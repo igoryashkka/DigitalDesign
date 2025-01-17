@@ -5,11 +5,11 @@ entity orGate is
     Port (
         in1 : in  std_logic;
         in2 : in  std_logic;
-        out : out std_logic
+        result : out std_logic
     );
 end orGate;
 
 architecture Behavioral of orGate is
 begin
-    out <= in1 or in2;
+    result <= in1 or in2;
 end Behavioral;

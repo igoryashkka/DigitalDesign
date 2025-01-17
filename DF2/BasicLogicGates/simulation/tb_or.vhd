@@ -1,32 +1,30 @@
-
-
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
-entity tb_andGate is
+entity tb_orGate is
+-- No ports in the test bench
+end tb_orGate;
 
-end tb_andGate;
-
-architecture Behavioral of tb_andGate is
+architecture Behavioral of tb_orGate is
     -- Component declaration
-    component andGate is
+    component orGate is
         Port (
-            in1 : in  std_logic;
-            in2 : in  std_logic;
+            in1    : in  std_logic;
+            in2    : in  std_logic;
             result : out std_logic
         );
     end component;
 
     -- Signals for testing
-    signal in1 : std_logic := '0';
-    signal in2 : std_logic := '0';
-    signal result    : std_logic;
+    signal in1    : std_logic := '0';
+    signal in2    : std_logic := '0';
+    signal result : std_logic;
 
 begin
-    -- Instantiate the AND Gate
-    uut: andGate Port Map (
-        in1 => in1,
-        in2 => in2,
+    -- Instantiate the OR Gate
+    uut: orGate Port Map (
+        in1    => in1,
+        in2    => in2,
         result => result
     );
 

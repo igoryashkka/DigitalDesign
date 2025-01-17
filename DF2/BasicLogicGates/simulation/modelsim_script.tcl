@@ -2,10 +2,10 @@
 vlib work
 
 # compile all the Verilog sources
-vcom ../tb_and.vhd ../../andGate.vhd 
+vcom ../tb_or.vhd ../../orGate.vhd 
 
 # open the testbench module for simulation
-vsim work.tb_andGate
+vsim work.tb_orGate
 
 # add all testbench signals to time diagram
 add wave -r /*
