@@ -2,10 +2,10 @@
 vlib work
 
 # compile all the Verilog sources
-vcom ../tb_or.vhd ../../orGate.vhd 
+vcom ../tb_FullAdder4Bit.vhd ../../FullAdder4Bit.vhd 
 
 # open the testbench module for simulation
-vsim work.tb_orGate
+vsim work.tb_FullAdder4Bit
 
 # add all testbench signals to time diagram
 add wave -r /*

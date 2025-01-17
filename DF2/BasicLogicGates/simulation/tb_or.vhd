@@ -21,7 +21,7 @@ architecture Behavioral of tb_orGate is
     signal result : std_logic;
 
 begin
-    -- Instantiate the OR Gate
+    -- UnitUnderTest (UUT)
     uut: orGate Port Map (
         in1    => in1,
         in2    => in2,
