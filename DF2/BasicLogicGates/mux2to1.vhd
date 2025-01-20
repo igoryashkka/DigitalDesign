@@ -14,3 +14,5 @@ architecture Behavioral of mux2to1 is
 begin
     y <= a when sel = '0' else b;
 end Behavioral;
+
+-- Same comment as in andGate

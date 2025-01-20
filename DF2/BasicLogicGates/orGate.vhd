@@ -13,3 +13,5 @@ architecture Behavioral of orGate is
 begin
     result <= in1 or in2;
 end Behavioral;
+
+-- Same comment as in andGate

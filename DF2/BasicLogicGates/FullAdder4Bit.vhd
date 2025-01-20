@@ -77,3 +77,7 @@ begin
 
     Cout <= Carry(4);
 end Behavioral;
+
+-- Same comment as in andGate
+-- For current task it is not a case but for blocks of code which repeats several times better to use GENERATE construction:
+-- less lines of code and more parametric approach --> easier to support design, more reusable
