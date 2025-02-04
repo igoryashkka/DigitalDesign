@@ -20,7 +20,7 @@ BEGIN
             IF reset_i = '1' THEN
                 cnt_s <= "000";
             ELSIF enable_i = '1' THEN
-                cnt_s <= STD_LOGIC_VECTOR(TO_UNSIGNED(TO_INTEGER(UNSIGNED(cnt_s)) + 1, 3));
+                cnt_s <= STD_LOGIC_VECTOR(UNSIGNED(cnt_s) + 1);
             END IF;
         END IF;
     END PROCESS;
