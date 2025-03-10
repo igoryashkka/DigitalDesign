@@ -11,7 +11,6 @@ ENTITY FullAdder IS
            Cout_o : OUT STD_LOGIC);
 END FullAdder;
 
-
 ARCHITECTURE Behavioral OF FullAdder IS
 BEGIN
     Sum_o   <= (A_i XOR B_i) XOR Cin_i;
@@ -32,11 +31,10 @@ ENTITY addsub IS
            Borrow_o: OUT STD_LOGIC); 
 END addsub;
 
-
 ARCHITECTURE Behavioral OF addsub IS
-   using 
     SIGNAL Carry_chain  : STD_LOGIC_VECTOR(N DOWNTO 0); 
     SIGNAL temp_diff    : STD_LOGIC_VECTOR(N-1 DOWNTO 0);
+    SIGNAL B_complement : STD_LOGIC_VECTOR(N-1 DOWNTO 0);
 
     COMPONENT FullAdder IS
         PORT ( A_i     : IN  STD_LOGIC;
@@ -47,19 +45,9 @@ ARCHITECTURE Behavioral OF addsub IS
     END COMPONENT;
 
 BEGIN
+    B_complement <= NOT B_i WHEN Sub_i = '1' ELSE B_i;
+    Carry_chain(0) <= Sub_i;
 
-    PROCESS (Sub_i, B_i)
-    BEGIN
-        IF Sub_i = '1' THEN
-            B_complement <= NOT B_i;
-            Carry_chain(0) <= '1'; 
-        ELSE
-            B_complement <= B_i;
-            Carry_chain(0) <= '0';
-        END IF;
-    END PROCESS;
-
-  
     gen_full_adders : FOR i IN 0 TO N-1 GENERATE
     BEGIN
         FA_inst : FullAdder PORT MAP (
@@ -71,14 +59,7 @@ BEGIN
         );
     END GENERATE gen_full_adders;
 
-
     Diff_o <= temp_diff;
     Borrow_o <= Carry_chain(N); 
 
 END Behavioral;
-
-
-
-
-
-
