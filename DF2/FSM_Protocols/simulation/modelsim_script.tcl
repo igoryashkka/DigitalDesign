@@ -2,10 +2,10 @@
 vlib work
 
 # compile all the Verilog sources
-vcom ../tb_SequenceDetector.vhd ../../SequenceDetector.vhd 
+vcom ../tb_lookahd.vhd ../../lookahd.vhd 
 
 # open the testbench module for simulation
-vsim work.tb_SequenceDetector
+vsim work.tb_lookahd
 
 # add all testbench signals to time diagram
 add wave -r /*
