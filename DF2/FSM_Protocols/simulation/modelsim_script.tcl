@@ -2,10 +2,11 @@
 vlib work
 
 # compile all the Verilog sources
-vcom ../tb_lookahd.vhd ../../lookahd.vhd 
+vcom ../tb_spi.vhd ../../spi_master.vhd  ../../spi_slave.vhd  
+# ../../spi_slave.vhd
 
 # open the testbench module for simulation
-vsim work.tb_lookahd
+vsim work.tb_spi
 
 # add all testbench signals to time diagram
 add wave -r /*
