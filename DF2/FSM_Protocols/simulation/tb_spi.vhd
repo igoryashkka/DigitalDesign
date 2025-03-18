@@ -6,103 +6,103 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity tb_spi is
 end tb_spi;
 
-architecture testbench of tb_spi is
-    signal clk      : STD_LOGIC := '0';
-    signal reset    : STD_LOGIC := '0';
-    signal data_in  : STD_LOGIC_VECTOR(7 downto 0);
-    signal start    : STD_LOGIC := '0';
-    signal MOSI     : STD_LOGIC;
-    signal SCK      : STD_LOGIC;
-    signal done     : STD_LOGIC;
-    signal data_out : STD_LOGIC_VECTOR(7 downto 0);
-    signal done_slave : STD_LOGIC;
+architecture Behavioral of tb_spi is
 
-    constant clk_period : time := 10 ns;
-
+    signal clk, reset, start, cs : std_logic := '0';
+    signal inputData             : std_logic_vector(7 downto 0) := (others => '0');
+    signal completeTransmit, completeReceive, sck, mosi, miso : std_logic;
+    signal dataFromSlave, dataFromMaster : std_logic_vector(7 downto 0);
+    
     component spi_master
-        Port ( clk      : in  STD_LOGIC;
-               reset    : in  STD_LOGIC;
-               data_in  : in  STD_LOGIC_VECTOR(7 downto 0);
-               start    : in  STD_LOGIC;
-               MOSI     : out STD_LOGIC;
-               SCK      : out STD_LOGIC;
-               done     : out STD_LOGIC);
+        generic (N : integer := 8);
+        port (
+            clk_c                : in  std_logic;
+            reset_r              : in  std_logic;
+            start_i              : in  std_logic;
+            miso_i               : in  std_logic;
+            inputData_i          : in  std_logic_vector(N-1 downto 0);
+            mosi_o               : out std_logic;
+            done_o               : out std_logic;
+            outData_o            : out std_logic_vector(N-1 downto 0);
+            sck                  : out std_logic
+        );
     end component;
-
+    
     component spi_slave
-        Port ( clk      : in  STD_LOGIC;
-               reset    : in  STD_LOGIC;
-               MOSI     : in  STD_LOGIC;
-               SCK      : in  STD_LOGIC;
-               start    : in  STD_LOGIC;
-               data_out : out STD_LOGIC_VECTOR(7 downto 0);
-               done     : out STD_LOGIC);
+        generic (N : integer := 8);
+        port (
+            slk_c               : in  std_logic;
+            reset_r             : in  std_logic;
+            mosi_i              : in  std_logic;
+            cs                  : in  std_logic;
+            miso_o              : out std_logic;
+            done_o  : out std_logic;
+            outData_o : out std_logic_vector(N-1 downto 0)
+        );
     end component;
-
+    
 begin
-
-    UUT_Master: spi_master
-        port map (
-            clk      => clk,
-            reset    => reset,
-            data_in  => data_in,
-            start    => start,
-            MOSI     => MOSI,
-            SCK      => SCK,
-            done     => done
-        );
     
-  
-    UUT_Slave: spi_slave
-        port map (
-            clk      => clk,
-            reset    => reset,
-            MOSI     => MOSI,
-            SCK      => SCK,
-            start    => start,
-            data_out => data_out,
-            done     => done_slave
-        );
-
-    
+   
     process
     begin
         while true loop
-            clk <= not clk;
-            wait for clk_period / 2;
+            clk <= '0';
+            wait for 5 ns;
+            clk <= '1';
+            wait for 5 ns;
         end loop;
     end process;
-
+    
+   
+    MASTER_INST: spi_master
+        generic map (N => 8)
+        port map (
+            clk_c => clk,
+            reset_r => reset,
+            start_i => start,
+            miso_i => miso,
+            inputData_i => inputData,
+            mosi_o => mosi,
+            done_o => completeTransmit,
+            outData_o => dataFromSlave,
+            sck => sck
+        );
+    
+    SLAVE_INST: spi_slave
+        generic map (N => 8)
+        port map (
+            slk_c => sck,
+            reset_r => reset,
+            mosi_i => mosi,
+            cs => cs,
+            miso_o => miso,
+            done_o => completeReceive,
+            outData_o => dataFromMaster
+        );
+    
     
     process
     begin
         
         reset <= '1';
-        wait for clk_period;
+        wait for 100 ns;
         reset <= '0';
-        wait for clk_period;
+        cs <= '0';
+        wait for 10 ns;
         
-
-        data_in <= "10101010";
-        start   <= '1';
-        wait for clk_period;
-       
-        wait until done = '1';
         
-
-        --report "Received data in slave: " & integer'image(to_integer(unsigned(data_out)));
+        start <= '1';
+        inputData <= X"EF";
+        wait for 10 ns;
+        start <= '0';
         
-        wait for clk_period * 5;
-    
-        data_in <= "11001100";
-        start   <= '1';
-        wait for clk_period;
-        --start   <= '0';
-        wait until done = '1';
-    
-        --report "Received data in slave: " & integer'image(to_integer(unsigned(data_out)));
+        
+        for i in 0 to 7 loop
+            wait until rising_edge(clk);
+        end loop;
         
         wait;
     end process;
-
-end testbench;
+    
+end Behavioral;
