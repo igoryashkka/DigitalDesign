@@ -9,7 +9,6 @@ architecture Behavioral of tb_spi is
 
     constant N : integer := 8;
 
-    -- Component declaration for SPI Master
     component spi_master
         generic (N : integer := 8);
         port (
@@ -25,11 +24,9 @@ architecture Behavioral of tb_spi is
         );
     end component;
 
-    -- Component declaration for SPI Slave
     component spi_slave
         generic (N : integer := 8);
         port (
-            clk_c        : in  std_logic;
             reset_r      : in  std_logic;
             sck          : in  std_logic;
             cs           : in  std_logic;
@@ -40,27 +37,23 @@ architecture Behavioral of tb_spi is
         );
     end component;
 
-    -- signals for SPI Master
     signal clk_c        : std_logic := '0';
     signal reset_r      : std_logic := '0';
     signal start_i      : std_logic := '0';
-    signal miso_i       : std_logic;
+    signal miso_i       : std_logic := '0'; -- initialized
     signal inputData_i  : std_logic_vector(N-1 downto 0) := "10101010";
     signal mosi_o       : std_logic;
     signal done_o       : std_logic;
     signal sck          : std_logic;
     signal cs           : std_logic;
 
-    -- signals for SPI Slave
-    signal outputData_o : std_logic_vector(N-1 downto 0);
-    signal received_o   : std_logic;
+    signal outputData_o : std_logic_vector(N-1 downto 0) := (others => '0'); -- initialized
+    signal received_o   : std_logic := '0'; -- initialized
 
-    -- clock generation
     constant clk_period : time := 10 ns;
 
 begin
 
-    -- instantiate SPI master
     UUT_Master: spi_master
         generic map(N => N)
         port map(
@@ -75,11 +68,9 @@ begin
             cs          => cs
         );
 
-    -- instantiate SPI slave
     UUT_Slave: spi_slave
         generic map(N => N)
         port map(
-            clk_c        => clk_c,
             reset_r      => reset_r,
             sck          => sck,
             cs           => cs,
@@ -89,48 +80,31 @@ begin
             received_o   => received_o
         );
 
-    -- Clock process
     clk_process: process
     begin
-        while True loop
-            clk_c <= '0';
-            wait for clk_period / 2;
-            clk_c <= '1';
-            wait for clk_period / 2;
-        end loop;
+        clk_c <= '0';
+        wait for clk_period / 2;
+        clk_c <= '1';
+        wait for clk_period / 2;
     end process;
 
-    -- Stimulus process
     stim_proc: process
     begin
-        -- Reset sequence
         reset_r <= '1';
         wait for 20 ns;
         reset_r <= '0';
         wait for 20 ns;
 
-        -- Start transmission
         start_i <= '1';
         wait for clk_period;
         start_i <= '0';
 
-        -- Wait until transmission is done
         wait until done_o = '1';
 
-        -- Check received data at slave
-        wait for 20 ns;
-
-        --assert outputData_o = inputData_i
-        --report "SPI Transfer failed: Data mismatch" severity error;
-
-        --assert received_o = '1'
-        --report "SPI Transfer failed: Slave didn't indicate reception" severity error;
-
         wait for 50 ns;
+        assert outputData_o = inputData_i report "SPI data mismatch!" severity error;
 
-        -- Finish simulation
-        --assert false
-        --report "Simulation ended successfully" severity failure;
+        wait;
     end process;
 
 end Behavioral;
