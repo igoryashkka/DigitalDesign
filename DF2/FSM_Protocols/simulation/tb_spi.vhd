@@ -1,110 +1,111 @@
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.NUMERIC_STD.ALL;
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.NUMERIC_STD.ALL;
 
-entity tb_spi is
-end tb_spi;
+ENTITY TB_SPI IS
+END TB_SPI;
 
-architecture Behavioral of tb_spi is
+ARCHITECTURE BEHAVIORAL OF TB_SPI IS
 
-    constant N : integer := 8;
+    CONSTANT N : INTEGER := 8;
 
-    component spi_master
-        generic (N : integer := 8);
-        port (
-            clk_c       : in  std_logic;
-            reset_r     : in  std_logic;
-            start_i     : in  std_logic;
-            miso_i      : in  std_logic;
-            inputData_i : in  std_logic_vector(N-1 downto 0);
-            mosi_o      : out std_logic;
-            done_o      : out std_logic;
-            sck         : out std_logic;
-            cs          : out std_logic
+    COMPONENT SPI_MASTER
+        GENERIC (N : INTEGER := 8);
+        PORT (
+            CLK_i        : IN  STD_LOGIC;
+            Reset_i      : IN  STD_LOGIC;
+            Start_i      : IN  STD_LOGIC;
+            MSIO_i       : IN  STD_LOGIC;
+            InputData_i  : IN  STD_LOGIC_VECTOR(N-1 DOWNTO 0);
+            Mosi_o       : OUT STD_LOGIC;
+            Done_o       : OUT STD_LOGIC;
+            SCK_o        : OUT STD_LOGIC;
+            CS_o         : OUT STD_LOGIC
         );
-    end component;
+    END COMPONENT;
 
-    component spi_slave
-        generic (N : integer := 8);
-        port (
-            reset_r      : in  std_logic;
-            sck          : in  std_logic;
-            cs           : in  std_logic;
-            mosi_i       : in  std_logic;
-            miso_o       : out std_logic;
-            outputData_o : out std_logic_vector(N-1 downto 0);
-            received_o   : out std_logic
+    COMPONENT SPI_SLAVE
+        GENERIC (N : INTEGER := 8);
+        PORT (
+            Reset_i       : IN  STD_LOGIC;
+            SCK_i         : IN  STD_LOGIC;
+            CS_i          : IN  STD_LOGIC;
+            MOSI_i        : IN  STD_LOGIC;
+            MISO_o        : OUT STD_LOGIC;
+            OutputData_o  : OUT STD_LOGIC_VECTOR(N-1 DOWNTO 0);
+            Received_o    : OUT STD_LOGIC
         );
-    end component;
+    END COMPONENT;
 
-    signal clk_c        : std_logic := '0';
-    signal reset_r      : std_logic := '0';
-    signal start_i      : std_logic := '0';
-    signal miso_i       : std_logic := '0'; -- initialized
-    signal inputData_i  : std_logic_vector(N-1 downto 0) := "10101010";
-    signal mosi_o       : std_logic;
-    signal done_o       : std_logic;
-    signal sck          : std_logic;
-    signal cs           : std_logic;
+    SIGNAL CLK_i        : STD_LOGIC := '0';
+    SIGNAL Reset_i      : STD_LOGIC := '0';
+    SIGNAL Start_i      : STD_LOGIC := '0';
+    SIGNAL MSIO_i       : STD_LOGIC := '0';
+    SIGNAL InputData_i  : STD_LOGIC_VECTOR(N-1 DOWNTO 0) := "10101010";
+    SIGNAL Mosi_o       : STD_LOGIC;
+    SIGNAL Done_o       : STD_LOGIC;
+    SIGNAL SCK_o        : STD_LOGIC;
+    SIGNAL CS_o         : STD_LOGIC;
 
-    signal outputData_o : std_logic_vector(N-1 downto 0) := (others => '0'); -- initialized
-    signal received_o   : std_logic := '0'; -- initialized
+    SIGNAL OutputData_o : STD_LOGIC_VECTOR(N-1 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL Received_o   : STD_LOGIC := '0';
 
-    constant clk_period : time := 10 ns;
+    CONSTANT CLK_PERIOD : TIME := 10 NS;
 
-begin
+BEGIN
 
-    UUT_Master: spi_master
-        generic map(N => N)
-        port map(
-            clk_c       => clk_c,
-            reset_r     => reset_r,
-            start_i     => start_i,
-            miso_i      => miso_i,
-            inputData_i => inputData_i,
-            mosi_o      => mosi_o,
-            done_o      => done_o,
-            sck         => sck,
-            cs          => cs
-        );
-
-    UUT_Slave: spi_slave
-        generic map(N => N)
-        port map(
-            reset_r      => reset_r,
-            sck          => sck,
-            cs           => cs,
-            mosi_i       => mosi_o,
-            miso_o       => miso_i,
-            outputData_o => outputData_o,
-            received_o   => received_o
+    UUT_Master : SPI_MASTER
+        GENERIC MAP (N => N)
+        PORT MAP (
+            CLK_i        => CLK_i,
+            Reset_i      => Reset_i,
+            Start_i      => Start_i,
+            MSIO_i       => MSIO_i,
+            InputData_i  => InputData_i,
+            Mosi_o       => Mosi_o,
+            Done_o       => Done_o,
+            SCK_o        => SCK_o,
+            CS_o         => CS_o
         );
 
-    clk_process: process
-    begin
-        clk_c <= '0';
-        wait for clk_period / 2;
-        clk_c <= '1';
-        wait for clk_period / 2;
-    end process;
+    UUT_Slave : SPI_SLAVE
+        GENERIC MAP (N => N)
+        PORT MAP (
+            Reset_i      => Reset_i,
+            SCK_i        => SCK_o,
+            CS_i         => CS_o,
+            MOSI_i       => Mosi_o,
+            MISO_o       => MSIO_i,
+            OutputData_o => OutputData_o,
+            Received_o   => Received_o
+        );
 
-    stim_proc: process
-    begin
-        reset_r <= '1';
-        wait for 20 ns;
-        reset_r <= '0';
-        wait for 20 ns;
+    CLK_PROCESS : PROCESS
+    BEGIN
+        CLK_i <= '0';
+        WAIT FOR CLK_PERIOD / 2;
+        CLK_i <= '1';
+        WAIT FOR CLK_PERIOD / 2;
+    END PROCESS;
 
-        start_i <= '1';
-        wait for clk_period;
-        start_i <= '0';
+    STIM_PROC : PROCESS
+    BEGIN
+        Reset_i <= '1';
+        WAIT FOR 20 NS;
+        Reset_i <= '0';
+        WAIT FOR 20 NS;
 
-        wait until done_o = '1';
+        Start_i <= '1';
+        WAIT FOR CLK_PERIOD;
+        Start_i <= '0';
 
-        wait for 50 ns;
-        assert outputData_o = inputData_i report "SPI data mismatch!" severity error;
+        WAIT UNTIL Done_o = '1';
 
-        wait;
-    end process;
+        WAIT FOR 50 NS;
+        ASSERT OutputData_o = InputData_i
+            REPORT "SPI DATA MISMATCH!" SEVERITY ERROR;
 
-end Behavioral;
+        WAIT;
+    END PROCESS;
+
+END BEHAVIORAL;

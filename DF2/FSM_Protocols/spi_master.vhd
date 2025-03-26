@@ -1,79 +1,77 @@
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
 
--- SPI Master
-entity spi_master is
-    generic (N : integer := 10);
-    port (
-        clk_c       : in  std_logic;
-        reset_r     : in  std_logic;
-        start_i     : in  std_logic;
-        miso_i      : in  std_logic;
-        inputData_i : in  std_logic_vector(N-1 downto 0);
-        mosi_o      : out std_logic;
-        done_o      : out std_logic;
-        sck         : out std_logic;
-        cs          : out std_logic
+ENTITY SPI_MASTER IS
+    GENERIC (N : INTEGER := 8);
+    PORT (
+        CLK_i        : IN  STD_LOGIC;
+        Reset_i      : IN  STD_LOGIC;
+        Start_i      : IN  STD_LOGIC;
+        MSIO_i       : IN  STD_LOGIC;
+        InputData_i  : IN  STD_LOGIC_VECTOR(N-1 DOWNTO 0);
+        Mosi_o       : OUT STD_LOGIC;
+        Done_o       : OUT STD_LOGIC;
+        SCK_o        : OUT STD_LOGIC;
+        CS_o         : OUT STD_LOGIC
     );
-end spi_master;
+END SPI_MASTER;
 
-architecture Behavioral of spi_master is
-    type stateType is (IDLE, TRANSMIT, COMPLETE);
-    signal state     : stateType := IDLE;
-    signal shift_reg : std_logic_vector(N-1 downto 0);
-    signal bit_count : integer range 0 to N := 0;
-    signal sck_reg   : std_logic := '1';
-    signal cs_reg    : std_logic := '1';
-    signal sck_counter : integer range 0 to 1 := 0;  -- For proper clock toggling
+ARCHITECTURE BEHAVIORAL OF SPI_MASTER IS
+    TYPE StateType IS (IDLE, TRANSMIT, COMPLETE);
+    SIGNAL State        : StateType := IDLE;
+    SIGNAL ShiftReg     : STD_LOGIC_VECTOR(N-1 DOWNTO 0);
+    SIGNAL BitCount     : INTEGER RANGE 0 TO N := 0;
+    SIGNAL SCK_Reg      : STD_LOGIC := '1';
+    SIGNAL CS_Reg       : STD_LOGIC := '1';
+    SIGNAL SCK_Counter  : INTEGER RANGE 0 TO 1 := 0;
+BEGIN
+    PROCESS(CLK_i, Reset_i)
+    BEGIN
+        IF Reset_i = '1' THEN
+            State        <= IDLE;
+            ShiftReg     <= (OTHERS => '0');
+            BitCount     <= 0;
+            SCK_Reg      <= '1';
+            CS_Reg       <= '1';
+            SCK_Counter  <= 0;
+        ELSIF RISING_EDGE(CLK_i) THEN
+            CASE State IS
+                WHEN IDLE =>
+                    SCK_Reg <= '1';
+                    CS_Reg  <= '1';
+                    Done_o  <= '0';
+                    IF Start_i = '1' THEN
+                        ShiftReg    <= InputData_i;
+                        BitCount    <= 0;
+                        State       <= TRANSMIT;
+                        CS_Reg      <= '0';
+                    END IF;
 
-begin
-    process(clk_c, reset_r)
-    begin
-        if reset_r = '1' then
-            state       <= IDLE;
-            shift_reg   <= (others => '0');
-            bit_count   <= 0;
-            sck_reg     <= '1';
-            cs_reg      <= '1';
-            sck_counter <= 0;
-        elsif rising_edge(clk_c) then
-            case state is
-                when IDLE =>
-                    sck_reg <= '1';
-                    cs_reg <= '1';
-                    done_o <= '0';
-                    if start_i = '1' then
-                        shift_reg <= inputData_i;
-                        bit_count <= 0;
-                        state <= TRANSMIT;
-                        cs_reg <= '0'; -- Activate chip select
-                    end if;
+                WHEN TRANSMIT =>
+                    IF SCK_Counter = 0 THEN
+                        SCK_Reg     <= '0';
+                        SCK_Counter <= 1;
+                    ELSE
+                        ShiftReg    <= ShiftReg(N-2 DOWNTO 0) & MSIO_i;
+                        BitCount    <= BitCount + 1;
+                        SCK_Reg     <= '1';
+                        SCK_Counter <= 0;
+                        IF BitCount = N - 1 THEN
+                            State <= COMPLETE;
+                        END IF;
+                    END IF;
 
-                when TRANSMIT =>
-                    if sck_counter = 0 then
-                        sck_reg <= '0';
-                        sck_counter <= 1;
-                    else
-                        shift_reg <= shift_reg(N-2 downto 0) & miso_i;
-                        bit_count <= bit_count + 1;
-                        sck_reg <= '1';
-                        sck_counter <= 0;
-                        if bit_count = N - 1 then -- here was N - 1
-                            state <= COMPLETE;
-                        end if;
-                    end if;
+                WHEN COMPLETE =>
+                    State   <= IDLE;
+                    CS_Reg  <= '1';
+                    Done_o  <= '1';
+            END CASE;
+        END IF;
+    END PROCESS;
 
-                when COMPLETE =>
-                    state <= IDLE;
-                    cs_reg <= '1';
-                    done_o <= '1';
-            end case;
-        end if;
-    end process;
-
-    mosi_o <= shift_reg(N-1);
-    sck    <= sck_reg;
-    cs     <= cs_reg;
-end Behavioral;
+    Mosi_o <= ShiftReg(N-1);
+    SCK_o  <= SCK_Reg;
+    CS_o   <= CS_Reg;
+END BEHAVIORAL;

@@ -1,52 +1,102 @@
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-entity spi_slave is
-    generic (N : integer := 9);
-    port (
-        reset_r      : in  std_logic;
-        sck          : in  std_logic;
-        cs           : in  std_logic;
-        mosi_i       : in  std_logic;
-        miso_o       : out std_logic;
-        outputData_o : out std_logic_vector(N-1 downto 0);
-        received_o   : out std_logic
+ENTITY SPI_SLAVE IS
+    GENERIC (N : INTEGER := 8);
+    PORT (
+        Reset_i       : IN  STD_LOGIC;
+        SCK_i         : IN  STD_LOGIC;
+        CS_i          : IN  STD_LOGIC;
+        MOSI_i        : IN  STD_LOGIC;
+        MISO_o        : OUT STD_LOGIC;
+        OutputData_o  : OUT STD_LOGIC_VECTOR(N-1 DOWNTO 0);
+        Received_o    : OUT STD_LOGIC
     );
-end spi_slave;
+END SPI_SLAVE;
 
-architecture Behavioral of spi_slave is
-    signal shift_reg  : std_logic_vector(N-1 downto 0);
-    signal bit_count  : integer range 0 to N := 0;
-    signal received_r : std_logic := '0';
+ARCHITECTURE BEHAVIORAL OF SPI_SLAVE IS
+    SIGNAL ShiftReg    : STD_LOGIC_VECTOR(N-1 DOWNTO 0);
+    SIGNAL BitCount    : INTEGER RANGE 0 TO N := 0;
+    SIGNAL Received_r  : STD_LOGIC := '0';
+BEGIN
 
-begin
+    PROCESS(SCK_i, Reset_i, CS_i)
+    BEGIN
+        IF Reset_i = '1' THEN
+            ShiftReg     <= (OTHERS => '0');
+            BitCount     <= 0;
+            Received_r   <= '0';
+            OutputData_o <= (OTHERS => '0');
+        ELSIF CS_i = '1' THEN
+            BitCount     <= 0;
+            Received_r   <= '0';
+        ELSIF FALLING_EDGE(SCK_i) AND CS_i = '0' THEN
+            ShiftReg <= ShiftReg(N-2 DOWNTO 0) & MOSI_i;
+            BitCount <= BitCount + 1;
 
-    process(sck, reset_r, cs)
-    begin
-        if reset_r = '1' then
-            shift_reg   <= (others => '0');
-            bit_count   <= 0;
-            received_r  <= '0';
-            outputData_o <= (others => '0'); 
-        elsif cs = '1' then
-            bit_count   <= 0;
-            received_r  <= '0';
-        elsif rising_edge(sck) and cs = '0' then
-            shift_reg <= shift_reg(N-2 downto 0) & mosi_i;
-            bit_count <= bit_count + 1;
+            IF BitCount = N-1 THEN
+                OutputData_o <= ShiftReg(N-2 DOWNTO 0) & MOSI_i;
+                Received_r   <= '1';
+            ELSE
+                Received_r   <= '0';
+            END IF;
+        END IF;
+    END PROCESS;
 
-            if bit_count = N-1 then
-                outputData_o <= shift_reg(N-2 downto 0) & mosi_i;
-                received_r   <= '1';
-            else
-                received_r <= '0';
-            end if;
-        end if;
-    end process;
+    MISO_o     <= ShiftReg(N-1);
+    Received_o <= Received_r;
 
-    miso_o     <= shift_reg(N-1); 
-    received_o <= received_r;
+END BEHAVIORAL;
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-end Behavioral;
+ENTITY SPI_SLAVE IS
+    GENERIC (N : INTEGER := 8);
+    PORT (
+        Reset_i       : IN  STD_LOGIC;
+        SCK_i         : IN  STD_LOGIC;
+        CS_i          : IN  STD_LOGIC;
+        MOSI_i        : IN  STD_LOGIC;
+        MISO_o        : OUT STD_LOGIC;
+        OutputData_o  : OUT STD_LOGIC_VECTOR(N-1 DOWNTO 0);
+        Received_o    : OUT STD_LOGIC
+    );
+END SPI_SLAVE;
+
+ARCHITECTURE BEHAVIORAL OF SPI_SLAVE IS
+    SIGNAL ShiftReg    : STD_LOGIC_VECTOR(N-1 DOWNTO 0);
+    SIGNAL BitCount    : INTEGER RANGE 0 TO N := 0;
+    SIGNAL Received_r  : STD_LOGIC := '0';
+BEGIN
+
+    PROCESS(SCK_i, Reset_i, CS_i)
+    BEGIN
+        IF Reset_i = '1' THEN
+            ShiftReg     <= (OTHERS => '0');
+            BitCount     <= 0;
+            Received_r   <= '0';
+            OutputData_o <= (OTHERS => '0');
+        ELSIF CS_i = '1' THEN
+            BitCount     <= 0;
+            Received_r   <= '0';
+        ELSIF FALLING_EDGE(SCK_i) AND CS_i = '0' THEN
+            ShiftReg <= ShiftReg(N-2 DOWNTO 0) & MOSI_i;
+            BitCount <= BitCount + 1;
+
+            IF BitCount = N-1 THEN
+                OutputData_o <= ShiftReg(N-2 DOWNTO 0) & MOSI_i;
+                Received_r   <= '1';
+            ELSE
+                Received_r   <= '0';
+            END IF;
+        END IF;
+    END PROCESS;
+
+    MISO_o     <= ShiftReg(N-1);
+    Received_o <= Received_r;
+
+END BEHAVIORAL;
