@@ -54,7 +54,7 @@ BEGIN
                         SCK_Reg     <= '0';
                         SCK_Counter <= 1;
                     ELSE
-                        ShiftReg    <= ShiftReg(N-2 DOWNTO 0) & MSIO_i;
+                        ShiftReg    <= ShiftReg(N-2 DOWNTO 0) & '0';
                         BitCount    <= BitCount + 1;
                         SCK_Reg     <= '1';
                         SCK_Counter <= 0;
