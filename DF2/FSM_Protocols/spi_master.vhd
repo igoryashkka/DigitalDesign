@@ -21,6 +21,7 @@ ARCHITECTURE BEHAVIORAL OF SPI_MASTER IS
     TYPE StateType IS (IDLE, TRANSMIT, COMPLETE);
     SIGNAL State        : StateType := IDLE;
     SIGNAL ShiftReg     : STD_LOGIC_VECTOR(N-1 DOWNTO 0);
+    SIGNAL DataReg     : STD_LOGIC_VECTOR(N-1 DOWNTO 0) := (OTHERS => '0');
     SIGNAL BitCount     : INTEGER RANGE 0 TO N := 0;
     SIGNAL SCK_Reg      : STD_LOGIC := '1';
     SIGNAL SCK_Counter  : INTEGER RANGE 0 TO 1 := 0;
@@ -49,7 +50,7 @@ BEGIN
                         SCK_Reg     <= '0';
                         SCK_Counter <= 1;
                     ELSE
-                        ShiftReg    <= ShiftReg(N-2 DOWNTO 0) & '0';
+                        ShiftReg    <= ShiftReg(N-2 DOWNTO 0) & MSIO_i;
                         BitCount    <= BitCount + 1;
                         SCK_Reg     <= '1';
                         SCK_Counter <= 0;
@@ -60,6 +61,7 @@ BEGIN
 
                 WHEN COMPLETE =>
                     State   <= IDLE;
+                    DataReg <= ShiftReg(N-1 DOWNTO 0);
                     Done_o  <= '1';
             END CASE;
         END IF;

@@ -19,6 +19,7 @@ END SPI_SLAVE;
 ARCHITECTURE BEHAVIORAL OF SPI_SLAVE IS
     SIGNAL ShiftReg     : STD_LOGIC_VECTOR(N-1 DOWNTO 0);
     SIGNAL BitCount     : INTEGER RANGE 0 TO N := 0;
+    SIGNAL DataReg     : STD_LOGIC_VECTOR(N-1 DOWNTO 0):= (OTHERS => '0');
     SIGNAL Received_r   : STD_LOGIC := '0';
     SIGNAL received_r1  : STD_LOGIC := '0';
     SIGNAL received_r2  : STD_LOGIC := '0';
@@ -37,6 +38,7 @@ BEGIN
             BitCount <= BitCount + 1;
             IF BitCount = N-1 THEN
                 OutputData_o <= ShiftReg(N-2 DOWNTO 0) & MOSI_i;
+                DataReg <= ShiftReg(N-2 DOWNTO 0) & MOSI_i;
                 Received_r   <= '1';
             ELSE
                 Received_r   <= '0';
