@@ -9,7 +9,6 @@ ENTITY SPI_SLAVE IS
         clk_i         : IN  STD_LOGIC;
         Reset_i       : IN  STD_LOGIC;
         SCK_i         : IN  STD_LOGIC;
-        CS_i          : IN  STD_LOGIC;
         MOSI_i        : IN  STD_LOGIC;
         MISO_o        : OUT STD_LOGIC;
         OutputData_o  : OUT STD_LOGIC_VECTOR(N-1 DOWNTO 0);

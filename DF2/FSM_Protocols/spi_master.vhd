@@ -13,8 +13,7 @@ ENTITY SPI_MASTER IS
         InputData_i  : IN  STD_LOGIC_VECTOR(N-1 DOWNTO 0);
         Mosi_o       : OUT STD_LOGIC;
         Done_o       : OUT STD_LOGIC;
-        SCK_o        : OUT STD_LOGIC;
-        CS_o         : OUT STD_LOGIC
+        SCK_o        : OUT STD_LOGIC
     );
 END SPI_MASTER;
 
@@ -24,7 +23,6 @@ ARCHITECTURE BEHAVIORAL OF SPI_MASTER IS
     SIGNAL ShiftReg     : STD_LOGIC_VECTOR(N-1 DOWNTO 0);
     SIGNAL BitCount     : INTEGER RANGE 0 TO N := 0;
     SIGNAL SCK_Reg      : STD_LOGIC := '1';
-    SIGNAL CS_Reg       : STD_LOGIC := '1';
     SIGNAL SCK_Counter  : INTEGER RANGE 0 TO 1 := 0;
 BEGIN
     PROCESS(CLK_i, Reset_i)
@@ -34,19 +32,16 @@ BEGIN
             ShiftReg     <= (OTHERS => '0');
             BitCount     <= 0;
             SCK_Reg      <= '1';
-            CS_Reg       <= '1';
             SCK_Counter  <= 0;
         ELSIF RISING_EDGE(CLK_i) THEN
             CASE State IS
                 WHEN IDLE =>
                     SCK_Reg <= '1';
-                    CS_Reg  <= '1';
                     Done_o  <= '0';
                     IF Start_i = '1' THEN
                         ShiftReg    <= InputData_i;
                         BitCount    <= 0;
                         State       <= TRANSMIT;
-                        CS_Reg      <= '0';
                     END IF;
 
                 WHEN TRANSMIT =>
@@ -65,7 +60,6 @@ BEGIN
 
                 WHEN COMPLETE =>
                     State   <= IDLE;
-                    CS_Reg  <= '1';
                     Done_o  <= '1';
             END CASE;
         END IF;
@@ -73,5 +67,4 @@ BEGIN
 
     Mosi_o <= ShiftReg(N-1);
     SCK_o  <= SCK_Reg;
-    CS_o   <= CS_Reg;
 END BEHAVIORAL;
