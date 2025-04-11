@@ -19,7 +19,8 @@ ARCHITECTURE BEHAVIORAL OF TB_SPI IS
             InputData_i  : IN  STD_LOGIC_VECTOR(N-1 DOWNTO 0);
             Mosi_o       : OUT STD_LOGIC;
             Done_o       : OUT STD_LOGIC;
-            SCK_o        : OUT STD_LOGIC
+            SCK_o        : OUT STD_LOGIC;
+            CS_o         : OUT STD_LOGIC
         );
     END COMPONENT;
 
@@ -32,7 +33,8 @@ ARCHITECTURE BEHAVIORAL OF TB_SPI IS
             MOSI_i        : IN  STD_LOGIC;
             MISO_o        : OUT STD_LOGIC;
             OutputData_o  : OUT STD_LOGIC_VECTOR(N-1 DOWNTO 0);
-            Received_o    : OUT STD_LOGIC
+            Received_o    : OUT STD_LOGIC;
+            CS_i          : IN  STD_LOGIC
         );
     END COMPONENT;
 
@@ -44,6 +46,7 @@ ARCHITECTURE BEHAVIORAL OF TB_SPI IS
     SIGNAL Mosi_o       : STD_LOGIC;
     SIGNAL Done_o       : STD_LOGIC;
     SIGNAL SCK_o        : STD_LOGIC;
+    SIGNAL CS_o         : STD_LOGIC;
     SIGNAL OutputData_o : STD_LOGIC_VECTOR(N-1 DOWNTO 0) := (OTHERS => '0');
     SIGNAL Received_o   : STD_LOGIC := '0';
 
@@ -51,6 +54,7 @@ ARCHITECTURE BEHAVIORAL OF TB_SPI IS
 
 BEGIN
 
+  
     UUT_Master : SPI_MASTER
         GENERIC MAP (N => N)
         PORT MAP (
@@ -61,9 +65,11 @@ BEGIN
             InputData_i  => InputData_i,
             Mosi_o       => Mosi_o,
             Done_o       => Done_o,
-            SCK_o        => SCK_o
+            SCK_o        => SCK_o,
+            CS_o         => CS_o
         );
 
+   
     UUT_Slave : SPI_SLAVE
         GENERIC MAP (N => N)
         PORT MAP (
@@ -73,8 +79,10 @@ BEGIN
             MOSI_i        => Mosi_o,
             MISO_o        => MSIO_i,
             OutputData_o  => OutputData_o,
-            Received_o    => Received_o
+            Received_o    => Received_o,
+            CS_i          => CS_o
         );
+
 
     CLK_PROCESS : PROCESS
     BEGIN
@@ -86,20 +94,23 @@ BEGIN
 
     STIM_PROC : PROCESS
     BEGIN
+  
         Reset_i <= '1';
         WAIT FOR 20 NS;
         Reset_i <= '0';
         WAIT FOR 20 NS;
 
+
         Start_i <= '1';
         WAIT FOR CLK_PERIOD;
         Start_i <= '0';
 
+       
         WAIT UNTIL Done_o = '1';
-
         WAIT FOR 50 NS;
-       -- ASSERT OutputData_o = InputData_i
-    --    REPORT "SPI DATA MISMATCH!" SEVERITY ERROR;
+
+        ASSERT OutputData_o = InputData_i
+            REPORT "SPI DATA MISMATCH!" SEVERITY ERROR;
 
         WAIT;
     END PROCESS;
