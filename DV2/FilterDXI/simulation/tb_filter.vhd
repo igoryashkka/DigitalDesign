@@ -93,11 +93,11 @@ BEGIN
 
         FOR i IN test_inputs'RANGE LOOP
             WAIT UNTIL dxi_ready = '1' AND rising_edge(clk);
-            dxi_data   <= test_inputs(i);
+            dxi_data      <= test_inputs(i);
             config_select <= test_cfgs(i);
-            dxi_valid  <= '1';
-            WAIT FOR clk_period;
-            dxi_valid  <= '0';
+            dxi_valid     <= '1';
+            WAIT UNTIL rising_edge(clk);
+            dxi_valid     <= '0';
 
             expected := expected_outputs(i);
 
