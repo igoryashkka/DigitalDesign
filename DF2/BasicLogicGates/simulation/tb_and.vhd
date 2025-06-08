@@ -35,12 +35,21 @@ begin
     begin
         in1 <= '0'; in2 <= '0';
         wait for 10 ns;
+        assert result = '0' report "0 AND 0 should be 0" severity error;
+
         in1 <= '0'; in2 <= '1';
         wait for 10 ns;
+        assert result = '0' report "0 AND 1 should be 0" severity error;
+
         in1 <= '1'; in2 <= '0';
         wait for 10 ns;
+        assert result = '0' report "1 AND 0 should be 0" severity error;
+
         in1 <= '1'; in2 <= '1';
         wait for 10 ns;
+        assert result = '1' report "1 AND 1 should be 1" severity error;
+
+        assert false report "Testbench completed successfully" severity note;
         wait;
     end process;
 end Behavioral;
