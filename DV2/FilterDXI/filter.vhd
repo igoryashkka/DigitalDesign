@@ -21,10 +21,9 @@ ARCHITECTURE rtl OF dxi_top IS
     TYPE pixel_array IS ARRAY(0 TO 8) OF std_logic_vector(7 DOWNTO 0);
     TYPE kernel_array IS ARRAY(0 TO 8) OF INTEGER;
 
-    SIGNAL pixel_window     : pixel_array := (OTHERS => (OTHERS => '0'));
     SIGNAL pixel_result     : std_logic_vector(7 DOWNTO 0) := (OTHERS => '0');
     SIGNAL master_valid     : std_logic := '0';
-    SIGNAL o_dxi_ready_reg  : std_logic := '0';
+    SIGNAL o_dxi_ready_reg  : std_logic := '1';
 
     CONSTANT lap1  : kernel_array := (  0, -1,  0,
                                        -1,  4, -1,
@@ -80,40 +79,22 @@ ARCHITECTURE rtl OF dxi_top IS
 
 BEGIN
 
-    process(i_clk)
-        TYPE state_type IS (IDLE, COMB, SEND);
-        VARIABLE state : state_type := IDLE;
+    PROCESS(i_clk)
     BEGIN
         IF rising_edge(i_clk) THEN
             IF i_rstn = '0' THEN
-                pixel_window    <= (OTHERS => (OTHERS => '0'));
                 pixel_result    <= (OTHERS => '0');
                 master_valid    <= '0';
-                o_dxi_ready_reg <= '0';
-                state           := IDLE;
+                o_dxi_ready_reg <= '1';
             ELSE
-                CASE state IS
-
-                    WHEN IDLE =>
-                        o_dxi_ready_reg <= '1';
-                        IF i_dxi_valid = '1' THEN
-                            pixel_window    <= unpack_pixel_bus(i_dxi_data);
-                            o_dxi_ready_reg <= '0';
-                            state := COMB;
-                        END IF;
-
-                    WHEN COMB =>
-                        pixel_result <= apply_filter(pixel_window, config_select);
-                        master_valid <= '1';
-                        state := SEND;
-
-                    WHEN SEND =>
-                        IF i_dxi_out_ready = '1' THEN
-                            master_valid <= '0';
-                            state := IDLE;
-                        END IF;
-
-                END CASE;
+                IF (o_dxi_ready_reg = '1') and (i_dxi_valid = '1') THEN
+                    pixel_result    <= apply_filter(unpack_pixel_bus(i_dxi_data), config_select);
+                    master_valid    <= '1';
+                    o_dxi_ready_reg <= '0';
+                ELSIF (master_valid = '1') and (i_dxi_out_ready = '1') THEN
+                    master_valid    <= '0';
+                    o_dxi_ready_reg <= '1';
+                END IF;
             END IF;
         END IF;
     END PROCESS;
