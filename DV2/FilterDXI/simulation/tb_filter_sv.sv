@@ -10,16 +10,13 @@ module tb_filter_sv;
   localparam clk_period = 10;
   always #(clk_period / 2) clk = ~clk;
 
-
   interface dxi_if(input logic clk);
     logic        valid;
     logic [71:0] data;
     logic        ready;
-
     logic        out_valid;
     logic        out_ready;
     logic [7:0]  master_data;
-
     logic [1:0]  config_select;
   endinterface
 
@@ -37,17 +34,47 @@ module tb_filter_sv;
     .config_select(vif.config_select)
   );
 
+  localparam int lap1 [0:8]  = '{0, -1, 0, -1, 4, -1, 0, -1, 0};
+  localparam int lap2 [0:8]  = '{-1, -1, -1, -1, 8, -1, -1, -1, -1};
+  localparam int gauss[0:8]  = '{1, 2, 1, 2, 4, 2, 1, 2, 1};
+  localparam int avg  [0:8]  = '{1, 1, 1, 1, 1, 1, 1, 1, 1};
+
+  function automatic logic [7:0] apply_filter(input logic [71:0] pixels, input logic [1:0] sel);
+    int acc = 0;
+    int norm;
+    int result;
+    int kernel[0:8];
+    logic [7:0] px[0:8];
+    for (int i = 0; i < 9; i++)
+      px[i] = pixels[i*8 +: 8];
+    case (sel)
+      2'b00: begin kernel = lap1;  norm = 1; end
+      2'b01: begin kernel = lap2;  norm = 1; end
+      2'b10: begin kernel = gauss; norm = 16; end
+      default: begin kernel = avg; norm = 9; end
+    endcase
+    for (int i = 0; i < 9; i++)
+      acc += kernel[i] * px[i];
+    result = acc / norm;
+    if (result < 0) result = 0;
+    else if (result > 255) result = 255;
+    return logic'(result[7:0]);
+  endfunction
 
   logic [71:0] test_inputs[4] = '{
-    72'h000102030405060708,
-    72'h080706050403020100,
+    72'h5F5F5F5F5F5F5F5F5F,
+    72'hfff1f2f3f4f5f6f7f8,
     72'hFFFFFFFFFFFFFFFFFF,
     72'hA5A5A5A5A5A5A5A5A5
   };
 
   logic [1:0] test_cfgs[4] = '{2'b00, 2'b01, 2'b10, 2'b11};
-  logic [7:0] expected_outputs[4] = '{8'h00, 8'h00, 8'hFF, 8'hA5};
+  logic [7:0] expected_outputs[4];
 
+  initial begin
+    for (int i = 0; i < 4; i++)
+      expected_outputs[i] = apply_filter(test_inputs[i], test_cfgs[i]);
+  end
 
   task automatic reset_dut();
     rstn = 0;
@@ -84,8 +111,6 @@ module tb_filter_sv;
     vif.valid = 0;
   endtask
 
-
-
   task automatic testcase_functional();
     for (int i = 0; i < 4; i++) begin
       send_once(test_inputs[i], test_cfgs[i]);
@@ -100,10 +125,10 @@ module tb_filter_sv;
 
   initial begin
     reset_dut();
-    $display("Running functional tests...");
+    $display("testcase_functional()");
     testcase_functional();
     repeat (3) @(posedge clk);
-    $display("Running clock-by-clock transaction test...");
+    $display("testcase_clock_by_clock()");
     testcase_clock_by_clock();
     #50;
     $display("Simulation complete.");
