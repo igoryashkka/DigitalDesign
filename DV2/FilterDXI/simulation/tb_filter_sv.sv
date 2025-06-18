@@ -18,7 +18,7 @@ module tb_filter_sv;
   typedef pixel_t pixel_window_t[0:8];
   logic [7:0] processed_pixel;
 
-  logic clk = 0;
+  logic clk = 1;
   logic rstn = 0;
   localparam clk_period = 10;
   always #(clk_period / 2) clk = ~clk;
@@ -61,7 +61,7 @@ module tb_filter_sv;
     result = acc / norm;
     if (result < 0) result = 0;
     else if (result > 255) result = 255;
-    return logic'(result[7:0]);
+    return result[7:0];
   endfunction
 
   logic [71:0] test_inputs[4] = '{
@@ -101,32 +101,16 @@ module tb_filter_sv;
     dxi_mst.valid <= 0;
   endtask
 
-  task automatic send_clock_by_clock(input logic [71:0] data_array[], input logic [1:0] cfg_array[]);
-    dxi_mst.valid <= 1;
-    for (int i = 0; i < data_array.size(); i++) begin
-      @(posedge clk);
-      dxi_mst.data <= data_array[i];
-      config_select <= cfg_array[i];
-      while (!dxi_mst.ready)
-        @(posedge clk);
-    end
-    @(posedge clk);
-    dxi_mst.valid <= 0;
-  endtask
-
   task automatic testcase_functional();
-    for (int i = 0; i < 4; i++) begin
-      if (i == 0)
-        send_once(test_inputs[i], test_cfgs[2]);
-      else
-        send_once(test_inputs[i], test_cfgs[i]);
-    end
+    for (int i = 0; i < 4; i++)
+      send_once(test_inputs[i], test_cfgs[i]);
   endtask
 
   task automatic testcase_clock_by_clock();
     logic [71:0] data_seq[4] = '{test_inputs[3], test_inputs[2], test_inputs[1], test_inputs[0]};
     logic [1:0]  cfg_seq[4]  = '{test_cfgs[3], test_cfgs[2], test_cfgs[3], test_cfgs[2]};
-    send_clock_by_clock(data_seq, cfg_seq);
+    for (int i = 0; i < 4; i++)
+      send_once(data_seq[i], cfg_seq[i]);
   endtask
 
   task automatic monitor_input();
@@ -140,7 +124,7 @@ module tb_filter_sv;
 
   task automatic monitor_output();
     forever begin
-      @(posedge clk);
+      @(negedge clk);
       if (dxi_slv.valid && dxi_slv.ready) begin
         $display("[MONITOR-OUT] @%0t -> OUT : data = %h", $time, dxi_slv.data);
       end
@@ -151,7 +135,6 @@ module tb_filter_sv;
     dxi_slv.ready <= 1;
     do @(negedge clk); while (!dxi_slv.valid);
     processed_data <= dxi_slv.data;
-    $display("[drive_slv] @%0t -> OUT : data = %h", $time, dxi_slv.data);
     dxi_slv.ready <= 0;
   endtask
 
@@ -159,9 +142,6 @@ module tb_filter_sv;
     fork
       monitor_input();
       monitor_output();
-      begin
-        for (int i = 0; i < 14; i++) drive_slv(processed_pixel);
-      end
       begin
         reset_dut();
         $display("testcase_functional()");
@@ -172,7 +152,11 @@ module tb_filter_sv;
         $display("Simulation complete.");
         $finish;
       end
+      begin
+        for (int i = 0; i < 16; i++) drive_slv(processed_pixel);
+      end
     join_any
   end
 
 endmodule
+   
