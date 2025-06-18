@@ -116,7 +116,13 @@ end
       @(posedge clk);
     dxi_mst.valid <= 0;
   endtask
-
+  // [NOTE] testcase_functional() AND testcase_clock_by_clock() use the same task send_once for re-use style
+  // [WARN]  They exist exist at the same time for handle different test cases 
+  //          1st - simple transaction where [dxi_mst.valid]  will fall at 0 to indicate just over-clock transaction
+  //          2nd - once send , but clock-by-clcok transaction where [dxi_mst.valid] will NOT fall to 0
+  //
+  // [TODO]   Adding arg [falling_flag] signal and asign :  dxi_mst.valid <= falling_flag;
+  // [NOTE]   Syncronization fails for now if call it with diff falling_flag value , but RTL can handle it at all.
   task automatic testcase_functional();
     for (int i = 0; i < 4; i++)
       send_once(test_inputs[i], test_cfgs[i]);
