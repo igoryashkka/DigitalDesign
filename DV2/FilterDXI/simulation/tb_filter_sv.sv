@@ -98,7 +98,7 @@ module tb_filter_sv;
     @(posedge clk);
     while (!vif.ready)
       @(posedge clk);
-    vif.valid = 0;
+    vif.valid <= 0;
   endtask
 
   task automatic send_clock_by_clock(input logic [71:0] data_array[], input logic [1:0] cfg_array[]);
@@ -111,7 +111,7 @@ module tb_filter_sv;
         @(posedge clk);
     end
     @(posedge clk);
-    vif.valid = 0;
+    vif.valid <= 0;
   endtask
 
   task automatic testcase_functional();
@@ -147,14 +147,14 @@ module tb_filter_sv;
     end
   endtask
 
-   task  drive_slv(output processed_data);
-        vif.out_ready = 1;
+   task  drive_slv(output logic [7:0] processed_data);
+        vif.out_ready <= 1;
         do begin
-        @(posedge clk);
+        @(negedge clk);
         end while(!vif.out_valid);
         processed_data <= vif.master_data;
         $display("[drive_slv] @%0t -> OUT : data = %h", $time, vif.master_data);
-        vif.out_ready = 0;
+        vif.out_ready <= 0;
     endtask
 
   initial begin
@@ -170,6 +170,12 @@ module tb_filter_sv;
         
       //end
 
+       begin // process output data rx
+                for(int i=0; i < 14; i++) begin
+                    drive_slv(processed_pixel);
+                end
+      end
+
       begin
         reset_dut();
         $display("testcase_functional()");
@@ -181,11 +187,7 @@ module tb_filter_sv;
         $finish;
       end
 
-      begin // process output data rx
-                for(int i=0; i < 14; i++) begin
-                    drive_slv(processed_pixel);
-                end
-      end
+     
 
     
     join_any
