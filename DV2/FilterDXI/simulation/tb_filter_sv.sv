@@ -3,7 +3,9 @@
 module tb_filter_sv;
 
   typedef logic [7:0] pixel_t;
-  typedef pixel_t pixel_window_t[0:8];
+  typedef pixel_t  pixel_window_t[0:8];
+  logic [7:0]  processed_pixel;
+    
 
   logic clk = 0;
   logic rstn = 0;
@@ -82,6 +84,7 @@ module tb_filter_sv;
     vif.data = 0;
     vif.config_select = 0;
     vif.out_ready = 1;
+    processed_pixel = 0;
     repeat (3) @(posedge clk);
     rstn = 1;
     @(posedge clk);
@@ -89,9 +92,9 @@ module tb_filter_sv;
 
   task automatic send_once(input [71:0] data, input [1:0] cfg);
     @(posedge clk);
-    vif.data = data;
-    vif.config_select = cfg;
-    vif.valid = 1;
+    vif.data <= data;
+    vif.config_select <= cfg;
+    vif.valid <= 1;
     @(posedge clk);
     while (!vif.ready)
       @(posedge clk);
@@ -99,11 +102,11 @@ module tb_filter_sv;
   endtask
 
   task automatic send_clock_by_clock(input logic [71:0] data_array[], input logic [1:0] cfg_array[]);
-    vif.valid = 1;
+    vif.valid <= 1;
     for (int i = 0; i < data_array.size(); i++) begin
       @(posedge clk);
-      vif.data = data_array[i];
-      vif.config_select = cfg_array[i];
+      vif.data <= data_array[i];
+      vif.config_select <= cfg_array[i];
       while (!vif.ready)
         @(posedge clk);
     end
@@ -113,7 +116,12 @@ module tb_filter_sv;
 
   task automatic testcase_functional();
     for (int i = 0; i < 4; i++) begin
-      send_once(test_inputs[i], test_cfgs[i]);
+      if (i == 0) begin
+        send_once(test_inputs[i], test_cfgs[2]);
+      end else begin
+        send_once(test_inputs[i], test_cfgs[i]);
+      end
+      
     end
   endtask
 
@@ -123,15 +131,64 @@ module tb_filter_sv;
     send_clock_by_clock(data_seq, cfg_seq);
   endtask
 
+    task automatic monitor_interface();
+    logic [71:0] in_data;
+    logic [7:0] out_data;
+    forever begin
+      if (vif.valid && vif.ready) begin
+        in_data = vif.data;
+        $display("[MONITOR] @%0t -> IN  : data = %h | config = %0b", $time, in_data, vif.config_select);
+      end
+      @(posedge clk);
+      if (vif.out_valid && vif.out_ready) begin
+        out_data = vif.master_data;
+        $display("[MONITOR] @%0t -> OUT : data = %h", $time, out_data);
+      end
+    end
+  endtask
+
+   task  drive_slv(output processed_data);
+        vif.out_ready = 1;
+        do begin
+        @(posedge clk);
+        end while(!vif.out_valid);
+        processed_data <= vif.master_data;
+        $display("[drive_slv] @%0t -> OUT : data = %h", $time, vif.master_data);
+        vif.out_ready = 0;
+    endtask
+
   initial begin
-    reset_dut();
-    $display("testcase_functional()");
-    testcase_functional();
-    repeat (3) @(posedge clk);
-    $display("testcase_clock_by_clock()");
-    testcase_clock_by_clock();
-    #50;
-    $display("Simulation complete.");
-    $finish;
+    ///processed_pixel = 0;
+    fork
+
+      begin
+        monitor_interface();
+      end
+
+      //begin
+      //  $display("Starting simulation...");
+        
+      //end
+
+      begin
+        reset_dut();
+        $display("testcase_functional()");
+        testcase_functional();
+        $display("testcase_clock_by_clock()");
+        testcase_clock_by_clock();
+        #50;
+        $display("Simulation complete.");
+        $finish;
+      end
+
+      begin // process output data rx
+                for(int i=0; i < 14; i++) begin
+                    drive_slv(processed_pixel);
+                end
+      end
+
+    
+    join_any
   end
-endmodule
+
+endmodule  
