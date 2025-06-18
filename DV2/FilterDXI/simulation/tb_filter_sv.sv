@@ -1,57 +1,58 @@
 `timescale 1ns/1ps
 
+interface dxi_mst_if(input logic clk);
+  logic valid;
+  logic ready;
+  logic [71:0] data;
+endinterface
+
+interface dxi_slv_if(input logic clk);
+  logic valid;
+  logic ready;
+  logic [7:0] data;
+endinterface
+
 module tb_filter_sv;
 
   typedef logic [7:0] pixel_t;
-  typedef pixel_t  pixel_window_t[0:8];
-  logic [7:0]  processed_pixel;
-    
+  typedef pixel_t pixel_window_t[0:8];
+  logic [7:0] processed_pixel;
 
   logic clk = 0;
   logic rstn = 0;
   localparam clk_period = 10;
   always #(clk_period / 2) clk = ~clk;
 
-  interface dxi_if(input logic clk);
-    logic        valid;
-    logic [71:0] data;
-    logic        ready;
-    logic        out_valid;
-    logic        out_ready;
-    logic [7:0]  master_data;
-    logic [1:0]  config_select;
-  endinterface
-
-  dxi_if vif(clk);
+  dxi_mst_if dxi_mst(clk);
+  dxi_slv_if dxi_slv(clk);
+  logic [1:0] config_select;
 
   dxi_top dut (
     .i_clk(clk),
     .i_rstn(rstn),
-    .i_dxi_valid(vif.valid),
-    .i_dxi_data(vif.data),
-    .o_dxi_ready(vif.ready),
-    .i_dxi_out_ready(vif.out_ready),
-    .o_dxi_out_valid(vif.out_valid),
-    .o_master_data(vif.master_data),
-    .config_select(vif.config_select)
+    .i_dxi_valid(dxi_mst.valid),
+    .i_dxi_data(dxi_mst.data),
+    .o_dxi_ready(dxi_mst.ready),
+    .i_dxi_out_ready(dxi_slv.ready),
+    .o_dxi_out_valid(dxi_slv.valid),
+    .o_master_data(dxi_slv.data),
+    .config_select(config_select)
   );
 
-  localparam int lap1 [0:8]  = '{0, -1, 0, -1, 4, -1, 0, -1, 0};
-  localparam int lap2 [0:8]  = '{-1, -1, -1, -1, 8, -1, -1, -1, -1};
-  localparam int gauss[0:8]  = '{1, 2, 1, 2, 4, 2, 1, 2, 1};
-  localparam int avg  [0:8]  = '{1, 1, 1, 1, 1, 1, 1, 1, 1};
+  localparam int lap1[0:8]  = '{0, -1, 0, -1, 4, -1, 0, -1, 0};
+  localparam int lap2[0:8]  = '{-1, -1, -1, -1, 8, -1, -1, -1, -1};
+  localparam int gauss[0:8] = '{1, 2, 1, 2, 4, 2, 1, 2, 1};
+  localparam int avg[0:8]   = '{1, 1, 1, 1, 1, 1, 1, 1, 1};
 
   function automatic logic [7:0] apply_filter(input logic [71:0] pixels, input logic [1:0] sel);
-    int acc = 0;
-    int norm;
-    int result;
+    int acc = 0, norm, result;
     int kernel[0:8];
     logic [7:0] px[0:8];
     for (int i = 0; i < 9; i++)
       px[i] = pixels[i*8 +: 8];
     case (sel)
-      2'b00: begin kernel = lap1;  norm = 1; end
-      2'b01: begin kernel = lap2;  norm = 1; end
+      2'b00: begin kernel = lap1; norm = 1; end
+      2'b01: begin kernel = lap2; norm = 1; end
       2'b10: begin kernel = gauss; norm = 16; end
       default: begin kernel = avg; norm = 9; end
     endcase
@@ -69,7 +70,6 @@ module tb_filter_sv;
     72'hFFFFFFFFFFFFFFFFFF,
     72'hA5A5A5A5A5A5A5A5A5
   };
-
   logic [1:0] test_cfgs[4] = '{2'b00, 2'b01, 2'b10, 2'b11};
   logic [7:0] expected_outputs[4];
 
@@ -80,10 +80,10 @@ module tb_filter_sv;
 
   task automatic reset_dut();
     rstn = 0;
-    vif.valid = 0;
-    vif.data = 0;
-    vif.config_select = 0;
-    vif.out_ready = 1;
+    dxi_mst.valid = 0;
+    dxi_mst.data = 0;
+    config_select = 0;
+    dxi_slv.ready = 1;
     processed_pixel = 0;
     repeat (3) @(posedge clk);
     rstn = 1;
@@ -92,36 +92,34 @@ module tb_filter_sv;
 
   task automatic send_once(input [71:0] data, input [1:0] cfg);
     @(posedge clk);
-    vif.data <= data;
-    vif.config_select <= cfg;
-    vif.valid <= 1;
+    dxi_mst.data <= data;
+    config_select <= cfg;
+    dxi_mst.valid <= 1;
     @(posedge clk);
-    while (!vif.ready)
+    while (!dxi_mst.ready)
       @(posedge clk);
-    vif.valid <= 0;
+    dxi_mst.valid <= 0;
   endtask
 
   task automatic send_clock_by_clock(input logic [71:0] data_array[], input logic [1:0] cfg_array[]);
-    vif.valid <= 1;
+    dxi_mst.valid <= 1;
     for (int i = 0; i < data_array.size(); i++) begin
       @(posedge clk);
-      vif.data <= data_array[i];
-      vif.config_select <= cfg_array[i];
-      while (!vif.ready)
+      dxi_mst.data <= data_array[i];
+      config_select <= cfg_array[i];
+      while (!dxi_mst.ready)
         @(posedge clk);
     end
     @(posedge clk);
-    vif.valid <= 0;
+    dxi_mst.valid <= 0;
   endtask
 
   task automatic testcase_functional();
     for (int i = 0; i < 4; i++) begin
-      if (i == 0) begin
+      if (i == 0)
         send_once(test_inputs[i], test_cfgs[2]);
-      end else begin
+      else
         send_once(test_inputs[i], test_cfgs[i]);
-      end
-      
     end
   endtask
 
@@ -131,51 +129,39 @@ module tb_filter_sv;
     send_clock_by_clock(data_seq, cfg_seq);
   endtask
 
-    task automatic monitor_interface();
-    logic [71:0] in_data;
-    logic [7:0] out_data;
+  task automatic monitor_input();
     forever begin
-      if (vif.valid && vif.ready) begin
-        in_data = vif.data;
-        $display("[MONITOR] @%0t -> IN  : data = %h | config = %0b", $time, in_data, vif.config_select);
-      end
       @(posedge clk);
-      if (vif.out_valid && vif.out_ready) begin
-        out_data = vif.master_data;
-        $display("[MONITOR] @%0t -> OUT : data = %h", $time, out_data);
+      if (dxi_mst.valid && dxi_mst.ready) begin
+        $display("[MONITOR-IN] @%0t -> IN  : data = %h | config = %0b", $time, dxi_mst.data, config_select);
       end
     end
   endtask
 
-   task  drive_slv(output logic [7:0] processed_data);
-        vif.out_ready <= 1;
-        do begin
-        @(negedge clk);
-        end while(!vif.out_valid);
-        processed_data <= vif.master_data;
-        $display("[drive_slv] @%0t -> OUT : data = %h", $time, vif.master_data);
-        vif.out_ready <= 0;
-    endtask
+  task automatic monitor_output();
+    forever begin
+      @(posedge clk);
+      if (dxi_slv.valid && dxi_slv.ready) begin
+        $display("[MONITOR-OUT] @%0t -> OUT : data = %h", $time, dxi_slv.data);
+      end
+    end
+  endtask
+
+  task drive_slv(output logic [7:0] processed_data);
+    dxi_slv.ready <= 1;
+    do @(negedge clk); while (!dxi_slv.valid);
+    processed_data <= dxi_slv.data;
+    $display("[drive_slv] @%0t -> OUT : data = %h", $time, dxi_slv.data);
+    dxi_slv.ready <= 0;
+  endtask
 
   initial begin
-    ///processed_pixel = 0;
     fork
-
+      monitor_input();
+      monitor_output();
       begin
-        monitor_interface();
+        for (int i = 0; i < 14; i++) drive_slv(processed_pixel);
       end
-
-      //begin
-      //  $display("Starting simulation...");
-        
-      //end
-
-       begin // process output data rx
-                for(int i=0; i < 14; i++) begin
-                    drive_slv(processed_pixel);
-                end
-      end
-
       begin
         reset_dut();
         $display("testcase_functional()");
@@ -186,11 +172,7 @@ module tb_filter_sv;
         $display("Simulation complete.");
         $finish;
       end
-
-     
-
-    
     join_any
   end
 
-endmodule  
+endmodule
