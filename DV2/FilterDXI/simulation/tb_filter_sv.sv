@@ -64,19 +64,36 @@ module tb_filter_sv;
     return result[7:0];
   endfunction
 
-  logic [71:0] test_inputs[4] = '{
-    72'h5F5F5F5F5F5F5F5F5F,
-    72'hfff1f2f3f4f5f6f7f8,
-    72'hFFFFFFFFFFFFFFFFFF,
-    72'hA5A5A5A5A5A5A5A5A5
-  };
-  logic [1:0] test_cfgs[4] = '{2'b00, 2'b01, 2'b10, 2'b11};
-  logic [7:0] expected_outputs[4];
+logic [71:0] test_inputs[8] = '{
+  72'h5F5F5F5F5F5F5F5F5F,
+  72'hfff1f2f3f4f5f6f7f8,
+  72'hFFFFFFFFFFFFFFFFFF,
+  72'hA5A5A5A5A5A5A5A5A5,
+  72'hA5A5A5A5A5A5A5A5A5,
+  72'hFFFFFFFFFFFFFFFFFF,
+  72'hfff1f2f3f4f5f6f7f8,
+  72'h5F5F5F5F5F5F5F5F5F
+};
 
-  initial begin
-    for (int i = 0; i < 4; i++)
-      expected_outputs[i] = apply_filter(test_inputs[i], test_cfgs[i]);
-  end
+logic [1:0] test_cfgs[8] = '{
+  2'b00,
+  2'b01,
+  2'b10,
+  2'b11,
+  2'b11,
+  2'b10,
+  2'b11,
+  2'b10
+};
+
+logic [7:0] expected_outputs[8];
+
+initial begin
+  for (int i = 0; i < 8; i++)
+    expected_outputs[i] = apply_filter(test_inputs[i], test_cfgs[i]);
+end
+
+
 
   task automatic reset_dut();
     rstn = 0;
@@ -91,7 +108,6 @@ module tb_filter_sv;
   endtask
 
   task automatic send_once(input [71:0] data, input [1:0] cfg);
-    @(posedge clk);
     dxi_mst.data <= data;
     config_select <= cfg;
     dxi_mst.valid <= 1;
@@ -107,10 +123,8 @@ module tb_filter_sv;
   endtask
 
   task automatic testcase_clock_by_clock();
-    logic [71:0] data_seq[4] = '{test_inputs[3], test_inputs[2], test_inputs[1], test_inputs[0]};
-    logic [1:0]  cfg_seq[4]  = '{test_cfgs[3], test_cfgs[2], test_cfgs[3], test_cfgs[2]};
-    for (int i = 0; i < 4; i++)
-      send_once(data_seq[i], cfg_seq[i]);
+    for (int i = 4; i < 8; i++)
+      send_once(test_inputs[i], test_cfgs[i]);
   endtask
 
   task automatic monitor_input();
@@ -138,10 +152,25 @@ module tb_filter_sv;
     dxi_slv.ready <= 0;
   endtask
 
+  task automatic checker_task();
+  int i = 0;
+  while (i < 8) begin
+    do @(negedge clk); while (!dxi_slv.valid);
+    if (dxi_slv.ready) begin
+      $display("[CHECKER] @%0t -> CHECK [%0d]: Expected = %02x | Got = %02x %s",
+        $time, i, expected_outputs[i], dxi_slv.data,
+        (dxi_slv.data === expected_outputs[i]) ? "[OK]" : "[FAIL]"
+      );
+      i++;
+    end
+  end
+endtask
+
   initial begin
     fork
       monitor_input();
       monitor_output();
+      checker_task();
       begin
         reset_dut();
         $display("testcase_functional()");
@@ -153,7 +182,7 @@ module tb_filter_sv;
         $finish;
       end
       begin
-        for (int i = 0; i < 16; i++) drive_slv(processed_pixel);
+        for (int i = 0; i < 8; i++) drive_slv(processed_pixel);
       end
     join_any
   end
