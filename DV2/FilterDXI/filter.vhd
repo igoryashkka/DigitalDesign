@@ -79,22 +79,25 @@ ARCHITECTURE rtl OF dxi_top IS
 
 BEGIN
 
-    PROCESS(i_clk)
+PROCESS(i_clk)
     BEGIN
         IF rising_edge(i_clk) THEN
             IF i_rstn = '0' THEN
                 pixel_result    <= (OTHERS => '0');
-                master_valid    <= '0';
+               -- master_valid    <= '1';
                 o_dxi_ready_reg <= '1';
             ELSE
-                IF (o_dxi_ready_reg = '1') and (i_dxi_valid = '1') THEN
+            
+                IF (o_dxi_ready_reg = '1' AND  i_dxi_valid = '1') THEN
                     pixel_result    <= apply_filter(unpack_pixel_bus(i_dxi_data), config_select);
                     master_valid    <= '1';
-                    o_dxi_ready_reg <= '0';
-                ELSIF (master_valid = '1') and (i_dxi_out_ready = '1') THEN
+                END IF;    
+
+                IF (i_dxi_out_ready = '0') THEN
                     master_valid    <= '0';
-                    o_dxi_ready_reg <= '1';
+                    o_dxi_ready_reg <= '0';
                 END IF;
+
             END IF;
         END IF;
     END PROCESS;

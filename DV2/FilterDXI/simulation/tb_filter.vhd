@@ -47,9 +47,9 @@ ARCHITECTURE sim OF tb_filter IS
     TYPE config_array IS ARRAY(natural range <>) OF std_logic_vector(1 DOWNTO 0);
 
     CONSTANT test_inputs : input_array := (
-        x"000102030405060708",
+        x"A8A8A8A8A8A8A8A8A8",
         x"080706050403020100",
-        x"FFFFFFFFFFFFFFFFFF",
+        x"F2F2F2F2F2F2F22F2F",
         x"A5A5A5A5A5A5A5A5A5"
     );
 
@@ -75,9 +75,9 @@ BEGIN
     clk_process : PROCESS
     BEGIN
         WHILE TRUE LOOP
-            clk <= '0';
-            WAIT FOR clk_period / 2;
             clk <= '1';
+            WAIT FOR clk_period / 2;
+            clk <= '0';
             WAIT FOR clk_period / 2;
         END LOOP;
     END PROCESS;
@@ -90,7 +90,40 @@ BEGIN
         WAIT FOR 3 * clk_period;
         rstn <= '1';
         WAIT FOR clk_period;
+        WAIT FOR clk_period;
 
+            WAIT UNTIL rising_edge(clk);
+            dxi_data      <= test_inputs(3);
+            config_select <= test_cfgs(3);
+            dxi_valid     <= '1';
+            WAIT UNTIL dxi_ready = '1' AND rising_edge(clk);
+            dxi_data      <= test_inputs(2);
+            config_select <= test_cfgs(2);
+            WAIT UNTIL dxi_ready = '1' AND rising_edge(clk);
+            dxi_data      <= test_inputs(3);
+            config_select <= test_cfgs(3);
+            WAIT UNTIL dxi_ready = '1' AND rising_edge(clk);
+            dxi_data      <= test_inputs(2);
+            config_select <= test_cfgs(2);
+            WAIT UNTIL dxi_ready = '1' AND rising_edge(clk);
+            dxi_valid     <= '0';
+        
+        WAIT FOR clk_period;
+        WAIT FOR clk_period;
+        WAIT FOR clk_period;
+        WAIT FOR clk_period;
+        WAIT FOR clk_period;
+
+        FOR i IN test_inputs'RANGE LOOP
+            WAIT UNTIL dxi_ready = '1' AND rising_edge(clk);
+            dxi_data      <= test_inputs(i);
+            config_select <= test_cfgs(i);
+            dxi_valid     <= '1';
+            WAIT UNTIL rising_edge(clk);
+            dxi_valid     <= '0';
+        END LOOP;
+
+        
         FOR i IN test_inputs'RANGE LOOP
             WAIT UNTIL dxi_ready = '1' AND rising_edge(clk);
             dxi_data      <= test_inputs(i);
@@ -106,8 +139,10 @@ BEGIN
                 REPORT "Mismatch on transaction " & integer'image(i)
                 SEVERITY ERROR;
 
-            WAIT FOR (i + 1) * clk_period;
+        --    WAIT FOR (i + 1) * clk_period;
         END LOOP;
+
+
 
         WAIT FOR 10 * clk_period;
         ASSERT FALSE REPORT "Simulation finished" SEVERITY NOTE;
@@ -115,3 +150,9 @@ BEGIN
     END PROCESS;
 
 END ARCHITECTURE;
+
+
+        --x"A8A8A8A8A8A8A8A8A8",
+        --x"080706050403020100",
+        --x"F2F2F2F2F2F2F22F2F",
+        --x"A5A5A5A5A5A5A5A5A5"
