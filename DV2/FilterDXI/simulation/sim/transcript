@@ -1,0 +1,75 @@
+# do ../modelsim_script.tcl
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 17:12:31 on Jun 25,2025
+# vcom -reportprogress 300 ../../filter.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package NUMERIC_STD
+# -- Compiling entity dxi_top
+# -- Compiling architecture rtl of dxi_top
+# End time: 17:12:31 on Jun 25,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 17:12:31 on Jun 25,2025
+# vlog -reportprogress 300 ../tb_filter_sv.sv 
+# -- Compiling package tb_filter_sv_sv_unit
+# -- Compiling interface dxi_mst_if
+# -- Compiling interface dxi_slv_if
+# -- Compiling module tb_filter_sv
+# 
+# Top level modules:
+# 	tb_filter_sv
+# End time: 17:12:32 on Jun 25,2025, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+# vsim work.tb_filter_sv 
+# Start time: 17:12:32 on Jun 25,2025
+# Loading sv_std.std
+# Loading work.tb_filter_sv_sv_unit
+# Loading work.tb_filter_sv
+# Loading work.dxi_mst_if
+# Loading work.dxi_slv_if
+# Loading std.standard
+# Loading std.textio(body)
+# Loading ieee.std_logic_1164(body)
+# Loading ieee.numeric_std(body)
+# Loading work.dxi_top(rtl)
+# testcase_functional()
+# [MONITOR-IN] @50000 -> IN  : data = 5f5f5f5f5f5f5f5f5f | config = 0
+# [MONITOR-OUT] @55000 -> OUT : data = 00
+# [CHECKER] @55000 -> CHECK [0]: Expected = 00 | Got = 00   [OK]
+# [MONITOR-IN] @60000 -> IN  : data = fff1f2f3f4f5f6f7f8 | config = 1
+# [MONITOR-OUT] @65000 -> OUT : data = 00
+# [CHECKER] @65000 -> CHECK [1]: Expected = 00 | Got = 00   [OK]
+# [MONITOR-IN] @70000 -> IN  : data = ffffffffffffffffff | config = 10
+# [MONITOR-OUT] @75000 -> OUT : data = ff
+# [CHECKER] @75000 -> CHECK [2]: Expected = ff | Got = ff   [OK]
+# [MONITOR-IN] @80000 -> IN  : data = a5a5a5a5a5a5a5a5a5 | config = 11
+# testcase_clock_by_clock()
+# [MONITOR-OUT] @85000 -> OUT : data = a5
+# [CHECKER] @85000 -> CHECK [3]: Expected = a5 | Got = a5   [OK]
+# [MONITOR-IN] @90000 -> IN  : data = a5a5a5a5a5a5a5a5a5 | config = 11
+# [MONITOR-OUT] @95000 -> OUT : data = a5
+# [CHECKER] @95000 -> CHECK [4]: Expected = a5 | Got = a5   [OK]
+# [MONITOR-IN] @100000 -> IN  : data = ffffffffffffffffff | config = 10
+# [MONITOR-OUT] @105000 -> OUT : data = ff
+# [CHECKER] @105000 -> CHECK [5]: Expected = ff | Got = ff   [OK]
+# [MONITOR-IN] @110000 -> IN  : data = fff1f2f3f4f5f6f7f8 | config = 11
+# [MONITOR-OUT] @115000 -> OUT : data = f5
+# [CHECKER] @115000 -> CHECK [6]: Expected = f5 | Got = f5   [OK]
+# [MONITOR-IN] @120000 -> IN  : data = 5f5f5f5f5f5f5f5f5f | config = 10
+# [MONITOR-OUT] @125000 -> OUT : data = 5f
+# [CHECKER] @125000 -> CHECK [7]: Expected = 5f | Got = 5f   [OK]
+# [MONITOR-OUT] @135000 -> OUT : data = 5f
+# [MONITOR-OUT] @145000 -> OUT : data = 5f
+# [MONITOR-OUT] @155000 -> OUT : data = 5f
+# [MONITOR-OUT] @165000 -> OUT : data = 5f
+# Simulation complete.
+# ** Note: $finish    : ../tb_filter_sv.sv(190)
+#    Time: 170 ns  Iteration: 0  Instance: /tb_filter_sv
+# 1
+# Break in Module tb_filter_sv at ../tb_filter_sv.sv line 190
+# 0 ps
+# 178500 ps
+# End time: 17:13:16 on Jun 25,2025, Elapsed time: 0:00:44
+# Errors: 0, Warnings: 0

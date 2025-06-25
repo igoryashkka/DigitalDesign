@@ -1,5 +1,9 @@
 `timescale 1ns/1ps
 
+mailbox #(logic [71:0]) input_data_q = new();
+mailbox #(logic [1:0])  input_cfg_q  = new();
+mailbox #(logic [7:0])  output_data_q = new();
+
 interface dxi_mst_if(input logic clk);
   logic valid;
   logic ready;
@@ -64,6 +68,8 @@ module tb_filter_sv;
     return result[7:0];
   endfunction
 
+// [NOTE] test data is used only for master drv, good todo randomize this data.
+
 logic [71:0] test_inputs[8] = '{
   72'h5F5F5F5F5F5F5F5F5F,
   72'hfff1f2f3f4f5f6f7f8,
@@ -85,14 +91,6 @@ logic [1:0] test_cfgs[8] = '{
   2'b11,
   2'b10
 };
-
-logic [7:0] expected_outputs[8];
-
-initial begin
-  for (int i = 0; i < 8; i++)
-    expected_outputs[i] = apply_filter(test_inputs[i], test_cfgs[i]);
-end
-
 
 
   task automatic reset_dut();
@@ -137,6 +135,8 @@ end
     forever begin
       @(posedge clk);
       if (dxi_mst.valid && dxi_mst.ready) begin
+         input_data_q.put(dxi_mst.data);
+         input_cfg_q.put(config_select);
         $display("[MONITOR-IN] @%0t -> IN  : data = %h | config = %0b", $time, dxi_mst.data, config_select);
       end
     end
@@ -146,37 +146,51 @@ end
     forever begin
       @(negedge clk);
       if (dxi_slv.valid && dxi_slv.ready) begin
+         output_data_q.put(dxi_slv.data);
         $display("[MONITOR-OUT] @%0t -> OUT : data = %h", $time, dxi_slv.data);
       end
     end
   endtask
 
-  task drive_slv(output logic [7:0] processed_data);
+// [NOTE] Handle drv , there are some ideas... 
+
+  task automatic drive_slv();
+  forever begin
     dxi_slv.ready <= 1;
     do @(negedge clk); while (!dxi_slv.valid);
-    processed_data <= dxi_slv.data;
     dxi_slv.ready <= 0;
-  endtask
-
-  task automatic checker_task();
-  int i = 0;
-  while (i < 8) begin
-    do @(negedge clk); while (!dxi_slv.valid);
-    if (dxi_slv.ready) begin
-      $display("[CHECKER] @%0t -> CHECK [%0d]: Expected = %02x | Got = %02x %s",
-        $time, i, expected_outputs[i], dxi_slv.data,
-        (dxi_slv.data === expected_outputs[i]) ? "[OK]" : "[FAIL]"
-      );
-      i++;
-    end
   end
 endtask
+
+// [NOTE] i = 0 , global idk, it coudn`t compile. todo move to task 
+int i = 0;
+logic [7:0] expected;
+
+task automatic checker_task();
+  logic [71:0] din;
+  logic [1:0] cfg;
+  logic [7:0] dout;
+  int i = 0;
+
+  forever begin
+    input_data_q.get(din);
+    input_cfg_q.get(cfg);
+    output_data_q.get(dout);
+
+    expected = apply_filter(din, cfg);
+    $display("[CHECKER] @%0t -> CHECK [%0d]: Expected = %02x | Got = %02x %s", $time, i, expected, dout, (dout === expected) ? "[OK]" : "[FAIL]");
+    i++;
+    if (i == 8) disable checker_task;
+  end
+endtask
+
 
   initial begin
     fork
       monitor_input();
       monitor_output();
       checker_task();
+      drive_slv();
       begin
         reset_dut();
         $display("testcase_functional()");
@@ -187,9 +201,7 @@ endtask
         $display("Simulation complete.");
         $finish;
       end
-      begin
-        for (int i = 0; i < 8; i++) drive_slv(processed_pixel);
-      end
+
     join_any
   end
 
