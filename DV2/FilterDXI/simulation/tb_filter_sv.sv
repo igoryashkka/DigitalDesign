@@ -105,6 +105,8 @@ logic [1:0] test_cfgs[8] = '{
     @(posedge clk);
   endtask
 
+  // [NOTE] [config_select] , Maybe config_select is not needed here ... will think later 
+
   task automatic send_once(input [71:0] data, input [1:0] cfg);
     dxi_mst.data <= data;
     config_select <= cfg;
@@ -113,7 +115,8 @@ logic [1:0] test_cfgs[8] = '{
     while (!dxi_mst.ready)
       @(posedge clk);
     dxi_mst.valid <= 0;
-  endtask
+  endtask 
+
   // [NOTE] testcase_functional() AND testcase_clock_by_clock() use the same task send_once for re-use style
   // [WARN]  They exist exist at the same time for handle different test cases 
   //          1st - simple transaction where [dxi_mst.valid]  will fall at 0 to indicate just over-clock transaction
@@ -121,6 +124,7 @@ logic [1:0] test_cfgs[8] = '{
   //
   // [TODO]   Adding arg [falling_flag] signal and asign :  dxi_mst.valid <= falling_flag;
   // [NOTE]   Syncronization fails for now if call it with diff falling_flag value , but RTL can handle it at all.
+
   task automatic testcase_functional();
     for (int i = 0; i < 4; i++)
       send_once(test_inputs[i], test_cfgs[i]);
