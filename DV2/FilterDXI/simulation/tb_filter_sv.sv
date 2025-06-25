@@ -158,11 +158,13 @@ logic [1:0] test_cfgs[8] = '{
 
 // [NOTE] Handle drv , there are some ideas... 
 
-  task automatic drive_slv();
-  forever begin
+task automatic drive_slv();
+  int count = 0;
+  while (count < 8) begin
     dxi_slv.ready <= 1;
     do @(negedge clk); while (!dxi_slv.valid);
     dxi_slv.ready <= 0;
+    count++;
   end
 endtask
 
