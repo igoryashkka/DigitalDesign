@@ -1,5 +1,10 @@
 `timescale 1ns/1ps
 
+// Tds : [0] Global randomisation of data is not implemented yet [26.06.2025]
+// Tds : [1] Clock-by-clock transaction is not implemented yet [26.06.2025]
+// Tds : [2] Picture handling is not implemented yet [26.06.2025]
+// Tds : [3] Config selection ??? [26.06.2025]
+
 mailbox #(logic [71:0]) input_data_q = new();
 mailbox #(logic [1:0])  input_cfg_q  = new();
 mailbox #(logic [7:0])  output_data_q = new();
