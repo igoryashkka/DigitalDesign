@@ -107,7 +107,7 @@ logic [1:0] test_cfgs[8] = '{
 
   // [NOTE] [config_select] , Maybe config_select is not needed here ... will think later 
 
-  task automatic send_once(input [71:0] data, input [1:0] cfg);
+  task automatic drvie_mst(input [71:0] data, input [1:0] cfg);
     dxi_mst.data <= data;
     config_select <= cfg;
     dxi_mst.valid <= 1;
@@ -124,16 +124,11 @@ logic [1:0] test_cfgs[8] = '{
   //
   // [TODO]   Adding arg [falling_flag] signal and asign :  dxi_mst.valid <= falling_flag;
   // [NOTE]   Syncronization fails for now if call it with diff falling_flag value , but RTL can handle it at all.
-
-  task automatic testcase_functional();
-    for (int i = 0; i < 4; i++)
-      send_once(test_inputs[i], test_cfgs[i]);
-  endtask
-
-  task automatic testcase_clock_by_clock();
-    for (int i = 4; i < 8; i++)
-      send_once(test_inputs[i], test_cfgs[i]);
-  endtask
+  // [NOTE]   26.06.2025 Some code is old , and removed, general idea have different test-cases, like clocl-by-clock and over-clock
+  //task automatic testcase_clock_by_clock();
+//    for (int i = 0; i < 8; i++)
+      
+ // endtask
 
   task automatic monitor_input();
     forever begin
@@ -155,6 +150,11 @@ logic [1:0] test_cfgs[8] = '{
       end
     end
   endtask
+
+ // task automatic drvie_mst();
+    
+//  endtask
+
 
 // [NOTE] Handle drv , there are some ideas... 
 
@@ -194,28 +194,33 @@ endtask
 
   initial begin
     fork
+      reset_dut();
       monitor_input();
       monitor_output();
       checker_task();
+      
+
+
+       begin 
+      for (int i = 0; i < 8; i++) begin
+      static int num_cycles_mst = $urandom_range(1, 3); 
+      repeat(num_cycles_mst) @(posedge clk);
+      drvie_mst(test_inputs[i], test_cfgs[i]);
+      end
+       end
        begin 
        for (int i = 0; i < 8; i++) begin 
-        static  int num_cycles_slv = $urandom_range(2, 3);
+        static  int num_cycles_slv = $urandom_range(2, 4);
           repeat (num_cycles_slv) @(posedge clk);
           drive_slv();
         end
- end
-      begin
-        reset_dut();
-        $display("testcase_functional()");
-        testcase_functional();
-        $display("testcase_clock_by_clock()");
-        testcase_clock_by_clock();
-        #50;
-        $display("Simulation complete.");
-        $finish;
-      end
+        end
+
+
 
     join_any
+    #500;
+    $finish;
   end
 
 endmodule
