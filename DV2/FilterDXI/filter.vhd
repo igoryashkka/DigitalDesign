@@ -95,7 +95,7 @@ PROCESS(i_clk)
                     master_valid    <= '0';
                 END IF;
                 
-                 IF (master_valid =  '1') THEN   -- sending transaction 
+                 IF (master_valid =  '1' AND i_dxi_out_ready = '1') THEN   -- sending transaction 
                     o_dxi_ready_reg    <= '1';    -- so ready high 
                 ELSIF (o_dxi_ready_reg = '1' AND  i_dxi_valid = '1') THEN -- getting input transaction
                     o_dxi_ready_reg    <= '0';                            -- so ready low 

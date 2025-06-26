@@ -148,7 +148,7 @@ logic [1:0] test_cfgs[8] = '{
 
   task automatic monitor_output();
     forever begin
-      @(negedge clk);
+      @(posedge clk);
       if (dxi_slv.valid && dxi_slv.ready) begin
          output_data_q.put(dxi_slv.data);
         $display("[MONITOR-OUT] @%0t -> OUT : data = %h", $time, dxi_slv.data);
@@ -160,13 +160,13 @@ logic [1:0] test_cfgs[8] = '{
 
 task automatic drive_slv();
   int count = 0;
-   forever begin
+  // forever begin
  // while (count < 8) begin
     dxi_slv.ready <= 1;
     do @(posedge clk); while (!dxi_slv.valid);
     dxi_slv.ready <= 0;
   //  count++;
-  end
+  //end
 endtask
 
 // [NOTE] i = 0 , global idk, it coudn`t compile. todo move to task 
@@ -197,7 +197,13 @@ endtask
       monitor_input();
       monitor_output();
       checker_task();
-      drive_slv();
+       begin 
+       for (int i = 0; i < 8; i++) begin 
+        static  int num_cycles_slv = $urandom_range(2, 3);
+          repeat (num_cycles_slv) @(posedge clk);
+          drive_slv();
+        end
+ end
       begin
         reset_dut();
         $display("testcase_functional()");
