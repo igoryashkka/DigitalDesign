@@ -1,6 +1,6 @@
 # do ../modelsim_script.tcl
 # Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
-# Start time: 17:12:31 on Jun 25,2025
+# Start time: 16:30:41 on Jun 26,2025
 # vcom -reportprogress 300 ../../filter.vhd 
 # -- Loading package STANDARD
 # -- Loading package TEXTIO
@@ -8,10 +8,10 @@
 # -- Loading package NUMERIC_STD
 # -- Compiling entity dxi_top
 # -- Compiling architecture rtl of dxi_top
-# End time: 17:12:31 on Jun 25,2025, Elapsed time: 0:00:00
+# End time: 16:30:41 on Jun 26,2025, Elapsed time: 0:00:00
 # Errors: 0, Warnings: 0
 # Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
-# Start time: 17:12:31 on Jun 25,2025
+# Start time: 16:30:41 on Jun 26,2025
 # vlog -reportprogress 300 ../tb_filter_sv.sv 
 # -- Compiling package tb_filter_sv_sv_unit
 # -- Compiling interface dxi_mst_if
@@ -20,10 +20,10 @@
 # 
 # Top level modules:
 # 	tb_filter_sv
-# End time: 17:12:32 on Jun 25,2025, Elapsed time: 0:00:01
+# End time: 16:30:41 on Jun 26,2025, Elapsed time: 0:00:00
 # Errors: 0, Warnings: 0
 # vsim work.tb_filter_sv 
-# Start time: 17:12:32 on Jun 25,2025
+# Start time: 16:30:41 on Jun 26,2025
 # Loading sv_std.std
 # Loading work.tb_filter_sv_sv_unit
 # Loading work.tb_filter_sv
@@ -60,16 +60,12 @@
 # [MONITOR-IN] @120000 -> IN  : data = 5f5f5f5f5f5f5f5f5f | config = 10
 # [MONITOR-OUT] @125000 -> OUT : data = 5f
 # [CHECKER] @125000 -> CHECK [7]: Expected = 5f | Got = 5f   [OK]
-# [MONITOR-OUT] @135000 -> OUT : data = 5f
-# [MONITOR-OUT] @145000 -> OUT : data = 5f
-# [MONITOR-OUT] @155000 -> OUT : data = 5f
-# [MONITOR-OUT] @165000 -> OUT : data = 5f
 # Simulation complete.
-# ** Note: $finish    : ../tb_filter_sv.sv(190)
+# ** Note: $finish    : ../tb_filter_sv.sv(208)
 #    Time: 170 ns  Iteration: 0  Instance: /tb_filter_sv
 # 1
-# Break in Module tb_filter_sv at ../tb_filter_sv.sv line 190
+# Break in Module tb_filter_sv at ../tb_filter_sv.sv line 208
 # 0 ps
 # 178500 ps
-# End time: 17:13:16 on Jun 25,2025, Elapsed time: 0:00:44
+# End time: 16:36:14 on Jun 26,2025, Elapsed time: 0:05:33
 # Errors: 0, Warnings: 0

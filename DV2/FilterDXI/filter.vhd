@@ -94,8 +94,12 @@ PROCESS(i_clk)
                 END IF;    
 
                 IF (i_dxi_out_ready = '0') THEN
-                    master_valid    <= '0';
+                   --  master_valid    <= '0';
                     o_dxi_ready_reg <= '0';
+                END IF;
+
+                IF (o_dxi_ready_reg = '0') THEN 
+                      master_valid    <= '0';
                 END IF;
 
             END IF;
