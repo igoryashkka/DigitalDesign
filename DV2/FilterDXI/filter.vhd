@@ -88,23 +88,25 @@ PROCESS(i_clk)
                 o_dxi_ready_reg <= '1';
             ELSE
             
-                IF (o_dxi_ready_reg = '1' AND  i_dxi_valid = '1') THEN
+                IF (o_dxi_ready_reg = '1' AND  i_dxi_valid = '1') THEN -- getting input transaction
                     pixel_result    <= apply_filter(unpack_pixel_bus(i_dxi_data), config_select);
-                    master_valid    <= '1';
-                END IF;    
-
-                IF (i_dxi_out_ready = '0') THEN
-                   --  master_valid    <= '0';
-                    o_dxi_ready_reg <= '0';
+                    master_valid    <= '1';                       
+                ELSIF (i_dxi_out_ready = '1') THEN
+                    master_valid    <= '0';
                 END IF;
-
-                IF (o_dxi_ready_reg = '0') THEN 
-                      master_valid    <= '0';
+                
+                 IF (master_valid =  '1') THEN   -- sending transaction 
+                    o_dxi_ready_reg    <= '1';    -- so ready high 
+                ELSIF (o_dxi_ready_reg = '1' AND  i_dxi_valid = '1') THEN -- getting input transaction
+                    o_dxi_ready_reg    <= '0';                            -- so ready low 
                 END IF;
 
             END IF;
         END IF;
     END PROCESS;
+
+
+
 
     o_dxi_ready     <= o_dxi_ready_reg;
     o_dxi_out_valid <= master_valid;
