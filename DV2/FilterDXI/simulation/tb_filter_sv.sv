@@ -208,14 +208,14 @@ endtask
 
        begin 
       for (int i = 0; i < 8; i++) begin
-      static int num_cycles_mst = $urandom_range(0, 3); 
+      automatic int num_cycles_mst = $urandom_range(0, 3); 
       repeat(num_cycles_mst) @(posedge clk);
       drvie_mst(test_inputs[i], test_cfgs[i]);
       end
        end
        begin 
        for (int i = 0; i < 8; i++) begin 
-        static  int num_cycles_slv = $urandom_range(0, 3);
+         automatic int num_cycles_slv = $urandom_range(0, 3);
           repeat (num_cycles_slv) @(posedge clk);
           drive_slv();
         end
