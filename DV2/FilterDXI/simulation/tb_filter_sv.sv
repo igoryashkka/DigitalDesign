@@ -105,7 +105,7 @@ logic [1:0] test_cfgs[8] = '{
     config_select = 0;
     dxi_slv.ready = 1;
     processed_pixel = 0;
-    repeat (3) @(posedge clk);
+    @(posedge clk);
     rstn = 1;
     @(posedge clk);
   endtask
@@ -208,14 +208,14 @@ endtask
 
        begin 
       for (int i = 0; i < 8; i++) begin
-      static int num_cycles_mst = $urandom_range(1, 3); 
+      static int num_cycles_mst = $urandom_range(0, 3); 
       repeat(num_cycles_mst) @(posedge clk);
       drvie_mst(test_inputs[i], test_cfgs[i]);
       end
        end
        begin 
        for (int i = 0; i < 8; i++) begin 
-        static  int num_cycles_slv = $urandom_range(2, 4);
+        static  int num_cycles_slv = $urandom_range(0, 3);
           repeat (num_cycles_slv) @(posedge clk);
           drive_slv();
         end
