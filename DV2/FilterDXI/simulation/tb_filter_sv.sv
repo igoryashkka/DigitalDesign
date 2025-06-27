@@ -5,6 +5,8 @@
 // Tds : [2] Picture handling is not implemented yet [26.06.2025]
 // Tds : [3] Config selection ??? [26.06.2025]
 
+
+
 mailbox #(logic [71:0]) input_data_q = new();
 mailbox #(logic [1:0])  input_cfg_q  = new();
 mailbox #(logic [7:0])  output_data_q = new();
@@ -23,6 +25,7 @@ endinterface
 
 module tb_filter_sv;
 
+  localparam int NUM_TEST_VECTORS = 24;
   typedef logic [7:0] pixel_t;
   typedef pixel_t pixel_window_t[0:8];
   logic [7:0] processed_pixel;
@@ -75,8 +78,24 @@ module tb_filter_sv;
 
 // [NOTE] test data is used only for master drv, good todo randomize this data.
 
-logic [71:0] test_inputs[8] = '{
+logic [71:0] test_inputs[NUM_TEST_VECTORS] = '{
   72'h5F5F5F5F5F5F5F5F5F,
+  72'hfff1f2f3f4f5f6f7f8,
+  72'hFFFFFFFFFFFFFFFFFF,
+  72'hA5A5A5A5A5A5A5A5A5,
+  72'hA5A5A5A5A5A5A5A5A5,
+  72'hFFFFFFFFFFFFFFFFFF,
+  72'hfff1f2f3f4f5f6f7f8,
+  72'h5F5F5F5F5F5F5F5F5F,
+   72'h5F5F5F5F5F5F5F5F5F,
+  72'hfff1f2f3f4f5f6f7f8,
+  72'hFFFFFFFFFFFFFFFFFF,
+  72'hA5A5A5A5A5A5A5A5A5,
+  72'hA5A5A5A5A5A5A5A5A5,
+  72'hFFFFFFFFFFFFFFFFFF,
+  72'hfff1f2f3f4f5f6f7f8,
+  72'h5F5F5F5F5F5F5F5F5F,
+   72'h5F5F5F5F5F5F5F5F5F,
   72'hfff1f2f3f4f5f6f7f8,
   72'hFFFFFFFFFFFFFFFFFF,
   72'hA5A5A5A5A5A5A5A5A5,
@@ -86,8 +105,24 @@ logic [71:0] test_inputs[8] = '{
   72'h5F5F5F5F5F5F5F5F5F
 };
 
-logic [1:0] test_cfgs[8] = '{
+logic [1:0] test_cfgs[NUM_TEST_VECTORS] = '{
   2'b00,
+  2'b01,
+  2'b10,
+  2'b11,
+  2'b11,
+  2'b10,
+  2'b11,
+  2'b10,
+   2'b00,
+  2'b01,
+  2'b10,
+  2'b11,
+  2'b11,
+  2'b10,
+  2'b11,
+  2'b10,
+   2'b00,
   2'b01,
   2'b10,
   2'b11,
@@ -192,7 +227,7 @@ task automatic checker_task();
     expected = apply_filter(din, cfg);
     $display("[CHECKER] @%0t -> CHECK [%0d]: Expected = %02x | Got = %02x %s", $time, i, expected, dout, (dout === expected) ? "[OK]" : "[FAIL]");
     i++;
-    if (i == 8) disable checker_task;
+    if (i == NUM_TEST_VECTORS) disable checker_task;
   end
 endtask
 
@@ -207,14 +242,14 @@ endtask
 
 
        begin 
-      for (int i = 0; i < 8; i++) begin
+      for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
       automatic int num_cycles_mst = $urandom_range(0, 3); 
       repeat(num_cycles_mst) @(posedge clk);
       drvie_mst(test_inputs[i], test_cfgs[i]);
       end
        end
        begin 
-       for (int i = 0; i < 8; i++) begin 
+       for (int i = 0; i < NUM_TEST_VECTORS ; i++) begin 
          automatic int num_cycles_slv = $urandom_range(0, 3);
           repeat (num_cycles_slv) @(posedge clk);
           drive_slv();
