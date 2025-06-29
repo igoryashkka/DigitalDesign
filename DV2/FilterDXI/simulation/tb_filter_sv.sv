@@ -111,9 +111,28 @@ function void add_addition_pixels(
             extended_img[0][j+1]       = image[0][j];
             extended_img[HEIGHT+1][j+1]= image[HEIGHT-1][j];
         end
+        extended_img[0][0]                     = image[0][0];
+        extended_img[0][WIDTH+1]              = image[0][WIDTH-1];
+        extended_img[HEIGHT+1][0]             = image[HEIGHT-1][0];
+        extended_img[HEIGHT+1][WIDTH+1]       = image[HEIGHT-1][WIDTH-1];
+
          end 
-   //  "mirroring":
-          
+     MIRRORING:begin
+         for (i = 0; i < HEIGHT; i++) begin
+            extended_img[i+1][0]       = image[i][1];
+            extended_img[i+1][WIDTH+1] = image[i][WIDTH-2];
+        end
+        for (j = 0; j < WIDTH; j++) begin
+            extended_img[0][j+1]       = image[1][j];
+            extended_img[HEIGHT+1][j+1]= image[HEIGHT-2][j];
+        end
+
+        extended_img[0][0]                     = image[1][1];
+        extended_img[0][WIDTH+1]              = image[1][WIDTH-2];
+        extended_img[HEIGHT+1][0]             = image[HEIGHT-2][1];
+        extended_img[HEIGHT+1][WIDTH+1]       = image[HEIGHT-2][WIDTH-2]; 
+        end
+
      ZEROING: begin
         for (i = 0; i < HEIGHT+2; i++) begin
             extended_img[i][0]       = 8'h00;
