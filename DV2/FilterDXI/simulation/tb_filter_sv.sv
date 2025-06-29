@@ -86,14 +86,12 @@ logic [7:0] image_2d [HEIGHT][WIDTH];
   localparam int gauss[0:8] = '{1, 2, 1, 2, 4, 2, 1, 2, 1};
   localparam int avg[0:8]   = '{1, 1, 1, 1, 1, 1, 1, 1, 1};
 
-
-
-
+typedef enum {PADDING, MIRRORING, ZEROING} padding_method_e;
   
 function void add_addition_pixels(
     input  logic [7:0] image        [HEIGHT][WIDTH],
-    output logic [7:0] extended_img [HEIGHT+2][WIDTH+2]
-);
+    output logic [7:0] extended_img [HEIGHT+2][WIDTH+2],
+    input padding_method_e method_);
     int i, j;
     begin
 
@@ -103,17 +101,32 @@ function void add_addition_pixels(
             end
         end
 
-        // Zero padding: vertical 
+   case (method_)
+     PADDING:begin
+        for (i = 0; i < HEIGHT; i++) begin
+            extended_img[i+1][0]       = image[i][0];
+            extended_img[i+1][WIDTH+1] = image[i][WIDTH-1];
+        end
+        for (j = 0; j < WIDTH; j++) begin
+            extended_img[0][j+1]       = image[0][j];
+            extended_img[HEIGHT+1][j+1]= image[HEIGHT-1][j];
+        end
+         end 
+   //  "mirroring":
+          
+     ZEROING: begin
         for (i = 0; i < HEIGHT+2; i++) begin
             extended_img[i][0]       = 8'h00;
             extended_img[i][WIDTH+1] = 8'h00;
-        end
-
-        // Zero padding: horizontal 
+        end        
         for (j = 0; j < WIDTH+2; j++) begin
             extended_img[0][j]       = 8'h00;
             extended_img[HEIGHT+1][j]= 8'h00;
         end
+        end
+   endcase
+
+     
     end
 endfunction
 
@@ -255,7 +268,7 @@ initial begin
     flatten_to_2d();
 
     
-    add_addition_pixels(image_2d, extended_image);
+    add_addition_pixels(image_2d, extended_image, PADDING);
 
   
     for (int i = 0; i < HEIGHT; i++) begin
@@ -312,7 +325,7 @@ endtask
       for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
       automatic int num_cycles_mst = $urandom_range(0, 3); 
       repeat(num_cycles_mst) @(posedge clk);
-      drvie_mst(test_inputs_image[i], test_cfgs[0]);
+      drvie_mst(test_inputs_image[i], test_cfgs[1]);
       end
        end
 
