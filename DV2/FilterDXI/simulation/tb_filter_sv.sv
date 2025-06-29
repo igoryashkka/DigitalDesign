@@ -1,9 +1,8 @@
 `timescale 1ns/1ps
 
-// Tds : [0] Global randomisation of data is not implemented yet [26.06.2025]
-// Tds : [1] Clock-by-clock transaction is not implemented yet [26.06.2025]
-// Tds : [2] Picture handling is not implemented yet [26.06.2025]
-// Tds : [3] Config selection ??? [26.06.2025]
+// Tds : [1] cbc vs o-c [?]
+// Tds : [2] Picture handling [prog]
+// Tds : [3] Config selection [prog]
 
 
 
@@ -23,9 +22,40 @@ interface dxi_slv_if(input logic clk);
   logic [7:0] data;
 endinterface
 
+
+
 module tb_filter_sv;
 
-  localparam int NUM_TEST_VECTORS = 24;
+
+  /*  Parameters for image dimensions */
+    parameter int WIDTH = 256;
+    parameter int HEIGHT = 194;
+   
+    reg [7:0] ext_image [0:(WIDTH+2)*(HEIGHT+2)-1];
+
+
+   logic [71:0] test_inputs_image [(HEIGHT)*(WIDTH)-1:0];
+
+    logic [7:0] image         [HEIGHT][WIDTH];
+    reg [7:0] processed_image [0:WIDTH*HEIGHT-1]; 
+
+    integer file_in, file_out, io, j, k_size;
+    string hex_str, output_filename;
+    reg [7:0] temp_byte;
+  
+    int idx = 0;
+    parameter int EXT_WIDTH  = WIDTH + 2;
+parameter int EXT_HEIGHT = HEIGHT + 2;
+    reg [7:0] padded_image [0:EXT_WIDTH*EXT_HEIGHT-1];
+
+    
+logic [7:0] extended_image[HEIGHT+2][WIDTH+2];
+
+reg [7:0] image_flat [0:WIDTH*HEIGHT-1];
+logic [7:0] image_2d [HEIGHT][WIDTH];
+  /*  Parameters for simulation */
+
+  localparam int NUM_TEST_VECTORS = ((HEIGHT)*(WIDTH));
   typedef logic [7:0] pixel_t;
   typedef pixel_t pixel_window_t[0:8];
   logic [7:0] processed_pixel;
@@ -56,6 +86,53 @@ module tb_filter_sv;
   localparam int gauss[0:8] = '{1, 2, 1, 2, 4, 2, 1, 2, 1};
   localparam int avg[0:8]   = '{1, 1, 1, 1, 1, 1, 1, 1, 1};
 
+
+
+
+  
+function void add_addition_pixels(
+    input  logic [7:0] image        [HEIGHT][WIDTH],
+    output logic [7:0] extended_img [HEIGHT+2][WIDTH+2]
+);
+    int i, j;
+    begin
+
+        for (i = 0; i < HEIGHT; i++) begin
+            for (j = 0; j < WIDTH; j++) begin
+                extended_img[i+1][j+1] = image[i][j];
+            end
+        end
+
+        // Zero padding: vertical 
+        for (i = 0; i < HEIGHT+2; i++) begin
+            extended_img[i][0]       = 8'h00;
+            extended_img[i][WIDTH+1] = 8'h00;
+        end
+
+        // Zero padding: horizontal 
+        for (j = 0; j < WIDTH+2; j++) begin
+            extended_img[0][j]       = 8'h00;
+            extended_img[HEIGHT+1][j]= 8'h00;
+        end
+    end
+endfunction
+
+
+function automatic [71:0] pack_3x3(input int row, input int col);
+    int r, c;
+    reg [71:0] packed_;
+    begin
+        packed_ = 72'd0;
+        for (r = -1; r <= 1; r++) begin
+            for (c = -1; c <= 1; c++) begin
+                packed_ = (packed_ << 8) | extended_image[row + r][col + c];
+            end
+        end
+        return packed_;
+    end
+endfunction
+
+
   function automatic logic [7:0] apply_filter(input logic [71:0] pixels, input logic [1:0] sel);
     int acc = 0, norm, result;
     int kernel[0:8];
@@ -76,61 +153,6 @@ module tb_filter_sv;
     return result[7:0];
   endfunction
 
-// [NOTE] test data is used only for master drv, good todo randomize this data.
-
-logic [71:0] test_inputs[NUM_TEST_VECTORS] = '{
-  72'h5F5F5F5F5F5F5F5F5F,
-  72'hfff1f2f3f4f5f6f7f8,
-  72'hFFFFFFFFFFFFFFFFFF,
-  72'hA5A5A5A5A5A5A5A5A5,
-  72'hA5A5A5A5A5A5A5A5A5,
-  72'hFFFFFFFFFFFFFFFFFF,
-  72'hfff1f2f3f4f5f6f7f8,
-  72'h5F5F5F5F5F5F5F5F5F,
-   72'h5F5F5F5F5F5F5F5F5F,
-  72'hfff1f2f3f4f5f6f7f8,
-  72'hFFFFFFFFFFFFFFFFFF,
-  72'hA5A5A5A5A5A5A5A5A5,
-  72'hA5A5A5A5A5A5A5A5A5,
-  72'hFFFFFFFFFFFFFFFFFF,
-  72'hfff1f2f3f4f5f6f7f8,
-  72'h5F5F5F5F5F5F5F5F5F,
-   72'h5F5F5F5F5F5F5F5F5F,
-  72'hfff1f2f3f4f5f6f7f8,
-  72'hFFFFFFFFFFFFFFFFFF,
-  72'hA5A5A5A5A5A5A5A5A5,
-  72'hA5A5A5A5A5A5A5A5A5,
-  72'hFFFFFFFFFFFFFFFFFF,
-  72'hfff1f2f3f4f5f6f7f8,
-  72'h5F5F5F5F5F5F5F5F5F
-};
-
-logic [1:0] test_cfgs[NUM_TEST_VECTORS] = '{
-  2'b00,
-  2'b01,
-  2'b10,
-  2'b11,
-  2'b11,
-  2'b10,
-  2'b11,
-  2'b10,
-   2'b00,
-  2'b01,
-  2'b10,
-  2'b11,
-  2'b11,
-  2'b10,
-  2'b11,
-  2'b10,
-   2'b00,
-  2'b01,
-  2'b10,
-  2'b11,
-  2'b11,
-  2'b10,
-  2'b11,
-  2'b10
-};
 
 
   task automatic reset_dut();
@@ -145,8 +167,6 @@ logic [1:0] test_cfgs[NUM_TEST_VECTORS] = '{
     @(posedge clk);
   endtask
 
-  // [NOTE] [config_select] , Maybe config_select is not needed here ... will think later 
-
   task automatic drvie_mst(input [71:0] data, input [1:0] cfg);
     dxi_mst.data <= data;
     config_select <= cfg;
@@ -157,18 +177,6 @@ logic [1:0] test_cfgs[NUM_TEST_VECTORS] = '{
     dxi_mst.valid <= 0;
   endtask 
 
-  // [NOTE] testcase_functional() AND testcase_clock_by_clock() use the same task send_once for re-use style
-  // [WARN]  They exist exist at the same time for handle different test cases 
-  //          1st - simple transaction where [dxi_mst.valid]  will fall at 0 to indicate just over-clock transaction
-  //          2nd - once send , but clock-by-clcok transaction where [dxi_mst.valid] will NOT fall to 0
-  //
-  // [TODO]   Adding arg [falling_flag] signal and asign :  dxi_mst.valid <= falling_flag;
-  // [NOTE]   Syncronization fails for now if call it with diff falling_flag value , but RTL can handle it at all.
-  // [NOTE]   26.06.2025 Some code is old , and removed, general idea have different test-cases, like clocl-by-clock and over-clock
-  //task automatic testcase_clock_by_clock();
-//    for (int i = 0; i < 8; i++)
-      
- // endtask
 
   task automatic monitor_input();
     forever begin
@@ -191,25 +199,81 @@ logic [1:0] test_cfgs[NUM_TEST_VECTORS] = '{
     end
   endtask
 
- // task automatic drvie_mst();
-    
-//  endtask
 
-
-// [NOTE] Handle drv , there are some ideas... 
 
 task automatic drive_slv();
-  int count = 0;
-  // forever begin
- // while (count < 8) begin
     dxi_slv.ready <= 1;
     do @(posedge clk); while (!dxi_slv.valid);
     dxi_slv.ready <= 0;
-  //  count++;
-  //end
 endtask
 
-// [NOTE] i = 0 , global idk, it coudn`t compile. todo move to task 
+
+
+    
+  function [7:0] hex_to_byte(input [7:0] char1, input [7:0] char2);
+      begin
+        hex_to_byte = (char1 >= "a") ? (char1 - "a" + 10) << 4 : (char1 - "0") << 4;
+        hex_to_byte |= (char2 >= "a") ? (char2 - "a" + 10) : (char2 - "0");
+      end
+  endfunction
+
+
+task automatic flatten_to_2d();
+    for (int r = 0; r < HEIGHT; r++) begin
+        for (int c = 0; c < WIDTH; c++) begin
+            image_2d[r][c] = image_flat[r * WIDTH + c];
+        end
+    end
+endtask
+
+
+  
+initial begin
+  
+    output_filename = $sformatf("output_%0d_%0d.txt", WIDTH, HEIGHT);
+    file_in = $fopen("C:/Users/igor4/trash/Documents/DigitalDesign/DV2/FilterDXI/simulation/image.txt", "r");
+    file_out = $fopen(output_filename, "w");
+
+    if (!file_in) begin
+        $display("Error: Cannot open input file!");
+        $finish;
+    end
+
+    
+    k_size = 0;
+    for (io = 0; io < HEIGHT; io++) begin
+        $fscanf(file_in, "%s", hex_str);
+        for (j = 0; j < WIDTH; j++) begin
+            temp_byte = hex_to_byte(hex_str[j*2], hex_str[j*2+1]);
+            image_flat[k_size] = temp_byte;
+            k_size++;
+        end
+    end
+    $fclose(file_in);
+
+   
+    flatten_to_2d();
+
+    
+    add_addition_pixels(image_2d, extended_image);
+
+  
+    for (int i = 0; i < HEIGHT; i++) begin
+        for (int j = 0; j < WIDTH; j++) begin
+            test_inputs_image[i * WIDTH + j] = pack_3x3(i + 1, j + 1);
+        end
+    end
+end
+
+ logic [1:0] test_cfgs[5] = '{
+  2'b00,
+  2'b01,
+  2'b10,
+  2'b11,
+  2'b11
+ };
+
+ // [NOTE] i = 0 , global idk, it coudn`t compile. todo move to task 
 int i = 0;
 logic [7:0] expected;
 
@@ -225,6 +289,9 @@ task automatic checker_task();
     output_data_q.get(dout);
 
     expected = apply_filter(din, cfg);
+    processed_image[i] = dout;
+     $fwrite(file_out, "%02x", processed_image[i]); 
+    if ((i + 1) % WIDTH == 0) $fwrite(file_out, "\n"); 
     $display("[CHECKER] @%0t -> CHECK [%0d]: Expected = %02x | Got = %02x %s", $time, i, expected, dout, (dout === expected) ? "[OK]" : "[FAIL]");
     i++;
     if (i == NUM_TEST_VECTORS) disable checker_task;
@@ -245,9 +312,11 @@ endtask
       for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
       automatic int num_cycles_mst = $urandom_range(0, 3); 
       repeat(num_cycles_mst) @(posedge clk);
-      drvie_mst(test_inputs[i], test_cfgs[i]);
+      drvie_mst(test_inputs_image[i], test_cfgs[0]);
       end
        end
+
+       // --- 
        begin 
        for (int i = 0; i < NUM_TEST_VECTORS ; i++) begin 
          automatic int num_cycles_slv = $urandom_range(0, 3);
@@ -259,9 +328,17 @@ endtask
 
 
     join_any
-    #500;
-    $finish;
-  end
+
+  
+
+
+
+//$fclose(file_out);
+
+$display("Processing complete! Output saved to %s", output_filename);
+   // #15000;
+    //$finish;
+  end 
 
 endmodule
    
