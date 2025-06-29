@@ -344,7 +344,7 @@ endtask
       for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
       automatic int num_cycles_mst = $urandom_range(0, 3); 
       repeat(num_cycles_mst) @(posedge clk);
-      drvie_mst(test_inputs_image[i], test_cfgs[1]);
+      drvie_mst(test_inputs_image[i], test_cfgs[3]);
       end
        end
 
