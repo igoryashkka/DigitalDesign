@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-`define USE_RANDOM_DATA 0  // 0 - use image data; 1 - use random data
+`define USE_RANDOM_DATA 1  // 0 - use image data; 1 - use random data
 
 
 mailbox #(logic [71:0]) input_data_q = new();
@@ -230,37 +230,33 @@ initial begin
   string hex_str, output_filename;
   output_filename = $sformatf("output_%0d_%0d.txt", WIDTH, HEIGHT);
 
-`ifdef USE_RANDOM_DATA
-  for (io = 0; io < HEIGHT; io++) begin
-    for (j = 0; j < WIDTH; j++) begin
-      image_2d[io][j] = $urandom_range(0, 255);
+  if (`USE_RANDOM_DATA) begin
+    for (io = 0; io < HEIGHT; io++)
+      for (j = 0; j < WIDTH; j++)
+        image_2d[io][j] = $urandom_range(0, 255);
+  end else begin
+    file_in = $fopen("C:/Users/igor4/trash/Documents/DigitalDesign/DV2/FilterDXI/simulation/input_256_194.txt", "r");
+    if (!file_in) begin
+      $display("Error: Cannot open input file!");
+      $finish;
     end
-  end
-`else
-  file_in = $fopen("C:/Users/igor4/trash/Documents/DigitalDesign/DV2/FilterDXI/simulation/image.txt", "r");
-  if (!file_in) begin
-    $display("Error: Cannot open input file!");
-    $finish;
-  end
-  for (io = 0; io < HEIGHT; io++) begin
-    $fscanf(file_in, "%s", hex_str);
-    for (j = 0; j < WIDTH; j++) begin
-      temp_byte = hex_to_byte(hex_str[j*2], hex_str[j*2+1]);
-      image_2d[io][j] = temp_byte;
+    for (io = 0; io < HEIGHT; io++) begin
+      $fscanf(file_in, "%s", hex_str);
+      for (j = 0; j < WIDTH; j++) begin
+        temp_byte = hex_to_byte(hex_str[j*2], hex_str[j*2+1]);
+        image_2d[io][j] = temp_byte;
+      end
     end
+    $fclose(file_in);
   end
-  $fclose(file_in);
-`endif
 
   file_out = $fopen(output_filename, "w");
   add_addition_pixels(image_2d, extended_image, PADDING);
-
-  for (int i = 0; i < HEIGHT; i++) begin
-    for (int j = 0; j < WIDTH; j++) begin
+  for (int i = 0; i < HEIGHT; i++)
+    for (int j = 0; j < WIDTH; j++)
       test_inputs_image[i * WIDTH + j] = pack_3x3(i + 1, j + 1);
-    end
-  end
 end
+
 
  logic [1:0] test_cfgs[5] = '{
   2'b00,
