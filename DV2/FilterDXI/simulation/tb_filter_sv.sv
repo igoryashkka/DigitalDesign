@@ -1,4 +1,5 @@
 `timescale 1ns/1ps
+`define USE_RANDOM_DATA 0  // 0 - use image data; 1 - use random data
 
 
 mailbox #(logic [71:0]) input_data_q = new();
@@ -222,37 +223,43 @@ endtask
       end
   endfunction
 
-
 initial begin
-    logic [7:0] image_2d [HEIGHT][WIDTH];
-    reg [7:0] temp_byte;
-    int io, j;
-    string hex_str, output_filename;
-    output_filename = $sformatf("output_%0d_%0d.txt", WIDTH, HEIGHT);
-    file_in = $fopen("C:/Users/igor4/trash/Documents/DigitalDesign/DV2/FilterDXI/simulation/image.txt", "r");
-    file_out = $fopen(output_filename, "w");
+  logic [7:0] image_2d [HEIGHT][WIDTH];
+  reg [7:0] temp_byte;
+  int io, j;
+  string hex_str, output_filename;
+  output_filename = $sformatf("output_%0d_%0d.txt", WIDTH, HEIGHT);
 
-    if (!file_in) begin
-        $display("Error: Cannot open input file!");
-        $finish;
+`ifdef USE_RANDOM_DATA
+  for (io = 0; io < HEIGHT; io++) begin
+    for (j = 0; j < WIDTH; j++) begin
+      image_2d[io][j] = $urandom_range(0, 255);
     end
-
-    for (io = 0; io < HEIGHT; io++) begin
-        $fscanf(file_in, "%s", hex_str);
-        for (j = 0; j < WIDTH; j++) begin
-            temp_byte = hex_to_byte(hex_str[j*2], hex_str[j*2+1]);
-            image_2d[io][j] = temp_byte;
-        end
+  end
+`else
+  file_in = $fopen("C:/Users/igor4/trash/Documents/DigitalDesign/DV2/FilterDXI/simulation/image.txt", "r");
+  if (!file_in) begin
+    $display("Error: Cannot open input file!");
+    $finish;
+  end
+  for (io = 0; io < HEIGHT; io++) begin
+    $fscanf(file_in, "%s", hex_str);
+    for (j = 0; j < WIDTH; j++) begin
+      temp_byte = hex_to_byte(hex_str[j*2], hex_str[j*2+1]);
+      image_2d[io][j] = temp_byte;
     end
-    $fclose(file_in);
+  end
+  $fclose(file_in);
+`endif
 
-    add_addition_pixels(image_2d, extended_image, PADDING);
+  file_out = $fopen(output_filename, "w");
+  add_addition_pixels(image_2d, extended_image, PADDING);
 
-    for (int i = 0; i < HEIGHT; i++) begin
-        for (int j = 0; j < WIDTH; j++) begin
-            test_inputs_image[i * WIDTH + j] = pack_3x3(i + 1, j + 1);
-        end
+  for (int i = 0; i < HEIGHT; i++) begin
+    for (int j = 0; j < WIDTH; j++) begin
+      test_inputs_image[i * WIDTH + j] = pack_3x3(i + 1, j + 1);
     end
+  end
 end
 
  logic [1:0] test_cfgs[5] = '{
@@ -281,7 +288,7 @@ task automatic checker_task();
 
     expected = apply_filter(din, cfg);
     processed_image[i] = dout;
-     $fwrite(file_out, "%02x", processed_image[i]); 
+    $fwrite(file_out, "%02x", processed_image[i]); 
     if ((i + 1) % WIDTH == 0) $fwrite(file_out, "\n"); 
     $display("[CHECKER] @%0t -> CHECK [%0d]: Expected = %02x | Got = %02x %s", $time, i, expected, dout, (dout === expected) ? "[OK]" : "[FAIL]");
     i++;
@@ -320,15 +327,9 @@ endtask
 
     join_any
 
-  
-
-
-
-//$fclose(file_out);
 
 $display("Processing complete!");
-   // #15000;
-    //$finish;
+
   end 
 
 endmodule
