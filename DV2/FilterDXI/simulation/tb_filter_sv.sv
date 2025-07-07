@@ -1,10 +1,5 @@
 `timescale 1ns/1ps
 
-// Tds : [1] cbc vs o-c [?]
-// Tds : [2] Picture handling [prog]
-// Tds : [3] Config selection [prog]
-
-
 
 mailbox #(logic [71:0]) input_data_q = new();
 mailbox #(logic [1:0])  input_cfg_q  = new();
@@ -27,38 +22,17 @@ endinterface
 module tb_filter_sv;
 
 
-  /*  Parameters for image dimensions */
+  /*  Parameters for image simulation */
     parameter int WIDTH = 256;
     parameter int HEIGHT = 194;
+    localparam int NUM_TEST_VECTORS = ((HEIGHT)*(WIDTH));
+
+    logic [7:0] extended_image[HEIGHT+2][WIDTH+2];
+    logic [71:0] test_inputs_image [(HEIGHT)*(WIDTH)-1:0];
+
+    int file_in, file_out;
    
-    reg [7:0] ext_image [0:(WIDTH+2)*(HEIGHT+2)-1];
 
-
-   logic [71:0] test_inputs_image [(HEIGHT)*(WIDTH)-1:0];
-
-    logic [7:0] image         [HEIGHT][WIDTH];
-    reg [7:0] processed_image [0:WIDTH*HEIGHT-1]; 
-
-    integer file_in, file_out, io, j, k_size;
-    string hex_str, output_filename;
-    reg [7:0] temp_byte;
-  
-    int idx = 0;
-    parameter int EXT_WIDTH  = WIDTH + 2;
-parameter int EXT_HEIGHT = HEIGHT + 2;
-    reg [7:0] padded_image [0:EXT_WIDTH*EXT_HEIGHT-1];
-
-    
-logic [7:0] extended_image[HEIGHT+2][WIDTH+2];
-
-reg [7:0] image_flat [0:WIDTH*HEIGHT-1];
-logic [7:0] image_2d [HEIGHT][WIDTH];
-  /*  Parameters for simulation */
-
-  localparam int NUM_TEST_VECTORS = ((HEIGHT)*(WIDTH));
-  typedef logic [7:0] pixel_t;
-  typedef pixel_t pixel_window_t[0:8];
-  logic [7:0] processed_pixel;
 
   logic clk = 1;
   logic rstn = 0;
@@ -193,7 +167,6 @@ endfunction
     dxi_mst.data = 0;
     config_select = 0;
     dxi_slv.ready = 1;
-    processed_pixel = 0;
     @(posedge clk);
     rstn = 1;
     @(posedge clk);
@@ -250,18 +223,11 @@ endtask
   endfunction
 
 
-task automatic flatten_to_2d();
-    for (int r = 0; r < HEIGHT; r++) begin
-        for (int c = 0; c < WIDTH; c++) begin
-            image_2d[r][c] = image_flat[r * WIDTH + c];
-        end
-    end
-endtask
-
-
-  
 initial begin
-  
+    logic [7:0] image_2d [HEIGHT][WIDTH];
+    reg [7:0] temp_byte;
+    int io, j;
+    string hex_str, output_filename;
     output_filename = $sformatf("output_%0d_%0d.txt", WIDTH, HEIGHT);
     file_in = $fopen("C:/Users/igor4/trash/Documents/DigitalDesign/DV2/FilterDXI/simulation/image.txt", "r");
     file_out = $fopen(output_filename, "w");
@@ -271,25 +237,17 @@ initial begin
         $finish;
     end
 
-    
-    k_size = 0;
     for (io = 0; io < HEIGHT; io++) begin
         $fscanf(file_in, "%s", hex_str);
         for (j = 0; j < WIDTH; j++) begin
             temp_byte = hex_to_byte(hex_str[j*2], hex_str[j*2+1]);
-            image_flat[k_size] = temp_byte;
-            k_size++;
+            image_2d[io][j] = temp_byte;
         end
     end
     $fclose(file_in);
 
-   
-    flatten_to_2d();
-
-    
     add_addition_pixels(image_2d, extended_image, PADDING);
 
-  
     for (int i = 0; i < HEIGHT; i++) begin
         for (int j = 0; j < WIDTH; j++) begin
             test_inputs_image[i * WIDTH + j] = pack_3x3(i + 1, j + 1);
@@ -305,7 +263,7 @@ end
   2'b11
  };
 
- // [NOTE] i = 0 , global idk, it coudn`t compile. todo move to task 
+
 int i = 0;
 logic [7:0] expected;
 
@@ -314,6 +272,7 @@ task automatic checker_task();
   logic [1:0] cfg;
   logic [7:0] dout;
   int i = 0;
+  reg [7:0] processed_image [0:WIDTH*HEIGHT-1]; 
 
   forever begin
     input_data_q.get(din);
@@ -344,11 +303,11 @@ endtask
       for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
       automatic int num_cycles_mst = $urandom_range(0, 3); 
       repeat(num_cycles_mst) @(posedge clk);
-      drvie_mst(test_inputs_image[i], test_cfgs[3]);
+      drvie_mst(test_inputs_image[i], test_cfgs[1]);
       end
        end
 
-       // --- 
+      
        begin 
        for (int i = 0; i < NUM_TEST_VECTORS ; i++) begin 
          automatic int num_cycles_slv = $urandom_range(0, 3);
@@ -367,7 +326,7 @@ endtask
 
 //$fclose(file_out);
 
-$display("Processing complete! Output saved to %s", output_filename);
+$display("Processing complete!");
    // #15000;
     //$finish;
   end 
