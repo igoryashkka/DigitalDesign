@@ -288,7 +288,7 @@ task automatic checker_task();
     if ((i + 1) % WIDTH == 0) $fwrite(file_out, "\n"); 
     $display("[CHECKER] @%0t -> CHECK [%0d]: Expected = %02x | Got = %02x %s", $time, i, expected, dout, (dout === expected) ? "[OK]" : "[FAIL]");
     i++;
-    if (i == NUM_TEST_VECTORS) disable checker_task;
+    //if (i == NUM_TEST_VECTORS) disable checker_task;
   end
 endtask
 
@@ -328,5 +328,29 @@ $display("Processing complete!");
 
   end 
 
+  // === ASSERTIONS ===
+  property hold_valid_until_ready;
+    @(posedge dut.i_clk)
+    disable iff (!dut.i_rstn)
+    dut.o_dxi_out_valid |=> ##[0:$] dut.i_dxi_out_ready;
+  endproperty
+
+   assert property (hold_valid_until_ready)
+    else begin
+      $error("ASSERTION FAILED: o_dxi_out_valid dropped before i_dxi_out_ready was asserted");
+      $fatal;
+    end
+    
+  property valid_ready_transfer;
+    @(posedge dut.i_clk)
+    disable iff (!dut.i_rstn)
+    (dut.o_dxi_out_valid && dut.i_dxi_out_ready) |-> (dut.o_master_data !== 8'bx);
+  endproperty
+
+   assert property (valid_ready_transfer)
+    else begin
+      $error("ASSERTION FAILED: Transfer without valid data (o_master_data = X)");
+      $fatal;
+    end
 endmodule
    
