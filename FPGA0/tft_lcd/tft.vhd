@@ -3,6 +3,23 @@ USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
 
 ENTITY tb_filter IS
+  PORT (
+      -- Generic
+        i_clk           : IN  std_logic;
+        i_rstn          : IN  std_logic;
+        tft_sdo         : IN  std_logic;
+
+        -- TFT  
+        tft_sck     : OUT std_logic;
+        tft_sdi : OUT std_logic;
+        tft_dc : OUT std_logic;
+        tft_reset : OUT std_logic;
+        tft_cs : OUT std_logic;
+
+        -- Data & clk
+        framebufferData   : IN std_logic_vector(15 DOWNTO 0);
+        framebufferClk   : OUT  std_logic
+    );
 END ENTITY;
 
 
@@ -25,6 +42,8 @@ end record;
 
 SIGNAL remainingDelayTicks :std_logic_vector(24 DOWNTO 0) := (OTHERS => '0');
 
+
+SIGNAL tft_reset : STD_LOGIC := '0';
 constant INIT_SEQ_LEN : integer := 59;
 SIGNAL initSeqCounter : integer := 6'b0; -- ????? how use/what better integer  STD_LOGIC_VECTOR(N-1 DOWNTO 0) := (OTHERS => '0');
 type init_seq_array_t is array(0 to INIT_SEQ_LEN - 1) of init_item_t;
@@ -79,25 +98,38 @@ PROCESS(i_clk)
 BEGIN
   IF rising_edge(i_clk) THEN
 
-  spiDataSet <= 1'b0; 
+  spiDataSet <= 0; 
 		
 		-- always decrement delay ticks
 		IF (remainingDelayTicks > 0) THEN
-			remainingDelayTicks <= remainingDelayTicks - 1'b1;
+			remainingDelayTicks <= remainingDelayTicks - 1;
     
         ELSIF (spiIdle && !spiDataSet) THEN
 
         CASE State IS
             WHEN START => 
+            tft_reset <= 0;
+            State <= HOLD_RESET;
 
             WHEN HOLD_RESET => 
 
+                State <= WAIT_FOR_POWERUP;
 
             WHEN WAIT_FOR_POWERUP => 
 
 
-            WHEN SEND_INIT_SEQ => 
+            State <= SEND_INIT_SEQ;
 
+            WHEN SEND_INIT_SEQ => 
+                IF (initSeqCounter < INIT_SEQ_LEN) THEN 
+                -- spi_data send 
+                -- spi data set 
+                -- init counter 
+                    else 
+                    State <= LOOP;
+                    remainingDelayTicks <= 24'(INPUT_CLK_MHZ * 10000); // min: 10ms
+                END IF;
+                        
 
             WHEN LOOP_CASE => 
             --      --  spiData <= !frameBufferLowNibble ? {1'b1, framebufferData[15:8]} :{1'b1, framebufferData[7:0]};
