@@ -34,6 +34,89 @@ endclass
 // ---------------------------------------------------------------------------------
 // NEW FETURE OOP-class
 // ---------------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------------
+// NEW FEATURE OOP-class : dxi_agent
+// ---------------------------------------------------------------------------------
+class dxi_agent #(parameter int DW = 72);
+
+  virtual dxi_mst_if dxi_mst_vif;
+  virtual dxi_slv_if dxi_slv_vif;
+
+ 
+  mailbox #(logic [DW-1:0]) in_q;
+  mailbox #(logic [1:0])    cfg_q;
+  mailbox #(logic [7:0])    out_q;
+
+ 
+  bit is_master = 1;
+
+
+  function new(virtual dxi_mst_if dxi_mst_vif_,
+               virtual dxi_slv_if dxi_slv_vif_,
+               mailbox #(logic [DW-1:0]) in_q_,
+               mailbox #(logic [1:0])    cfg_q_,
+               mailbox #(logic [7:0])    out_q_,
+               bit is_master_ = 1);
+    this.dxi_mst_vif = dxi_mst_vif_;
+    this.dxi_slv_vif = dxi_slv_vif_;
+    this.in_q        = in_q_;
+    this.cfg_q       = cfg_q_;
+    this.out_q       = out_q_;
+    this.is_master   = is_master_;
+  endfunction
+
+  // --- Monitor task
+  task automatic monitor();
+    forever begin
+      @(posedge dxi_mst_vif.clk);
+      if (dxi_mst_vif.valid && dxi_mst_vif.ready) begin
+        in_q.put(dxi_mst_vif.data);
+        cfg_q.put(dxi_agent::get_cfg());  // Static or global config_select
+        //$display("[AGENT-MONITOR] Data=%h, Time=%0t", dxi_mst_vif.data, $time);
+      end
+      if (dxi_slv_vif.valid && dxi_slv_vif.ready) begin
+        out_q.put(dxi_slv_vif.data);
+        //$display("[AGENT-MONITOR] OUT=%h, Time=%0t", dxi_slv_vif.data, $time);
+      end
+    end
+  endtask
+
+
+  task automatic drive_mst();
+    dxi_transaction #(DW) tr = new();
+  //  if (!tr.randomize()) $fatal("Randomization failed (master)");
+
+    //repeat (tr.delay) @(posedge dxi_mst_vif.clk);
+
+    dxi_mst_vif.data  <= tr.data;
+    dxi_mst_vif.valid <= 1;
+    wait (dxi_mst_vif.ready);
+    @(posedge dxi_mst_vif.clk);
+    dxi_mst_vif.valid <= 0;
+  endtask
+
+
+  task automatic drive_slv();
+    dxi_slv_vif.ready <= 1;
+    wait (dxi_slv_vif.valid);
+    @(posedge dxi_slv_vif.clk);
+    dxi_slv_vif.ready <= 0;
+  endtask
+
+
+  task automatic drive();
+    if (is_master) drive_mst();
+    else           drive_slv();
+  endtask
+
+
+endclass
+// ---------------------------------------------------------------------------------
+// NEW FEATURE OOP-class : dxi_agent
+// ---------------------------------------------------------------------------------
+
+
 mailbox #(logic [71:0]) input_data_q = new();
 mailbox #(logic [1:0])  input_cfg_q  = new();
 mailbox #(logic [7:0])  output_data_q = new();
