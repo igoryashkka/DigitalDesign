@@ -1,6 +1,30 @@
 `timescale 1ns/1ps
-`define USE_RANDOM_DATA 1  // 0 - use image data; 1 - use random data
+`define USE_RANDOM_DATA 1 // 0 - use image data; 1 - use random data
 
+
+class dxi_transaction #(parameter int DW = 72);
+  rand logic [DW-1:0] data;
+  rand int unsigned delay;
+
+  bit use_delay;  // flag to indicate if delay is used 
+
+  int unsigned delay_max = 5;
+  int unsigned dist_delay = 3;
+
+  // here we have 30% probability of using delay 
+  // and 70% probability of no delay
+  constraint constraint_delay_prob {
+    use_delay dist {1 := dist_delay, 0 := 10 - dist_delay};
+  }
+
+  // constraint for how long will be delay, (how many clk need to skip)
+  constraint constraint_delay {
+    if (use_delay)
+      delay inside {[1:delay_max]};
+    else
+      delay == 0;
+  }
+endclass
 
 mailbox #(logic [71:0]) input_data_q = new();
 mailbox #(logic [1:0])  input_cfg_q  = new();
@@ -233,7 +257,8 @@ initial begin
   if (`USE_RANDOM_DATA) begin
     for (io = 0; io < HEIGHT; io++)
       for (j = 0; j < WIDTH; j++)
-        image_2d[io][j] = $urandom_range(0, 255);
+       // image_2d[io][j] = $urandom_range(0, 255);
+       image_2d[io][j] =  8'h11;;
   end else begin
     file_in = $fopen("C:/Users/igor4/trash/Documents/DigitalDesign/DV2/FilterDXI/simulation/input_256_194.txt", "r");
     if (!file_in) begin
@@ -302,22 +327,24 @@ endtask
       
 
 
-       begin 
-      for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
-      automatic int num_cycles_mst = $urandom_range(0, 3); 
-      repeat(num_cycles_mst) @(posedge clk);
-      drvie_mst(test_inputs_image[i], test_cfgs[1]);
-      end
+      begin 
+       for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
+        automatic dxi_transaction tr = new();
+        assert(tr.randomize()) else $fatal("Randomization failed (master) at i=%0d", i);
+        repeat (tr.delay) @(posedge clk);
+        drvie_mst(tr.data, test_cfgs[1]);
        end
+      end
 
       
-       begin 
-       for (int i = 0; i < NUM_TEST_VECTORS ; i++) begin 
-         automatic int num_cycles_slv = $urandom_range(0, 3);
-          repeat (num_cycles_slv) @(posedge clk);
-          drive_slv();
-        end
-        end
+      begin 
+       for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
+        automatic  dxi_transaction tr = new();
+        assert(tr.randomize()) else $fatal("Randomization failed (master) at i=%0d", i);
+        repeat (tr.delay) @(posedge clk);
+        drive_slv();
+       end
+      end
 
 
 
