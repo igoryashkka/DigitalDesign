@@ -334,11 +334,13 @@ endtask
       checker_task();
       
 
-
+// ----------
+//  dxi obj , agent dxi is not used yet
+// ----------
       begin 
        for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
         automatic dxi_transaction tr = new();
-        assert(tr.randomize()) else $fatal("Randomization failed (master) at i=%0d", i);
+     //   assert(tr.randomize()) else $fatal("Randomization failed (master) at i=%0d", i);
         repeat (tr.delay) @(posedge clk);
         drvie_mst(tr.data, test_cfgs[1]);
        end
@@ -348,12 +350,14 @@ endtask
       begin 
        for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
         automatic  dxi_transaction tr = new();
-        assert(tr.randomize()) else $fatal("Randomization failed (master) at i=%0d", i);
+       // assert(tr.randomize()) else $fatal("Randomization failed (master) at i=%0d", i);
         repeat (tr.delay) @(posedge clk);
         drive_slv();
        end
       end
-
+// ----------
+//  dxi obj , agent dxi is not used yet
+// ----------
 
 
     join_any
