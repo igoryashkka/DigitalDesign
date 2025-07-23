@@ -1,7 +1,13 @@
 `timescale 1ns/1ps
 `define USE_RANDOM_DATA 1 // 0 - use image data; 1 - use random data
 
+// Next improvemnts -  OOP will be used instead off all old tasks
+// [NEW] New tb will be markred with some header and footer
+// [OLD] All other code whiout header and footer is not OOP-aprouch
 
+// ---------------------------------------------------------------------------------
+// NEW FETURE OOP-class
+// ---------------------------------------------------------------------------------
 class dxi_transaction #(parameter int DW = 72);
   rand logic [DW-1:0] data;
   rand int unsigned delay;
@@ -25,7 +31,9 @@ class dxi_transaction #(parameter int DW = 72);
       delay == 0;
   }
 endclass
-
+// ---------------------------------------------------------------------------------
+// NEW FETURE OOP-class
+// ---------------------------------------------------------------------------------
 mailbox #(logic [71:0]) input_data_q = new();
 mailbox #(logic [1:0])  input_cfg_q  = new();
 mailbox #(logic [7:0])  output_data_q = new();
