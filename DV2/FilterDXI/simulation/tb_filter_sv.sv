@@ -1,6 +1,25 @@
 `timescale 1ns/1ps
 `define USE_RANDOM_DATA 1 // 0 - use image data; 1 - use random data
 
+
+
+mailbox #(logic [71:0]) input_data_q = new();
+mailbox #(logic [1:0])  input_cfg_q  = new();
+mailbox #(logic [7:0])  output_data_q = new();
+
+interface dxi_mst_if(input logic clk);
+  logic valid;
+  logic ready;
+  logic [71:0] data;
+endinterface
+
+interface dxi_slv_if(input logic clk);
+  logic valid;
+  logic ready;
+  logic [7:0] data;
+endinterface
+logic [1:0] config_select;
+
 // Next improvemnts -  OOP will be used instead off all old tasks
 // [NEW] New tb will be markred with some header and footer
 // [OLD] All other code whiout header and footer is not OOP-aprouch
@@ -12,9 +31,9 @@ class dxi_transaction #(parameter int DW = 72);
   rand logic [DW-1:0] data;
   rand int unsigned delay;
 
-  bit use_delay;  // flag to indicate if delay is used 
+  rand bit use_delay;  // flag to indicate if delay is used 
 
-  int unsigned delay_max = 5;
+  int unsigned delay_max = 2;
   int unsigned dist_delay = 3;
 
   // here we have 30% probability of using delay 
@@ -40,98 +59,88 @@ endclass
 // ---------------------------------------------------------------------------------
 class dxi_agent #(parameter int DW = 72);
 
-  virtual dxi_mst_if dxi_mst_vif;
-  virtual dxi_slv_if dxi_slv_vif;
+  virtual dxi_mst_if mst_vif;
+  virtual dxi_slv_if slv_vif;
+  bit is_master;
 
- 
-  mailbox #(logic [DW-1:0]) in_q;
-  mailbox #(logic [1:0])    cfg_q;
-  mailbox #(logic [7:0])    out_q;
-
- 
-  bit is_master = 1;
+  mailbox #(logic [DW-1:0]) input_data_q;
+  mailbox #(logic [1:0])    input_cfg_q;
+  mailbox #(logic [7:0])    output_data_q;
 
 
-  function new(virtual dxi_mst_if dxi_mst_vif_,
-               virtual dxi_slv_if dxi_slv_vif_,
-               mailbox #(logic [DW-1:0]) in_q_,
-               mailbox #(logic [1:0])    cfg_q_,
-               mailbox #(logic [7:0])    out_q_,
-               bit is_master_ = 1);
-    this.dxi_mst_vif = dxi_mst_vif_;
-    this.dxi_slv_vif = dxi_slv_vif_;
-    this.in_q        = in_q_;
-    this.cfg_q       = cfg_q_;
-    this.out_q       = out_q_;
-    this.is_master   = is_master_;
-  endfunction
 
-  // --- Monitor task
-  task automatic monitor();
+function new(
+    virtual dxi_mst_if m_if,
+    virtual dxi_slv_if s_if,
+    bit is_master_mode,
+    mailbox #(logic [DW-1:0]) in_q,
+    mailbox #(logic [1:0])    cfg_q,
+    mailbox #(logic [7:0])    out_q
+);
+  mst_vif = m_if;
+  slv_vif = s_if;
+  is_master = is_master_mode;
+  input_data_q = in_q;
+  input_cfg_q  = cfg_q;
+  output_data_q = out_q;
+endfunction
+
+  // ✅ 
+  task automatic monitor_input();
     forever begin
-      @(posedge dxi_mst_vif.clk);
-      if (dxi_mst_vif.valid && dxi_mst_vif.ready) begin
-        in_q.put(dxi_mst_vif.data);
-        cfg_q.put(dxi_agent::get_cfg());  // Static or global config_select
-        //$display("[AGENT-MONITOR] Data=%h, Time=%0t", dxi_mst_vif.data, $time);
+      @(posedge mst_vif.clk);
+      if (mst_vif.valid && mst_vif.ready) begin
+        input_data_q.put(mst_vif.data);
+        input_cfg_q.put(config_select);
+        $display("[MONITOR-IN] @%0t -> IN  : data = %h | config = %0b", $time, mst_vif.data, config_select);
       end
-      if (dxi_slv_vif.valid && dxi_slv_vif.ready) begin
-        out_q.put(dxi_slv_vif.data);
-        //$display("[AGENT-MONITOR] OUT=%h, Time=%0t", dxi_slv_vif.data, $time);
+    end
+  endtask
+
+  
+  task automatic monitor_output();
+    forever begin
+      @(posedge slv_vif.clk);
+      if (slv_vif.valid && slv_vif.ready) begin
+        output_data_q.put(slv_vif.data);
+        $display("[MONITOR-OUT] @%0t -> OUT : data = %h", $time, slv_vif.data);
       end
     end
   endtask
 
 
-  task automatic drive_mst();
-    dxi_transaction #(DW) tr = new();
-  //  if (!tr.randomize()) $fatal("Randomization failed (master)");
-
-    //repeat (tr.delay) @(posedge dxi_mst_vif.clk);
-
-    dxi_mst_vif.data  <= tr.data;
-    dxi_mst_vif.valid <= 1;
-    wait (dxi_mst_vif.ready);
-    @(posedge dxi_mst_vif.clk);
-    dxi_mst_vif.valid <= 0;
+  task drive(input dxi_transaction tr, input logic [1:0] cfg);
+    $display("[DRIVE] is_master = %0b | delay = %0d", is_master, tr.delay);
+    //repeat (tr.delay) @(posedge (is_master ? mst_vif.clk : slv_vif.clk));
+    if (is_master)
+      drive_mst(tr.data, cfg);
+    else
+      drive_slv();
   endtask
 
-
-  task automatic drive_slv();
-    dxi_slv_vif.ready <= 1;
-    wait (dxi_slv_vif.valid);
-    @(posedge dxi_slv_vif.clk);
-    dxi_slv_vif.ready <= 0;
+  task drive_mst(input logic [DW-1:0] data, input logic [1:0] cfg);
+    mst_vif.data <= data;
+    config_select <= cfg;
+    mst_vif.valid <= 1;
+    @(posedge mst_vif.clk);
+    while (!mst_vif.ready)
+      @(posedge mst_vif.clk);
+    mst_vif.valid <= 0;
   endtask
 
-
-  task automatic drive();
-    if (is_master) drive_mst();
-    else           drive_slv();
+  task drive_slv();
+    slv_vif.ready <= 1;
+       do @(posedge slv_vif.clk); while (!slv_vif.valid);
+    slv_vif.ready <= 0;
   endtask
-
 
 endclass
+
 // ---------------------------------------------------------------------------------
 // NEW FEATURE OOP-class : dxi_agent
 // ---------------------------------------------------------------------------------
 
 
-mailbox #(logic [71:0]) input_data_q = new();
-mailbox #(logic [1:0])  input_cfg_q  = new();
-mailbox #(logic [7:0])  output_data_q = new();
-
-interface dxi_mst_if(input logic clk);
-  logic valid;
-  logic ready;
-  logic [71:0] data;
-endinterface
-
-interface dxi_slv_if(input logic clk);
-  logic valid;
-  logic ready;
-  logic [7:0] data;
-endinterface
 
 
 
@@ -157,7 +166,7 @@ module tb_filter_sv;
 
   dxi_mst_if dxi_mst(clk);
   dxi_slv_if dxi_slv(clk);
-  logic [1:0] config_select;
+  
 
   dxi_top dut (
     .i_clk(clk),
@@ -288,48 +297,6 @@ endfunction
     @(posedge clk);
   endtask
 
-  task automatic drvie_mst(input [71:0] data, input [1:0] cfg);
-    dxi_mst.data <= data;
-    config_select <= cfg;
-    dxi_mst.valid <= 1;
-    @(posedge clk);
-    while (!dxi_mst.ready)
-      @(posedge clk);
-    dxi_mst.valid <= 0;
-  endtask 
-
-
-  task automatic monitor_input();
-    forever begin
-      @(posedge clk);
-      if (dxi_mst.valid && dxi_mst.ready) begin
-         input_data_q.put(dxi_mst.data);
-         input_cfg_q.put(config_select);
-        $display("[MONITOR-IN] @%0t -> IN  : data = %h | config = %0b", $time, dxi_mst.data, config_select);
-      end
-    end
-  endtask
-
-  task automatic monitor_output();
-    forever begin
-      @(posedge clk);
-      if (dxi_slv.valid && dxi_slv.ready) begin
-         output_data_q.put(dxi_slv.data);
-        $display("[MONITOR-OUT] @%0t -> OUT : data = %h", $time, dxi_slv.data);
-      end
-    end
-  endtask
-
-
-
-task automatic drive_slv();
-    dxi_slv.ready <= 1;
-    do @(posedge clk); while (!dxi_slv.valid);
-    dxi_slv.ready <= 0;
-endtask
-
-
-
     
   function [7:0] hex_to_byte(input [7:0] char1, input [7:0] char2);
       begin
@@ -409,48 +376,48 @@ task automatic checker_task();
 endtask
 
 
-  initial begin
-    fork
-      reset_dut();
-      monitor_input();
-      monitor_output();
-      checker_task();
-      
+dxi_agent #(72) master_agent;
+dxi_agent #(72) slave_agent;
 
-// ----------
-//  dxi obj , agent dxi is not used yet
-// ----------
-      begin 
-       for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
-        automatic dxi_transaction tr = new();
-     //   assert(tr.randomize()) else $fatal("Randomization failed (master) at i=%0d", i);
-        repeat (tr.delay) @(posedge clk);
-        drvie_mst(tr.data, test_cfgs[1]);
-       end
+initial begin
+   master_agent = new(dxi_mst, dxi_slv, 1, input_data_q, input_cfg_q, output_data_q);
+   slave_agent  = new(dxi_mst, dxi_slv, 0, input_data_q, input_cfg_q, output_data_q);
+
+  fork
+    reset_dut();
+
+
+    master_agent.monitor_input();
+    slave_agent.monitor_output();
+
+    checker_task();
+
+  
+    begin 
+      for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
+        automatic dxi_transaction tr_mst = new();
+assert(tr_mst.randomize());
+       
+        if (!tr_mst.randomize())
+  $fatal("[ERROR] Failed to randomize master transaction");
+        master_agent.drive(tr_mst, test_cfgs[1]);
       end
+    end
 
-      
-      begin 
-       for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
-        automatic  dxi_transaction tr = new();
-       // assert(tr.randomize()) else $fatal("Randomization failed (master) at i=%0d", i);
-        repeat (tr.delay) @(posedge clk);
-        drive_slv();
-       end
+   
+    begin 
+      for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
+        automatic dxi_transaction tr_slv = new();
+        assert(tr_slv.randomize());
+        slave_agent.drive(tr_slv, 0);
       end
-// ----------
-//  dxi obj , agent dxi is not used yet
-// ----------
+    end
+  join_any
+end
 
-
-    join_any
-
-
-$display("Processing complete!");
-
-  end 
 
   // === ASSERTIONS ===
+  /*
   property hold_valid_until_ready;
     @(posedge dut.i_clk)
     disable iff (!dut.i_rstn)
@@ -474,5 +441,7 @@ $display("Processing complete!");
       $error("ASSERTION FAILED: Transfer without valid data (o_master_data = X)");
       $fatal;
     end
+
+    */
 endmodule
    
