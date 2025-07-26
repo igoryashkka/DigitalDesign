@@ -47,7 +47,7 @@ class dxi_transaction #(parameter int DW = 72);
     if (use_delay)
       delay inside {[1:delay_max]};
     else
-      delay == 0;
+      delay == 1;
   }
 endclass
 // ---------------------------------------------------------------------------------
@@ -111,7 +111,7 @@ endfunction
 
   task drive(input dxi_transaction tr, input logic [1:0] cfg);
     $display("[DRIVE] is_master = %0b | delay = %0d", is_master, tr.delay);
-    //repeat (tr.delay) @(posedge (is_master ? mst_vif.clk : slv_vif.clk));
+    //repeat (tr.delay) @(posedge (is_master ? mst_vif.clk : mst_vif.clk )); // here is not working , works in initial block
     if (is_master)
       drive_mst(tr.data, cfg);
     else
@@ -396,10 +396,8 @@ initial begin
     begin 
       for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
         automatic dxi_transaction tr_mst = new();
-assert(tr_mst.randomize());
-       
-        if (!tr_mst.randomize())
-  $fatal("[ERROR] Failed to randomize master transaction");
+        assert(tr_mst.randomize());
+        repeat (tr_mst.delay) @(posedge clk);
         master_agent.drive(tr_mst, test_cfgs[1]);
       end
     end
@@ -409,6 +407,7 @@ assert(tr_mst.randomize());
       for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
         automatic dxi_transaction tr_slv = new();
         assert(tr_slv.randomize());
+        repeat (tr_slv.delay) @(posedge clk);
         slave_agent.drive(tr_slv, 0);
       end
     end
