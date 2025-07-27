@@ -374,45 +374,125 @@ task automatic checker_task();
     //if (i == NUM_TEST_VECTORS) disable checker_task;
   end
 endtask
+// ---------------------------------------------------------------------------------
+// NEW FEATURE OOP-class : base_test
+
+class base_test;
+
+  dxi_agent #(72) master_agent;
+  dxi_agent #(72) slave_agent;
+
+  virtual dxi_mst_if mst_vif;
+  virtual dxi_slv_if slv_vif;
+
+  mailbox #(logic [71:0]) input_data_q;
+  mailbox #(logic [1:0])  input_cfg_q;
+  mailbox #(logic [7:0])  output_data_q;
+
+  function new();
+    input_data_q  = new();
+    input_cfg_q   = new();
+    output_data_q = new();
+  endfunction
+
+  virtual task build();
+   
+    master_agent = new(mst_vif, slv_vif, 1, input_data_q, input_cfg_q, output_data_q);
+    slave_agent  = new(mst_vif, slv_vif, 0, input_data_q, input_cfg_q, output_data_q);
+  endtask
+
+  virtual task run_testcase();
+    // Override in derived classes
+  endtask
+
+  virtual task run();
+    build();
+    
+    fork
+      master_agent.monitor_input();
+      slave_agent.monitor_output();
+    join_none
+
+    run_testcase();
+
+    
+    //#1000ns;// Дати час завершити всім трансакціям
+  endtask
+
+endclass
+// ---------------------------------------------------------------------------------
+// NEW FEATURE OOP-class : boundary_test
+
+class boundary_test extends base_test;
+
+  virtual task run_testcase();
+    dxi_transaction tr_mst, tr_slv;
+
+    tr_mst = new();
+    tr_mst.delay = 0;
+    tr_mst.data  = 72'h0000_0000_0000_0000_00;
+    master_agent.drive(tr_mst, 2'b00);
+
+    tr_mst = new();
+    tr_mst.delay = tr_mst.delay_max;
+    tr_mst.data  = 72'hFFFF_FFFF_FFFF_FFFF_FF;
+    repeat (tr_mst.delay) @(posedge mst_vif.clk);
+    master_agent.drive(tr_mst, 2'b11);
 
 
-dxi_agent #(72) master_agent;
-dxi_agent #(72) slave_agent;
+    tr_slv = new();
+    tr_slv.delay = 0;
+    repeat (tr_slv.delay) @(posedge slv_vif.clk);
+    slave_agent.drive(tr_slv, 2'b00);
+
+    tr_slv = new();
+    tr_slv.delay = tr_slv.delay_max;
+    repeat (tr_slv.delay) @(posedge slv_vif.clk);
+    slave_agent.drive(tr_slv, 2'b00);
+  endtask
+
+endclass
+// ---------------------------------------------------------------------------------
+// NEW FEATURE OOP-class : random_test
+class random_test extends base_test;
+
+  virtual task run_testcase();
+    dxi_transaction tr_mst, tr_slv;
+
+    for (int i = 0; i < 10; i++) begin
+      tr_mst = new();
+      assert(tr_mst.randomize());
+      repeat (tr_mst.delay) @(posedge mst_vif.clk);
+      master_agent.drive(tr_mst, $urandom_range(0,3));
+    end
+
+    for (int i = 0; i < 10; i++) begin
+      tr_slv = new();
+      assert(tr_slv.randomize());
+      repeat (tr_slv.delay) @(posedge slv_vif.clk);
+      slave_agent.drive(tr_slv, 0);
+    end
+  endtask
+
+endclass
+
+
+// ---------------------------------------------------------------------------------
 
 initial begin
-   master_agent = new(dxi_mst, dxi_slv, 1, input_data_q, input_cfg_q, output_data_q);
-   slave_agent  = new(dxi_mst, dxi_slv, 0, input_data_q, input_cfg_q, output_data_q);
-
-  fork
-    reset_dut();
+  base_test test;
 
 
-    master_agent.monitor_input();
-    slave_agent.monitor_output();
+  test = new random_test(); // or boundary_test();
 
-    checker_task();
+  // Призначення віртуальних інтерфейсів
+  test.mst_vif = dxi_mst;
+  test.slv_vif = dxi_slv;
 
-  
-    begin 
-      for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
-        automatic dxi_transaction tr_mst = new();
-        assert(tr_mst.randomize());
-        repeat (tr_mst.delay) @(posedge clk);
-        master_agent.drive(tr_mst, test_cfgs[1]);
-      end
-    end
-
-   
-    begin 
-      for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
-        automatic dxi_transaction tr_slv = new();
-        assert(tr_slv.randomize());
-        repeat (tr_slv.delay) @(posedge clk);
-        slave_agent.drive(tr_slv, 0);
-      end
-    end
-  join_any
+  // Запуск
+  test.run();
 end
+
 
 
   // === ASSERTIONS ===
