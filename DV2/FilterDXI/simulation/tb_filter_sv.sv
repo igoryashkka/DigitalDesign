@@ -1,10 +1,6 @@
 `timescale 1ns/1ps
 `define USE_RANDOM_DATA 1
 
-mailbox #(logic [71:0]) input_data_q = new();
-mailbox #(config_transaction) input_cfg_q = new();
-mailbox #(logic [7:0])  output_data_q = new();
-
 interface dxi_if #(parameter WIDTH = 72)(input logic clk);
   logic valid;
   logic ready;
@@ -43,46 +39,32 @@ class dxi_agent #(parameter int DW = 72);
   virtual config_if     config_vif;
   bit is_master;
 
-  mailbox #(logic [DW-1:0]) input_data_q;
-  mailbox #(config_transaction) input_cfg_q;
-  mailbox #(logic [7:0]) output_data_q;
-
   function new(
     virtual dxi_if #(DW) vif,
     virtual config_if cfg_vif,
-    bit is_master_mode,
-    mailbox #(logic [DW-1:0]) in_q,
-    mailbox #(config_transaction) cfg_q,
-    mailbox #(logic [7:0]) out_q
+    bit is_master_mode
   );
     dxi_vif = vif;
     config_vif = cfg_vif;
     is_master = is_master_mode;
-    input_data_q = in_q;
-    input_cfg_q  = cfg_q;
-    output_data_q = out_q;
   endfunction
 
-  task automatic monitor();
+  task automatic dxi_monitor(output logic [DW-1:0] data);
     forever begin
       @(posedge dxi_vif.clk);
       if (dxi_vif.valid && dxi_vif.ready) begin
-        if (DW == 72) begin
-          input_data_q.put(dxi_vif.data);
-          config_transaction cfg = new();
-          cfg.config_val = config_vif.config_select;
-          input_cfg_q.put(cfg);
-          $display("[MONITOR-IN] @%0t -> IN  : data = %h | config = %0b", $time, dxi_vif.data, cfg.config_val);
-        end else begin
-          output_data_q.put(dxi_vif.data[7:0]);
-          $display("[MONITOR-OUT] @%0t -> OUT : data = %h", $time, dxi_vif.data[7:0]);
-        end
+        data = dxi_vif.data;
+        if (DW == 72)
+          $display("[MONITOR-IN] @%0t -> IN  : data = %h | config = %0b", $time, data, config_vif.config_select);
+        else
+          $display("[MONITOR-OUT] @%0t -> OUT : data = %h", $time, data[7:0]);
+        break;
       end
     end
   endtask
-
+//$display("[CHECKER] PASSED:time=%0t, current data - %0h, expected data - %0h", $time, data_o, expected_result);
   task drive(input dxi_transaction tr, input config_transaction cfg);
-    $display("[DRIVE] is_master = %0b | delay = %0d", is_master, tr.delay);
+    $display("[DRIVE]time=%0t is_master = %0b | delay = %0d",$time, is_master, tr.delay);
     if (is_master)
       drive_mst(tr.data, cfg);
     else
@@ -91,7 +73,7 @@ class dxi_agent #(parameter int DW = 72);
 
   task drive_mst(input logic [DW-1:0] data, input config_transaction cfg);
     dxi_vif.data <= data;
-    config_vif.config_select <= cfg.config_val;
+    //config_vif.config_select <= cfg.config_val;
     dxi_vif.valid <= 1;
     @(posedge dxi_vif.clk);
     while (!dxi_vif.ready)
@@ -139,9 +121,20 @@ module tb_filter_sv;
     .config_select(config_vif.config_select)
   );
 
+  task automatic reset_dut();
+    rstn = 0;
+    @(posedge clk);
+    rstn = 1;
+    @(posedge clk);
+  endtask
 
-  
-  function automatic logic [7:0] apply_filter(input logic [71:0] pixels, input logic [1:0] sel);
+
+  localparam int lap1[0:8]  = '{0, -1, 0, -1, 4, -1, 0, -1, 0};
+  localparam int lap2[0:8]  = '{-1, -1, -1, -1, 8, -1, -1, -1, -1};
+  localparam int gauss[0:8] = '{1, 2, 1, 2, 4, 2, 1, 2, 1};
+  localparam int avg[0:8]   = '{1, 1, 1, 1, 1, 1, 1, 1, 1};
+
+   function automatic logic [7:0] apply_filter(input logic [71:0] pixels, input logic [1:0] sel);
     int acc = 0, norm, result;
     int kernel[0:8];
     logic [7:0] px[0:8];
@@ -162,62 +155,62 @@ module tb_filter_sv;
   endfunction
 
 
-
   logic [7:0] expected;
-
-  task automatic checker_task();
-    logic [71:0] din;
-    config_transaction cfg;
-    logic [7:0] dout;
-    int i = 0;
-    reg [7:0] processed_image [0:WIDTH*HEIGHT-1];
-
-    forever begin
-      input_data_q.get(din);
-      input_cfg_q.get(cfg);
-      output_data_q.get(dout);
-
-      expected = apply_filter(din, cfg.config_val);
-      processed_image[i] = dout;
-      $fwrite(file_out, "%02x", processed_image[i]);
-      if ((i + 1) % WIDTH == 0) $fwrite(file_out, "\n");
-      $display("[CHECKER] @%0t -> CHECK [%0d]: Expected = %02x | Got = %02x %s", $time, i, expected, dout, (dout === expected) ? "[OK]" : "[FAIL]");
-      i++;
-    end
-  endtask
 
   dxi_agent #(72) master_agent;
   dxi_agent #(8)  slave_agent;
+  dxi_transaction tr_mst;
+  config_transaction cfg_tr;
+  config_transaction cfg_tr_;
+  dxi_transaction tr_slv;
 
   initial begin
-    master_agent = new(dxi_in, config_vif, 1, input_data_q, input_cfg_q, output_data_q);
-    slave_agent  = new(dxi_out, config_vif, 0, input_data_q, input_cfg_q, output_data_q);
+    master_agent = new(dxi_in, config_vif, 1);
+    slave_agent  = new(dxi_out, config_vif, 0);
+
+
 
     fork
       reset_dut();
-      master_agent.monitor();
-      slave_agent.monitor();
-      checker_task();
 
-      begin
+      begin : drive_loop
         for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
-          automatic dxi_transaction tr_mst = new();
-          automatic config_transaction cfg_tr = new();
+          tr_mst = new();
+          cfg_tr = new();
           assert(tr_mst.randomize());
+          cfg_tr.config_val = 2'b01;
           repeat (tr_mst.delay) @(posedge clk);
           master_agent.drive(tr_mst, cfg_tr);
         end
       end
 
-      begin
-        for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
-          automatic dxi_transaction tr_slv = new();
+      begin : slave_loop
+        for (int j = 0; j < NUM_TEST_VECTORS; j++) begin
+          tr_slv = new();
+          //cfg_tr_ = new();
           assert(tr_slv.randomize());
           repeat (tr_slv.delay) @(posedge clk);
           slave_agent.drive(tr_slv, null);
         end
       end
-    join_any
+
+      begin : checker_loop
+        automatic int i = 0;
+        reg [7:0] processed_image [0:WIDTH*HEIGHT-1];
+        logic [71:0] din;
+        logic [7:0] dout;
+        forever begin
+          master_agent.dxi_monitor(din);
+          slave_agent.dxi_monitor(dout);
+          expected = apply_filter(din, config_vif.config_select);
+          processed_image[i] = dout;
+          $fwrite(file_out, "%02x", processed_image[i]);
+          if ((i + 1) % WIDTH == 0) $fwrite(file_out, "\n");
+          $display("[CHECKER] @%0t -> CHECK [%0d]: Expected = %02x | Got = %02x %s", $time, i, expected, dout, (dout === expected) ? "[OK]" : "[FAIL]");
+          i++;
+        end
+      end
+    join
   end
 
 endmodule
