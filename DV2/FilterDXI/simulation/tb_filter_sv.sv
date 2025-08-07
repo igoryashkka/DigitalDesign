@@ -89,6 +89,135 @@ class dxi_agent #(parameter int DW = 72);
 
 endclass
 
+class base_test;
+  virtual dxi_if #(72) vif_mst;
+  virtual dxi_if #(8)  vif_slv;
+  virtual config_if     config_vif;
+
+  dxi_agent #(72) master_agent;
+  dxi_agent #(8)  slave_agent;
+  config_transaction cfg_tr;
+
+  function new(
+    virtual dxi_if #(72) vif_mst,
+    virtual dxi_if #(8)  vif_slv,
+    virtual config_if     config_vif
+  );
+    this.vif_mst     = vif_mst;
+    this.vif_slv     = vif_slv;
+    this.config_vif  = config_vif;
+  endfunction
+
+  virtual task build();
+    master_agent = new(vif_mst, config_vif, 1);
+    slave_agent  = new(vif_slv, config_vif, 0);
+    cfg_tr       = new();
+  endtask
+
+  virtual task run_testcase();
+    // To be overridden
+  endtask
+
+  task run();
+    build();
+    run_testcase();
+  endtask
+endclass
+
+
+// --------------------------------------------------------
+// Random Test
+// --------------------------------------------------------
+class random_test extends base_test;
+  dxi_transaction tr_mst;
+  dxi_transaction tr_slv;
+  logic [7:0] expected;
+
+  virtual task run_testcase();
+    fork
+      begin : drive_loop
+        for (int i = 0; i < tb_filter_sv::NUM_TEST_VECTORS; i++) begin
+          tr_mst = new();
+          assert(tr_mst.randomize());
+          cfg_tr.config_val = 2'b01;
+          repeat (tr_mst.delay) @(posedge vif_mst.clk);
+          master_agent.drive(tr_mst, cfg_tr);
+        end
+      end
+
+      begin : slave_loop
+        for (int j = 0; j < tb_filter_sv::NUM_TEST_VECTORS; j++) begin
+          tr_slv = new();
+          assert(tr_slv.randomize());
+          repeat (tr_slv.delay) @(posedge vif_slv.clk);
+          slave_agent.drive(tr_slv, null);
+        end
+      end
+
+      begin : checker_loop
+        automatic int i = 0;
+        reg [7:0] processed_image [0:tb_filter_sv::WIDTH*tb_filter_sv::HEIGHT-1];
+        logic [71:0] din;
+        logic [7:0] dout;
+        forever begin
+          master_agent.dxi_monitor(din);
+          slave_agent.dxi_monitor(dout);
+          expected = tb_filter_sv::apply_filter(din, config_vif.config_select);
+          processed_image[i] = dout;
+          $fwrite(tb_filter_sv::file_out, "%02x", processed_image[i]);
+          if ((i + 1) % tb_filter_sv::WIDTH == 0) $fwrite(tb_filter_sv::file_out, "\n");
+          $display("[CHECKER] @%0t -> CHECK [%0d]: Expected = %02x | Got = %02x %s",
+                   $time, i, expected, dout, (dout === expected) ? "[OK]" : "[FAIL]");
+          i++;
+        end
+      end
+    join
+  endtask
+endclass
+
+class boundary_test extends base_test;
+  dxi_transaction tr_mst;
+  dxi_transaction tr_slv;
+
+  virtual task run_testcase();
+    logic [71:0] boundary_patterns[3] = '{72'h0000, 72'hFFFF_FFFF_FFFF, 72'hAAAA_AAAA_AAAA};
+    fork
+      begin : drive_loop
+        for (int i = 0; i < 3; i++) begin
+          tr_mst = new();
+          tr_mst.data = boundary_patterns[i];
+          tr_mst.delay = 1;
+          cfg_tr.config_val = i[1:0];
+          @(posedge vif_mst.clk);
+          master_agent.drive(tr_mst, cfg_tr);
+        end
+      end
+
+      begin : slave_loop
+        for (int j = 0; j < 3; j++) begin
+          tr_slv = new();
+          tr_slv.delay = 1;
+          @(posedge vif_slv.clk);
+          slave_agent.drive(tr_slv, null);
+        end
+      end
+
+      begin : checker_loop
+        for (int i = 0; i < 3; i++) begin
+          logic [71:0] din;
+          logic [7:0] dout;
+          master_agent.dxi_monitor(din);
+          slave_agent.dxi_monitor(dout);
+          logic [7:0] expected = tb_filter_sv::apply_filter(din, config_vif.config_select);
+          $display("[CHECKER_BOUNDARY] [%0d] Exp = %0h | Got = %0h %s",
+                   i, expected, dout, (expected === dout) ? "[OK]" : "[FAIL]");
+        end
+      end
+    join
+  endtask
+endclass
+
+
 module tb_filter_sv;
 
   parameter int WIDTH = 256;
@@ -155,62 +284,13 @@ module tb_filter_sv;
   endfunction
 
 
-  logic [7:0] expected;
 
-  dxi_agent #(72) master_agent;
-  dxi_agent #(8)  slave_agent;
-  dxi_transaction tr_mst;
-  config_transaction cfg_tr;
-  config_transaction cfg_tr_;
-  dxi_transaction tr_slv;
-
-  initial begin
-    master_agent = new(dxi_in, config_vif, 1);
-    slave_agent  = new(dxi_out, config_vif, 0);
-
-
-
-    fork
-      reset_dut();
-
-      begin : drive_loop
-        for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
-          tr_mst = new();
-          cfg_tr = new();
-          assert(tr_mst.randomize());
-          cfg_tr.config_val = 2'b01;
-          repeat (tr_mst.delay) @(posedge clk);
-          master_agent.drive(tr_mst, cfg_tr);
-        end
-      end
-
-      begin : slave_loop
-        for (int j = 0; j < NUM_TEST_VECTORS; j++) begin
-          tr_slv = new();
-          //cfg_tr_ = new();
-          assert(tr_slv.randomize());
-          repeat (tr_slv.delay) @(posedge clk);
-          slave_agent.drive(tr_slv, null);
-        end
-      end
-
-      begin : checker_loop
-        automatic int i = 0;
-        reg [7:0] processed_image [0:WIDTH*HEIGHT-1];
-        logic [71:0] din;
-        logic [7:0] dout;
-        forever begin
-          master_agent.dxi_monitor(din);
-          slave_agent.dxi_monitor(dout);
-          expected = apply_filter(din, config_vif.config_select);
-          processed_image[i] = dout;
-          $fwrite(file_out, "%02x", processed_image[i]);
-          if ((i + 1) % WIDTH == 0) $fwrite(file_out, "\n");
-          $display("[CHECKER] @%0t -> CHECK [%0d]: Expected = %02x | Got = %02x %s", $time, i, expected, dout, (dout === expected) ? "[OK]" : "[FAIL]");
-          i++;
-        end
-      end
-    join
-  end
+initial begin
+  base_test test;
+  // test = new(dxi_in, dxi_out, config_vif); // базовий
+  test = new random_test(dxi_in, dxi_out, config_vif); // випадковий
+  // test = new boundary_test(dxi_in, dxi_out, config_vif); // граничний
+  test.run();
+end
 
 endmodule
