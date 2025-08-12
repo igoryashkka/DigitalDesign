@@ -38,6 +38,7 @@ endpackage : tb_cfg
 
 import tb_cfg::*;
 
+
 // ------------------------------
 // Interfaces
 // ------------------------------
@@ -73,6 +74,7 @@ class dxi_transaction #(parameter int DW = 72);
     else           delay == 1;
   }
 endclass
+
 
 // ------------------------------
 // Agent
@@ -128,6 +130,88 @@ class dxi_agent #(parameter int DW = 72);
   endtask
 endclass
 
+// ------------------------------
+// Scoreboard
+// ------------------------------
+class checker_scoreboard;
+
+
+  dxi_agent #(72)      mst_ag;
+  dxi_agent #(8)       slv_ag;
+  virtual config_if    cfg_vif;
+
+  mailbox mb_gold_tx;
+  mailbox mb_out_tx;
+
+  
+  int unsigned n_compared;
+  int unsigned n_errors;
+
+  function new(dxi_agent #(72) mst_ag,
+               dxi_agent #(8)  slv_ag,
+               virtual config_if cfg_vif);
+    this.mst_ag  = mst_ag;
+    this.slv_ag  = slv_ag;
+    this.cfg_vif = cfg_vif;
+    mb_gold_tx   = new();
+    mb_out_tx    = new();
+  endfunction
+
+
+  function automatic logic [7:0] get_gold(input logic [71:0] din,
+                                          input logic [1:0]  sel);
+    return apply_filter(din, sel);
+  endfunction
+
+
+  task automatic collect_in();
+    logic [71:0] din;
+    logic [1:0]  sel;
+    forever begin
+      mst_ag.dxi_monitor(din);           
+      sel = cfg_vif.config_select;        
+      mb_gold_tx.put(get_gold(din, sel)); 
+    end
+  endtask
+
+
+  task automatic collect_out();
+    logic [7:0] dout;
+    forever begin
+      slv_ag.dxi_monitor(dout);
+      mb_out_tx.put(dout);       
+    end
+  endtask
+
+
+  task automatic compare_streams();
+    logic [7:0] gld, out;
+    forever begin
+      mb_gold_tx.get(gld);
+      mb_out_tx.get(out);
+      n_compared++;
+      if (out !== gld) begin
+        n_errors++;
+        $display("[SCB][%0t]  MISMATCH #%0d: expected=%02x got=%02x",
+               $time, n_compared, gld, out);
+      end
+      else begin
+        $display("[SCB][%0t] MATCH #%0d: expected=%02x got=%02x",
+                 $time, n_compared, gld, out);
+      end
+    end
+  endtask
+
+  
+  task run();
+    fork
+      collect_in();
+      collect_out();
+      compare_streams();
+    join_none
+  endtask
+
+endclass
 
 class base_test;
   virtual dxi_if #(72) vif_mst;
@@ -137,6 +221,8 @@ class base_test;
   dxi_agent #(72)      master_agent;
   dxi_agent #(8)       slave_agent;
   config_transaction   cfg_tr;
+
+  checker_scoreboard scb;
 
   function new(virtual dxi_if #(72) vif_mst,
                virtual dxi_if #(8)  vif_slv,
@@ -150,12 +236,16 @@ class base_test;
     master_agent = new(vif_mst, config_vif, 1);
     slave_agent  = new(vif_slv, config_vif, 0);
     cfg_tr       = new();
+    scb          = new(master_agent, slave_agent, config_vif); // <—
   endtask
 
   virtual task run_testcase(); endtask
 
   task run();
     build();
+    fork
+      scb.run();
+    join_none
     run_testcase();
   endtask
 endclass
@@ -188,7 +278,7 @@ class random_test extends base_test;
         end
       end
 
-
+    
       begin : slave_loop
         for (int j = 0; j < NUM_TEST_VECTORS; j++) begin
           tr_slv = new();
@@ -197,27 +287,14 @@ class random_test extends base_test;
           slave_agent.drive(tr_slv, null);
         end
       end
-
-  
-      begin : checker_loop
-        logic [71:0] din;
-        logic [7:0]  dout;
-        for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
-          master_agent.dxi_monitor(din);
-          slave_agent.dxi_monitor(dout);
-          expected = apply_filter(din, config_vif.config_select);
-          processed_image[i] = dout;
-          //$fwrite(file_out, "%02x", processed_image[i]);
-          //if ((i + 1) % WIDTH == 0) $fwrite(file_out, "\n");
-          $display("[CHECK] @%0t [%0d] exp=%02x got=%02x %s",
-                   $time, i, expected, dout, (dout === expected) ? "[OK]" : "[FAIL]");
-        end
-      end
     join
   endtask
 endclass
 
-
+///
+///
+/// maybe not all correner cases are covered !!!
+///
 class boundary_test extends base_test;
   dxi_transaction #(72) tr_mst;
   dxi_transaction #(8)  tr_slv;
@@ -249,17 +326,6 @@ class boundary_test extends base_test;
           tr_slv.delay = 1;
           @(posedge vif_slv.clk);
           slave_agent.drive(tr_slv, null);
-        end
-      end
-
-      begin : checker_loop
-        logic [71:0] din;
-        logic [7:0]  dout;
-        for (int i = 0; i < 3; i++) begin
-          master_agent.dxi_monitor(din);
-          slave_agent.dxi_monitor(dout);
-          expected = apply_filter(din, config_vif.config_select);
-          $display("[BOUNDARY] [%0d] exp=%0h got=%0h %s",i, expected, dout, (expected === dout) ? "[OK]" : "[FAIL]");
         end
       end
     join
