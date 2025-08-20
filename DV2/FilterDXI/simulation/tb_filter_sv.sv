@@ -450,14 +450,12 @@ class file_test extends base_test;
     end
 
 
-    for (int r = 1; r <= HEIGHT; r++) begin
-      for (int c = 1; c <= WIDTH; c++) begin
+      forever begin
         dxi_transaction #(8) tr_slv = new();
         assert(tr_slv.randomize());
         slave_agent.drive(tr_slv, null);
       end
-    end
-     join
+     join_any
   endtask
 endclass
 
@@ -491,14 +489,14 @@ class random_test extends base_test;
 
     
       begin : slave_loop
-        for (int j = 0; j < NUM_TEST_VECTORS; j++) begin  // forever
+        forever begin 
           tr_slv = new();
           assert(tr_slv.randomize());
           repeat (tr_slv.delay) @(posedge vif_slv.clk);
           slave_agent.drive(tr_slv, null);
         end
       end
-    join // join_any
+    join_any 
   endtask
 endclass
 
@@ -532,14 +530,14 @@ class boundary_test extends base_test;
       end
 
       begin : slave_loop
-        for (int j = 0; j < 3; j++) begin //// forever
+        forever begin 
           tr_slv       = new();
           tr_slv.delay = 1;
           @(posedge vif_slv.clk);
           slave_agent.drive(tr_slv, null);
         end
       end
-    join  // join_any
+    join_any  
   endtask
 endclass
 
@@ -578,15 +576,20 @@ module tb_filter_sv;
 
    random_test rt;
    file_test ft;
+   boundary_test bt;
+
   initial begin
     reset_dut();
 
     
-    ft = new(dxi_in, dxi_out, config_vif);
-    ft.run();
+    //ft = new(dxi_in, dxi_out, config_vif);
+    //ft.run();
     
 
-    //rt = new(dxi_in, dxi_out, config_vif);
-    //rt.run(); 
+   // rt = new(dxi_in, dxi_out, config_vif);
+   // rt.run(); 
+
+    bt = new(dxi_in, dxi_out, config_vif);
+    bt.run(); 
   end
 endmodule
