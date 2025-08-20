@@ -577,15 +577,17 @@ module tb_filter_sv;
   initial begin
     reset_dut();
 
-    
-   // ft = new(dxi_in, dxi_out, config_vif);
-   // ft.run();
-    
-
-   //rt = new(dxi_in, dxi_out, config_vif);
-   // rt.run(); 
-
+`ifdef RUN_FILE_TEST
+    ft = new(dxi_in, dxi_out, config_vif);
+    ft.run();
+`elsif RUN_RANDOM_TEST
+    rt = new(dxi_in, dxi_out, config_vif);
+    rt.run();
+`elsif RUN_BOUNDARY_TEST
     bt = new(dxi_in, dxi_out, config_vif);
-    bt.run(); 
+    bt.run();
+`else
+    $display("[TB] ERROR: select test to run.");
+`endif
   end
 endmodule
