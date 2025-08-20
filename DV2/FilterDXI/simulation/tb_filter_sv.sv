@@ -305,7 +305,7 @@ class file_collector_scoreboard;
   function new(dxi_agent #(8) slv_ag,
                int            width,
                int            height,
-               string         base_name = "out");
+               string         base_name);
     this.slv_ag      = slv_ag;
     this.img_width   = width;
     this.img_height  = height;
@@ -491,14 +491,14 @@ class random_test extends base_test;
 
     
       begin : slave_loop
-        for (int j = 0; j < NUM_TEST_VECTORS; j++) begin
+        for (int j = 0; j < NUM_TEST_VECTORS; j++) begin  // forever
           tr_slv = new();
           assert(tr_slv.randomize());
           repeat (tr_slv.delay) @(posedge vif_slv.clk);
           slave_agent.drive(tr_slv, null);
         end
       end
-    join
+    join // join_any
   endtask
 endclass
 
@@ -532,14 +532,14 @@ class boundary_test extends base_test;
       end
 
       begin : slave_loop
-        for (int j = 0; j < 3; j++) begin
+        for (int j = 0; j < 3; j++) begin //// forever
           tr_slv       = new();
           tr_slv.delay = 1;
           @(posedge vif_slv.clk);
           slave_agent.drive(tr_slv, null);
         end
       end
-    join
+    join  // join_any
   endtask
 endclass
 
