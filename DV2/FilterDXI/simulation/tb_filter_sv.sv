@@ -1,6 +1,4 @@
 `timescale 1ns/1ps
-`define USE_RANDOM_DATA 1
-
 
 package tb_cfg;
   parameter int WIDTH  = 256;
