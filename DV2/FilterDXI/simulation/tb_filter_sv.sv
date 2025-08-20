@@ -205,7 +205,7 @@ class dxi_agent #(parameter int DW = 72);
 
   task drive_slv();
     dxi_vif.ready <= 1'b1;
-    do @(posedge dxi_vif.clk); while (!dxi_vif.valid);
+    @(posedge dxi_vif.clk);
     dxi_vif.ready <= 1'b0;
   endtask
 endclass
