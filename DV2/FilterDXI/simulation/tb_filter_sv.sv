@@ -195,7 +195,6 @@ class dxi_agent #(parameter int DW = 72);
   endtask
 
   task drive_mst(input logic [DW-1:0] data, input config_transaction cfg);
-    config_vif.config_select <= cfg.config_val;
     dxi_vif.data  <= data;
     dxi_vif.valid <= 1'b1;
     @(posedge dxi_vif.clk);
@@ -374,6 +373,7 @@ class base_test;
   endfunction
 
   virtual task build();
+    config_vif.config_select <= 2'b00; 
     master_agent = new(vif_mst, config_vif, 1);
     slave_agent  = new(vif_slv, config_vif, 0);
     cfg_tr       = new();
