@@ -135,10 +135,6 @@ endinterface
 // ------------------------------
 // Transactions
 // ------------------------------
-class config_transaction;
-  rand bit [1:0] config_val;
-endclass
-
 class dxi_transaction #(parameter int DW = 72);
   rand logic [DW-1:0] data;
   rand int unsigned   delay;
@@ -188,13 +184,19 @@ class dxi_agent #(parameter int DW = 72);
     end
   endtask
 
-  task drive(input dxi_tr_t tr, input config_transaction cfg);
+  task drive(input dxi_tr_t tr);
     $display("[DRIVE] @%0t is_master=%0b | delay=%0d", $time, is_master, tr.delay);
-    if (is_master) drive_mst(tr.data, cfg);
-    else           drive_slv();
+    if (is_master) begin 
+        repeat (tr.delay) @(posedge dxi_vif.clk);
+        drive_mst(tr.data);
+    end else begin
+      //if (tr.use_delay) begin
+        repeat (tr.delay) @(posedge dxi_vif.clk);
+        drive_slv();
+    end
   endtask
 
-  task drive_mst(input logic [DW-1:0] data, input config_transaction cfg);
+  task drive_mst(input logic [DW-1:0] data);
     dxi_vif.data  <= data;
     dxi_vif.valid <= 1'b1;
     @(posedge dxi_vif.clk);
@@ -360,7 +362,6 @@ class base_test;
 
   dxi_agent #(72)      master_agent;
   dxi_agent #(8)       slave_agent;
-  config_transaction   cfg_tr;
 
   checker_scoreboard scb;
 
@@ -373,10 +374,9 @@ class base_test;
   endfunction
 
   virtual task build();
-    config_vif.config_select <= 2'b00; 
+    config_vif.config_select <= 2'b11; // Default configuration
     master_agent = new(vif_mst, config_vif, 1);
     slave_agent  = new(vif_slv, config_vif, 0);
-    cfg_tr       = new();
     scb          = new(master_agent, slave_agent, config_vif); 
   endtask
 
@@ -444,8 +444,7 @@ class file_test extends base_test;
       for (int c = 1; c <= WIDTH; c++) begin
         dxi_transaction #(72) tr = new();
         tr.data = pack_3x3(extended, r, c);  
-        cfg_tr.config_val = 2'b01;
-        master_agent.drive(tr, cfg_tr);
+        master_agent.drive(tr);
       end
     end
 
@@ -453,7 +452,7 @@ class file_test extends base_test;
       forever begin
         dxi_transaction #(8) tr_slv = new();
         assert(tr_slv.randomize());
-        slave_agent.drive(tr_slv, null);
+        slave_agent.drive(tr_slv);
       end
      join_any
   endtask
@@ -481,9 +480,7 @@ class random_test extends base_test;
         for (int i = 0; i < NUM_TEST_VECTORS; i++) begin
           tr_mst = new();
           assert(tr_mst.randomize());
-          cfg_tr.config_val = 2'b01;
-          repeat (tr_mst.delay) @(posedge vif_mst.clk);
-          master_agent.drive(tr_mst, cfg_tr);
+          master_agent.drive(tr_mst);
         end
       end
 
@@ -493,7 +490,7 @@ class random_test extends base_test;
           tr_slv = new();
           assert(tr_slv.randomize());
           repeat (tr_slv.delay) @(posedge vif_slv.clk);
-          slave_agent.drive(tr_slv, null);
+          slave_agent.drive(tr_slv);
         end
       end
     join_any 
@@ -523,9 +520,8 @@ class boundary_test extends base_test;
           tr_mst        = new();
           tr_mst.data   = boundary_patterns[i];
           tr_mst.delay  = 1;
-          cfg_tr.config_val = i[1:0];
           @(posedge vif_mst.clk);
-          master_agent.drive(tr_mst, cfg_tr);
+          master_agent.drive(tr_mst);
         end
       end
 
@@ -534,7 +530,7 @@ class boundary_test extends base_test;
           tr_slv       = new();
           tr_slv.delay = 1;
           @(posedge vif_slv.clk);
-          slave_agent.drive(tr_slv, null);
+          slave_agent.drive(tr_slv);
         end
       end
     join_any  
@@ -582,11 +578,11 @@ module tb_filter_sv;
     reset_dut();
 
     
-    //ft = new(dxi_in, dxi_out, config_vif);
-    //ft.run();
+   // ft = new(dxi_in, dxi_out, config_vif);
+   // ft.run();
     
 
-   // rt = new(dxi_in, dxi_out, config_vif);
+   //rt = new(dxi_in, dxi_out, config_vif);
    // rt.run(); 
 
     bt = new(dxi_in, dxi_out, config_vif);
