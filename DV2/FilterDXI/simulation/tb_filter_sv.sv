@@ -34,6 +34,86 @@ package tb_cfg;
     else if (result > 255) result = 255;
     return result[7:0];
   endfunction
+
+
+  
+  typedef enum {PADDING, MIRRORING, ZEROING} padding_method_e;
+
+  function void add_addition_pixels(
+      input  logic [7:0] image        [HEIGHT][WIDTH],
+      output logic [7:0] extended_img [HEIGHT+2][WIDTH+2],
+      input  padding_method_e method_);
+    int i, j;
+
+    
+    for (i = 0; i < HEIGHT; i++)
+      for (j = 0; j < WIDTH; j++)
+        extended_img[i+1][j+1] = image[i][j];
+
+    case (method_)
+      PADDING: begin
+        for (i = 0; i < HEIGHT; i++) begin
+          extended_img[i+1][0]       = image[i][0];
+          extended_img[i+1][WIDTH+1] = image[i][WIDTH-1];
+        end
+        for (j = 0; j < WIDTH; j++) begin
+          extended_img[0][j+1]        = image[0][j];
+          extended_img[HEIGHT+1][j+1] = image[HEIGHT-1][j];
+        end
+        extended_img[0][0]                      = image[0][0];
+        extended_img[0][WIDTH+1]               = image[0][WIDTH-1];
+        extended_img[HEIGHT+1][0]              = image[HEIGHT-1][0];
+        extended_img[HEIGHT+1][WIDTH+1]        = image[HEIGHT-1][WIDTH-1];
+      end
+
+      MIRRORING: begin
+        for (i = 0; i < HEIGHT; i++) begin
+          extended_img[i+1][0]       = image[i][1];
+          extended_img[i+1][WIDTH+1] = image[i][WIDTH-2];
+        end
+        for (j = 0; j < WIDTH; j++) begin
+          extended_img[0][j+1]        = image[1][j];
+          extended_img[HEIGHT+1][j+1] = image[HEIGHT-2][j];
+        end
+        extended_img[0][0]                      = image[1][1];
+        extended_img[0][WIDTH+1]               = image[1][WIDTH-2];
+        extended_img[HEIGHT+1][0]              = image[HEIGHT-2][1];
+        extended_img[HEIGHT+1][WIDTH+1]        = image[HEIGHT-2][WIDTH-2];
+      end
+
+      ZEROING: begin
+        for (i = 0; i < HEIGHT+2; i++) begin
+          extended_img[i][0]        = 8'h00;
+          extended_img[i][WIDTH+1]  = 8'h00;
+        end
+        for (j = 0; j < WIDTH+2; j++) begin
+          extended_img[0][j]        = 8'h00;
+          extended_img[HEIGHT+1][j] = 8'h00;
+        end
+      end
+    endcase
+  endfunction
+
+
+  function automatic [71:0] pack_3x3(
+      input logic [7:0] extended_img [HEIGHT+2][WIDTH+2],
+      input int row, input int col);
+    int r, c;
+    reg [71:0] packed_;
+    packed_ = 72'd0;
+    for (r = -1; r <= 1; r++)
+      for (c = -1; c <= 1; c++)
+        packed_ = (packed_ << 8) | extended_img[row + r][col + c];
+    return packed_;
+  endfunction
+
+  function [7:0] hex_to_byte(input [7:0] char1, input [7:0] char2);
+      begin
+        hex_to_byte = (char1 >= "a") ? (char1 - "a" + 10) << 4 : (char1 - "0") << 4;
+        hex_to_byte |= (char2 >= "a") ? (char2 - "a" + 10) : (char2 - "0");
+      end
+  endfunction
+
 endpackage : tb_cfg
 
 import tb_cfg::*;
@@ -213,6 +293,67 @@ class checker_scoreboard;
 
 endclass
 
+class file_collector_scoreboard;
+  dxi_agent #(8)      slv_ag;
+  int img_width;
+  int img_height;
+  string file_name;
+  int img_counter;
+
+  logic [7:0] pixel_queue[$]; 
+
+  function new(dxi_agent #(8) slv_ag,
+               int            width,
+               int            height,
+               string         base_name = "out");
+    this.slv_ag      = slv_ag;
+    this.img_width   = width;
+    this.img_height  = height;
+    this.file_name   = base_name;
+    this.img_counter = 0;
+  endfunction
+
+  task automatic collect();
+    logic [7:0] dout;
+    forever begin
+      slv_ag.dxi_monitor(dout);  
+      pixel_queue.push_back(dout);
+      if (pixel_queue.size() == img_width * img_height)
+        save_image();
+    end
+  endtask
+
+  task automatic save_image();
+    string output_filename;
+    int file_out;
+    int i = 0;
+
+    output_filename = $sformatf("output_%0d_%0d.txt", WIDTH, HEIGHT);
+    file_out = $fopen(output_filename, "w");
+    
+    
+    if (!file_out) begin
+      $display("[FILE SCB] ERROR: cannot open %s", output_filename);
+      return;
+    end
+
+    foreach (pixel_queue[idx]) begin
+    $fwrite(file_out, "%02x", pixel_queue[idx]);
+    i++;
+    if ((i % WIDTH) == 0) $fwrite(file_out, "\n");
+    end
+
+    $fclose(file_out);
+    $display("[FILE SCB] Saved image %s", output_filename);
+    pixel_queue.delete();
+  endtask
+
+  task run();
+    collect();
+  endtask
+endclass
+
+
 class base_test;
   virtual dxi_if #(72) vif_mst;
   virtual dxi_if #(8)  vif_slv;
@@ -236,7 +377,7 @@ class base_test;
     master_agent = new(vif_mst, config_vif, 1);
     slave_agent  = new(vif_slv, config_vif, 0);
     cfg_tr       = new();
-    scb          = new(master_agent, slave_agent, config_vif); // <—
+    scb          = new(master_agent, slave_agent, config_vif); 
   endtask
 
   virtual task run_testcase(); endtask
@@ -247,6 +388,76 @@ class base_test;
       scb.run();
     join_none
     run_testcase();
+  endtask
+endclass
+
+class file_test extends base_test;
+  file_collector_scoreboard fscb;
+
+  function new(virtual dxi_if #(72) vif_mst,
+               virtual dxi_if #(8)  vif_slv,
+               virtual config_if    config_vif);
+    super.new(vif_mst, vif_slv, config_vif);
+  endfunction
+
+  virtual task build();
+    super.build();
+    fscb = new(slave_agent, WIDTH, HEIGHT, "out");
+    $display("[FILE TEST] Efscb build ok");
+  endtask
+
+  task run();
+    build();
+    fork
+      scb.run();   
+      fscb.run();  
+    join_none
+    run_testcase();
+  endtask
+
+  virtual task run_testcase();
+    int file_in;
+    logic [7:0] image[HEIGHT][WIDTH];
+    logic [7:0] extended[HEIGHT+2][WIDTH+2];
+    reg [7:0] temp_byte;
+    string input_file = "C:/Users/igor4/trash/Documents/DigitalDesign/DV2/FilterDXI/simulation/input_256_194.txt";
+    string hex_str;
+    file_in = $fopen(input_file, "r");
+    if (!file_in) begin
+      $display("[FILE TEST] ERROR: cannot open %s", input_file);
+      $finish;
+    end
+
+      for (int i = 0; i < HEIGHT; i++) begin
+      $fscanf(file_in, "%s", hex_str);
+       for (int j = 0; j < WIDTH; j++) begin
+        temp_byte = hex_to_byte(hex_str[j*2], hex_str[j*2+1]);
+        image[i][j] = temp_byte;
+       end
+    end
+
+    $fclose(file_in);
+    add_addition_pixels(image, extended, PADDING);
+
+    fork
+    for (int r = 1; r <= HEIGHT; r++) begin
+      for (int c = 1; c <= WIDTH; c++) begin
+        dxi_transaction #(72) tr = new();
+        tr.data = pack_3x3(extended, r, c);  
+        cfg_tr.config_val = 2'b01;
+        master_agent.drive(tr, cfg_tr);
+      end
+    end
+
+
+    for (int r = 1; r <= HEIGHT; r++) begin
+      for (int c = 1; c <= WIDTH; c++) begin
+        dxi_transaction #(8) tr_slv = new();
+        assert(tr_slv.randomize());
+        slave_agent.drive(tr_slv, null);
+      end
+    end
+     join
   endtask
 endclass
 
@@ -366,11 +577,16 @@ module tb_filter_sv;
   endtask
 
    random_test rt;
-
+   file_test ft;
   initial begin
     reset_dut();
 
-    rt = new(dxi_in, dxi_out, config_vif);
-    rt.run(); 
+    
+    ft = new(dxi_in, dxi_out, config_vif);
+    ft.run();
+    
+
+    //rt = new(dxi_in, dxi_out, config_vif);
+    //rt.run(); 
   end
 endmodule
