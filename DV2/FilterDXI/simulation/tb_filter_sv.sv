@@ -196,7 +196,6 @@ class dxi_agent #(parameter int DW = 72);
         repeat (tr.delay) @(posedge dxi_vif.clk);
         drive_mst(tr.data);
     end else begin
-      //if (tr.use_delay) begin
         repeat (tr.delay) @(posedge dxi_vif.clk);
         drive_slv();
     end
