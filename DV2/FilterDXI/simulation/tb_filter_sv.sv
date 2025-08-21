@@ -140,9 +140,17 @@ class dxi_transaction #(parameter int DW = 72);
   int unsigned        delay_max  = 2;
   int unsigned        dist_delay = 3;
 
+  function int clamp(input int value, input int lo, input int hi);
+  if (value < lo) return lo;
+  else if (value > hi) return hi;
+  else return value;
+  endfunction
+
   constraint constraint_delay_prob {
-    use_delay dist {1 := dist_delay, 0 := 10 - dist_delay};
+    use_delay dist {1 :=      clamp(dist_delay, 0, 10), 
+                    0 := 10 - clamp(dist_delay, 0, 10)};
   }
+  
   constraint constraint_delay {
     if (use_delay) delay inside {[1:delay_max]};
     else           delay == 1;
