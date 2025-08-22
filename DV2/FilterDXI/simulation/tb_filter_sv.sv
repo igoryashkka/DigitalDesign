@@ -502,10 +502,7 @@ class random_test extends base_test;
   endtask
 endclass
 
-///
-///
-/// maybe not all correner cases are covered !!!
-///
+
 class boundary_test extends base_test;
   dxi_transaction #(72) tr_mst;
   dxi_transaction #(8)  tr_slv;
