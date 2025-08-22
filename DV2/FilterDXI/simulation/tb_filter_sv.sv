@@ -512,6 +512,12 @@ class boundary_test extends base_test;
                virtual config_if    config_vif);
     super.new(vif_mst, vif_slv, config_vif);
   endfunction
+
+  task automatic set_filter(input logic [1:0] sel);
+    config_vif.config_select <= sel;
+    @(posedge vif_mst.clk);
+  endtask
+  
               
   virtual task run_testcase();
     localparam logic [71:0] boundary_patterns [10] = '{
@@ -529,11 +535,7 @@ class boundary_test extends base_test;
 
   logic [1:0] filters [4] = '{2'b00, 2'b01, 2'b10, 2'b11};
 
-  task automatic set_filter(input logic [1:0] sel);
-    config_vif.sel <= sel;
-    @(posedge vif_mst.clk);
-  endtask
-  
+
     fork
       begin : drive_loop
        foreach (filters[f]) begin
