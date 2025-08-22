@@ -517,17 +517,39 @@ class boundary_test extends base_test;
   endfunction
               
   virtual task run_testcase();
-    logic [71:0] boundary_patterns[3] = '{72'h0, 72'hFFFF_FFFF_FFFF, 72'hAAAA_AAAA_AAAA};
-    logic [7:0] expected;
+    localparam logic [71:0] boundary_patterns [10] = '{
+    72'h00_00_00_00_00_00_00_00_00,
+    72'hFF_FF_FF_FF_FF_FF_FF_FF_FF,
+    72'h00_00_00_00_FF_00_00_00_00,
+    72'hFF_FF_FF_FF_00_FF_FF_FF_FF,
+    72'h00_00_00_FF_FF_FF_FF_FF_FF,
+    72'h00_00_00_FF_FF_FF_FF_FF_FF,
+    72'h00_FF_00_FF_00_FF_00_FF_00,
+    72'hFF_00_FF_00_FF_00_FF_00_FF,
+    72'h00_20_40_60_80_A0_C0_E0_FF,
+    72'hFF_E0_C0_A0_80_60_40_20_00
+  };
+
+  logic [1:0] filters [4] = '{2'b00, 2'b01, 2'b10, 2'b11};
+
+  task automatic set_filter(input logic [1:0] sel);
+    config_vif.sel <= sel;
+    @(posedge vif_mst.clk);
+  endtask
+  
     fork
       begin : drive_loop
-        for (int i = 0; i < 3; i++) begin
-          tr_mst        = new();
-          tr_mst.data   = boundary_patterns[i];
-          tr_mst.delay  = 1;
+       foreach (filters[f]) begin
+        set_filter(filters[f]);
+
+        for (int i = 0; i < 10; i++) begin
+         tr_mst       = new();
+         tr_mst.data  = boundary_patterns[i];
+
           @(posedge vif_mst.clk);
           master_agent.drive(tr_mst);
-        end
+      end
+    end
       end
 
       begin : slave_loop
