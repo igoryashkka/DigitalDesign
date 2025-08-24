@@ -165,14 +165,12 @@ class dxi_agent #(parameter int DW = 72);
   typedef dxi_transaction#(DW) dxi_tr_t;
 
   virtual dxi_if #(DW) dxi_vif;
-  virtual config_if    config_vif;
   bit is_master;
 
   function new(virtual dxi_if #(DW) vif,
                virtual config_if     cfg_vif,
                bit                   is_master_mode);
     dxi_vif   = vif;
-    config_vif = cfg_vif;
     is_master = is_master_mode;
   endfunction
 
@@ -182,7 +180,7 @@ class dxi_agent #(parameter int DW = 72);
       if (dxi_vif.valid && dxi_vif.ready) begin
         data = dxi_vif.data;
         if (DW == 72)
-          $display("[MONITOR-IN ] @%0t IN  : data=%h | cfg=%0b", $time, data, config_vif.config_select);
+          $display("[MONITOR-IN ] @%0t IN  : data=%h", $time, data);
         else
           $display("[MONITOR-OUT] @%0t OUT : data=%h", $time, data[7:0]);
         break;
@@ -494,7 +492,6 @@ class random_test extends base_test;
         forever begin 
           tr_slv = new();
           assert(tr_slv.randomize());
-          repeat (tr_slv.delay) @(posedge vif_slv.clk);
           slave_agent.drive(tr_slv);
         end
       end
