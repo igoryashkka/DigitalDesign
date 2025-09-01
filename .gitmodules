@@ -1,0 +1,3 @@
+[submodule "CPU0"]
+	path = CPU0
+	url = https://github.com/igoryashkka/CPU-core
