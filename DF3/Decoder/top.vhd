@@ -1,10 +1,9 @@
-
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 
-//se work.alu_pkg.all; 
+use work.alu_pkg.all; 
 
 entity top_alu is
   generic(
@@ -24,8 +23,8 @@ entity top_alu is
     btn_b_down     : in  std_logic;
 
     -- UART
-    uart_rx_i      : in  std_logic;
-    uart_tx_o      : out std_logic;
+   -- uart_rx_i      : in  std_logic;
+   -- uart_tx_o      : out std_logic;
 
     -- sts
     led_zero_o     : out std_logic;
@@ -53,7 +52,7 @@ architecture rtl of top_alu is
   --
   signal op_sel   : op_t := OP_ADD;
 
-  --  ALU
+--   --  ALU
   signal y_add,y_sub,y_mul,y_shl,y_shr,y_sar : std_logic_vector(15 downto 0);
   signal c_add,v_add,n_add,z_add : std_logic;
   signal c_sub,v_sub,n_sub,z_sub : std_logic;
@@ -65,61 +64,62 @@ architecture rtl of top_alu is
   signal Y          : std_logic_vector(15 downto 0);
   signal C,V,N,Z    : std_logic;
 
-  -- UART wires
-  signal rx_byte    : std_logic_vector(7 downto 0);
-  signal rx_valid   : std_logic;
-  signal rx_ready   : std_logic := '1';
+    signal duty_r, duty_g, duty_b : std_logic_vector(7 downto 0);
+--   -- UART wires
+--   signal rx_byte    : std_logic_vector(7 downto 0);
+--   signal rx_valid   : std_logic;
+--   signal rx_ready   : std_logic := '1';
 
-  signal tx_ready   : std_logic;
-  signal tx_start   : std_logic := '0';
-  signal tx_byte    : std_logic_vector(7 downto 0) := (others=>'0');
+--   signal tx_ready   : std_logic;
+--   signal tx_start   : std_logic := '0';
+--   signal tx_byte    : std_logic_vector(7 downto 0) := (others=>'0');
 
-  -- Parser outputs
-  signal p_op       : unsigned(2 downto 0);
-  signal p_a        : unsigned(7 downto 0);
-  signal p_b        : unsigned(7 downto 0);
-  signal p_stb      : std_logic;
+--   -- Parser outputs
+   signal p_op       : unsigned(2 downto 0); -- save for compilation
+--   signal p_a        : unsigned(7 downto 0);
+--   signal p_b        : unsigned(7 downto 0);
+   signal p_stb      : std_logic; -- save for compilation
 
-begin
+ begin
 
-  -- UART
-  u_rx: entity work.uart_rx
-    generic map(CLK_FREQ_HZ=>CLK_FREQ_HZ, BAUD=>BAUD)
-    port map(
-      clk=>clk, rst_n=>rst_n, rx_pin=>uart_rx_i,
-      rx_data=>rx_byte, rx_data_valid=>rx_valid, rx_data_ready=>rx_ready
-    );
+--   -- UART
+--  -- u_rx: entity work.uart_rx
+--   --  generic map(CLK_FREQ_HZ=>CLK_FREQ_HZ, BAUD=>BAUD)
+--    -- port map(
+--    --   clk=>clk, rst_n=>rst_n, rx_pin=>uart_rx_i,
+--     --  rx_data=>rx_byte, rx_data_valid=>rx_valid, rx_data_ready=>rx_ready
+--    -- );
 
-  u_tx: entity work.uart_tx
-    generic map(CLK_FREQ_HZ=>CLK_FREQ_HZ, BAUD=>BAUD)
-    port map(
-      clk=>clk, rst_n=>rst_n,
-      tx_data=>tx_byte, tx_data_valid=>tx_start, tx_data_ready=>tx_ready,
-      tx_pin=>uart_tx_o
-    );
+--   --u_tx: entity work.uart_tx
+--    -- generic map(CLK_FREQ_HZ=>CLK_FREQ_HZ, BAUD=>BAUD)
+--     --port map(
+--      -- clk=>clk, rst_n=>rst_n,
+--       --tx_data=>tx_byte, tx_data_valid=>tx_start, tx_data_ready=>tx_ready,
+--       --tx_pin=>uart_tx_o
+--     --);
   
---   process(clk, rst_n) begin
---     if rst_n='0' then
---       tx_start <= '0';
---     elsif rising_edge(clk) then
---       tx_start <= '0';
---       if rx_valid='1' and tx_ready='1' then
---         tx_byte  <= rx_byte;
---         tx_start <= '1';
---       end if;
---     end if;
---   end process;
+-- --   process(clk, rst_n) begin
+-- --     if rst_n='0' then
+-- --       tx_start <= '0';
+-- --     elsif rising_edge(clk) then
+-- --       tx_start <= '0';
+-- --       if rx_valid='1' and tx_ready='1' then
+-- --         tx_byte  <= rx_byte;
+-- --         tx_start <= '1';
+-- --       end if;
+-- --     end if;
+-- --   end process;
 
-  -- alu:<op>:<A>;<B>\n
-  u_parser: entity work.uart_alu_parser
-    port map(
-      clk=>clk, rst_n=>rst_n,
-      rx_data=>rx_byte, rx_valid=>rx_valid, rx_ready=>open,
-      op_out=>p_op, a_out=>p_a, b_out=>p_b, cmd_stb=>p_stb
-    );
+--   -- alu:<op>:<A>;<B>\n
+--  -- u_parser: entity work.uart_alu_parser
+--   --  port map(
+--    --   clk=>clk, rst_n=>rst_n,
+--     --  rx_data=>rx_byte, rx_valid=>rx_valid, rx_ready=>open,
+--      -- op_out=>p_op, a_out=>p_a, b_out=>p_b, cmd_stb=>p_stb
+--     --);
 
-  ----------------------------------------------------------------------------
-  -- Buttons → pulses
+--   ----------------------------------------------------------------------------
+--   -- Buttons → pulses
   db_aup : entity work.debounce_onepulse generic map(N_SAMPLES=>20000) port map(clk,rst_n,btn_a_up ,a_up_p);
   db_adn : entity work.debounce_onepulse generic map(N_SAMPLES=>20000) port map(clk,rst_n,btn_a_down,a_dn_p);
   db_bup : entity work.debounce_onepulse generic map(N_SAMPLES=>20000) port map(clk,rst_n,btn_b_up ,b_up_p);
@@ -153,40 +153,48 @@ begin
             when 5 => op_sel <= OP_SAR;
             when others => op_sel <= OP_ADD;
           end case;
-          reg_a <= p_a;
-          reg_b <= p_b;
+          --reg_a <= p_a;
+          --reg_b <= p_b; init via uart 
         end if;
       end if;
     end if;
   end process;
 
-  ----------------------------------------------------------------------------
-  -- ALU operators 
-  u_add: entity work.op_add port map(std_logic_vector(reg_a), std_logic_vector(reg_b), y_add,c_add,v_add,n_add,z_add);
-  u_sub: entity work.op_sub port map(std_logic_vector(reg_a), std_logic_vector(reg_b), y_sub,c_sub,v_sub,n_sub,z_sub);
-  u_mul: entity work.op_mul port map(std_logic_vector(reg_a), std_logic_vector(reg_b), y_mul,c_mul,v_mul,n_mul,z_mul);
-  u_shl: entity work.op_shl port map(std_logic_vector(reg_a), std_logic_vector(reg_b(2 downto 0)), y_shl,c_shl,v_shl,n_shl,z_shl);
-  u_shr: entity work.op_shr port map(std_logic_vector(reg_a), std_logic_vector(reg_b(2 downto 0)), y_shr,c_shr,v_shr,n_shr,z_shr);
-  u_sar: entity work.op_sar port map(std_logic_vector(reg_a), std_logic_vector(reg_b(2 downto 0)), y_sar,c_sar,v_sar,n_sar,z_sar);
+--   ----------------------------------------------------------------------------
+--   -- ALU operators 
+ u_add: entity work.op_add port map(std_logic_vector(reg_a), std_logic_vector(reg_b), y_add,c_add,v_add,n_add,z_add);
+ u_sub: entity work.op_sub port map(std_logic_vector(reg_a), std_logic_vector(reg_b), y_sub,c_sub,v_sub,n_sub,z_sub);
+ u_mul: entity work.op_mul port map(std_logic_vector(reg_a), std_logic_vector(reg_b), y_mul,c_mul,v_mul,n_mul,z_mul);
+-- u_shl: entity work.op_shl port map(std_logic_vector(reg_a), std_logic_vector(reg_b(2 downto 0)), y_shl,c_shl,v_shl,n_shl,z_shl);
+-- u_shr: entity work.op_shr port map(std_logic_vector(reg_a), std_logic_vector(reg_b(2 downto 0)), y_shr,c_shr,v_shr,n_shr,z_shr);
+-- u_sar: entity work.op_sar port map(std_logic_vector(reg_a), std_logic_vector(reg_b(2 downto 0)), y_sar,c_sar,v_sar,n_sar,z_sar);
 
   -- ALU MUX 
-  u_mux: entity work.alu_mux
-    port map(
-      sel=>op_sel,
-      y_add=>y_add, c_add=>c_add, v_add=>v_add, n_add=>n_add, z_add=>z_add,
-      y_sub=>y_sub, c_sub=>c_sub, v_sub=>v_sub, n_sub=>n_sub, z_sub=>z_sub,
-      y_mul=>y_mul, c_mul=>c_mul, v_mul=>v_mul, n_mul=>n_mul, z_mul=>z_mul,
-      y_shl=>y_shl, c_shl=>c_shl, v_shl=>v_shl, n_shl=>n_shl, z_shl=>z_shl,
-      y_shr=>y_shr, c_shr=>c_shr, v_shr=>v_shr, n_shr=>n_shr, z_shr=>z_shr,
-      y_sar=>y_sar, c_sar=>c_sar, v_sar=>v_sar, n_sar=>n_sar, z_sar=>z_sar,
-      y=>Y, carry=>C, overflow=>V, negative=>N, zero=>Z
-    );
+ u_mux: entity work.alu_mux
+   port map(
+     sel=>op_sel,
+     y_add=>y_add, c_add=>c_add, v_add=>v_add, n_add=>n_add, z_add=>z_add,
+     y_sub=>y_sub, c_sub=>c_sub, v_sub=>v_sub, n_sub=>n_sub, z_sub=>z_sub,
+     y_mul=>y_mul, c_mul=>c_mul, v_mul=>v_mul, n_mul=>n_mul, z_mul=>z_mul,
+     -- ------------------------------------------------------------------ 
+     y_shl=>y_shl, c_shl=>c_shl, v_shl=>v_shl, n_shl=>n_shl, z_shl=>z_shl,
+     y_shr=>y_shr, c_shr=>c_shr, v_shr=>v_shr, n_shr=>n_shr, z_shr=>z_shr,
+     y_sar=>y_sar, c_sar=>c_sar, v_sar=>v_sar, n_sar=>n_sar, z_sar=>z_sar,
+     -- ------------------------------------------------------------------
+     y=>Y, carry=>C, overflow=>V, negative=>N, zero=>Z
+   );
 
    -- ALU Status
   led_zero_o <= Z; led_carry_o<=C; led_over_o<=V; led_neg_o<=N;
 
-  -- PWM 
--- u_pwm_r: entity work.pwm8 port map(clk, rst_n, Y(15 downto 8), pwm_r_o);
---  u_pwm_g: entity work.pwm8 port map(clk, rst_n, Y(15 downto 8), pwm_g_o);
---  u_pwm_b: entity work.pwm8 port map(clk, rst_n, Y(15 downto 8), pwm_b_o);
+ 
+  
+  duty_r <= std_logic_vector(unsigned(Y(15 downto 8)));  
+  duty_g <= std_logic_vector(unsigned(Y(7 downto 0)));   
+  duty_b <= std_logic_vector(unsigned(Y(7 downto 0)));        
+
+  -- PWM  --  std_logic_vector(unsigned(Y) / 256); 
+ u_pwm_r: entity work.pwm8 port map(clk=>clk, rst_n=>rst_n, duty => duty_r , pwm => pwm_r_o);
+ u_pwm_g: entity work.pwm8 port map(clk=>clk, rst_n=>rst_n, duty => duty_g , pwm => pwm_g_o);
+ u_pwm_b: entity work.pwm8 port map(clk=>clk, rst_n=>rst_n, duty => duty_b , pwm => pwm_b_o);
 end architecture;
