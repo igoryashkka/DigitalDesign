@@ -175,17 +175,19 @@ architecture rtl of top_alu is
      y_add=>y_add, c_add=>c_add, v_add=>v_add, n_add=>n_add, z_add=>z_add,
      y_sub=>y_sub, c_sub=>c_sub, v_sub=>v_sub, n_sub=>n_sub, z_sub=>z_sub,
      y_mul=>y_mul, c_mul=>c_mul, v_mul=>v_mul, n_mul=>n_mul, z_mul=>z_mul,
+     -- ------------------------------------------------------------------ 
      y_shl=>y_shl, c_shl=>c_shl, v_shl=>v_shl, n_shl=>n_shl, z_shl=>z_shl,
      y_shr=>y_shr, c_shr=>c_shr, v_shr=>v_shr, n_shr=>n_shr, z_shr=>z_shr,
      y_sar=>y_sar, c_sar=>c_sar, v_sar=>v_sar, n_sar=>n_sar, z_sar=>z_sar,
+     -- ------------------------------------------------------------------
      y=>Y, carry=>C, overflow=>V, negative=>N, zero=>Z
    );
 
    -- ALU Status
   led_zero_o <= Z; led_carry_o<=C; led_over_o<=V; led_neg_o<=N;
 
-  -- PWM 
- --u_pwm_r: entity work.pwm8 port map(clk, rst_n, Y(15 downto 8), pwm_r_o);
- --u_pwm_g: entity work.pwm8 port map(clk, rst_n, Y(15 downto 8), pwm_g_o);
--- u_pwm_b: entity work.pwm8 port map(clk, rst_n, Y(15 downto 8), pwm_b_o);
+  -- PWM  --  std_logic_vector(unsigned(Y) / 256); 
+ u_pwm_r: entity work.pwm8 port map(clk, rst_n, std_logic_vector(unsigned(Y) / 256) , pwm_r_o);
+ u_pwm_g: entity work.pwm8 port map(clk, rst_n, std_logic_vector(unsigned(Y) / 256) , pwm_g_o);
+ u_pwm_b: entity work.pwm8 port map(clk, rst_n, std_logic_vector(unsigned(Y) / 256) , pwm_b_o);
 end architecture;
