@@ -65,58 +65,59 @@ architecture rtl of top_alu is
   signal C,V,N,Z    : std_logic;
 
     signal duty_r, duty_g, duty_b : std_logic_vector(7 downto 0);
+    
 --   -- UART wires
---   signal rx_byte    : std_logic_vector(7 downto 0);
---   signal rx_valid   : std_logic;
---   signal rx_ready   : std_logic := '1';
+  signal rx_byte    : std_logic_vector(7 downto 0);
+  signal rx_valid   : std_logic;
+  signal rx_ready   : std_logic := '1';
 
---   signal tx_ready   : std_logic;
---   signal tx_start   : std_logic := '0';
---   signal tx_byte    : std_logic_vector(7 downto 0) := (others=>'0');
+  signal tx_ready   : std_logic;
+  signal tx_start   : std_logic := '0';
+  signal tx_byte    : std_logic_vector(7 downto 0) := (others=>'0');
 
 --   -- Parser outputs
    signal p_op       : unsigned(2 downto 0); -- save for compilation
---   signal p_a        : unsigned(7 downto 0);
---   signal p_b        : unsigned(7 downto 0);
+   signal p_a        : unsigned(7 downto 0);
+   signal p_b        : unsigned(7 downto 0);
    signal p_stb      : std_logic; -- save for compilation
 
  begin
 
 --   -- UART
---  -- u_rx: entity work.uart_rx
---   --  generic map(CLK_FREQ_HZ=>CLK_FREQ_HZ, BAUD=>BAUD)
---    -- port map(
---    --   clk=>clk, rst_n=>rst_n, rx_pin=>uart_rx_i,
---     --  rx_data=>rx_byte, rx_data_valid=>rx_valid, rx_data_ready=>rx_ready
---    -- );
+  u_rx: entity work.uart_rx
+   generic map(CLK_FREQ_HZ=>CLK_FREQ_HZ, BAUD=>BAUD)
+    port map(
+     clk=>clk, rst_n=>rst_n, rx_pin=>uart_rx_i,
+     rx_data=>rx_byte, rx_data_valid=>rx_valid, rx_data_ready=>rx_ready
+    );
 
---   --u_tx: entity work.uart_tx
---    -- generic map(CLK_FREQ_HZ=>CLK_FREQ_HZ, BAUD=>BAUD)
---     --port map(
---      -- clk=>clk, rst_n=>rst_n,
---       --tx_data=>tx_byte, tx_data_valid=>tx_start, tx_data_ready=>tx_ready,
---       --tx_pin=>uart_tx_o
---     --);
+  u_tx: entity work.uart_tx
+   generic map(CLK_FREQ_HZ=>CLK_FREQ_HZ, BAUD=>BAUD)
+    port map(
+     clk=>clk, rst_n=>rst_n,
+      tx_data=>tx_byte, tx_data_valid=>tx_start, tx_data_ready=>tx_ready,
+      tx_pin=>uart_tx_o
+    );
   
--- --   process(clk, rst_n) begin
--- --     if rst_n='0' then
--- --       tx_start <= '0';
--- --     elsif rising_edge(clk) then
--- --       tx_start <= '0';
--- --       if rx_valid='1' and tx_ready='1' then
--- --         tx_byte  <= rx_byte;
--- --         tx_start <= '1';
--- --       end if;
--- --     end if;
--- --   end process;
+  process(clk, rst_n) begin
+    if rst_n='0' then
+      tx_start <= '0';
+    elsif rising_edge(clk) then
+      tx_start <= '0';
+      if rx_valid='1' and tx_ready='1' then
+        tx_byte  <= rx_byte;
+        tx_start <= '1';
+      end if;
+    end if;
+  end process;
 
---   -- alu:<op>:<A>;<B>\n
---  -- u_parser: entity work.uart_alu_parser
---   --  port map(
---    --   clk=>clk, rst_n=>rst_n,
---     --  rx_data=>rx_byte, rx_valid=>rx_valid, rx_ready=>open,
---      -- op_out=>p_op, a_out=>p_a, b_out=>p_b, cmd_stb=>p_stb
---     --);
+--  alu:<op>:<A>;<B>\n
+ u_parser: entity work.uart_alu_parser
+   port map(
+     clk=>clk, rst_n=>rst_n,
+     rx_data=>rx_byte, rx_valid=>rx_valid, rx_ready=>open,
+     op_out=>p_op, a_out=>p_a, b_out=>p_b, cmd_stb=>p_stb
+    );
 
 --   ----------------------------------------------------------------------------
 --   -- Buttons → pulses
@@ -153,8 +154,8 @@ architecture rtl of top_alu is
             when 5 => op_sel <= OP_SAR;
             when others => op_sel <= OP_ADD;
           end case;
-          --reg_a <= p_a;
-          --reg_b <= p_b; init via uart 
+          reg_a <= p_a;
+          reg_b <= p_b; init via uart 
         end if;
       end if;
     end if;
