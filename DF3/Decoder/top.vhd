@@ -64,6 +64,7 @@ architecture rtl of top_alu is
   signal Y          : std_logic_vector(15 downto 0);
   signal C,V,N,Z    : std_logic;
 
+    signal duty_r, duty_g, duty_b : std_logic_vector(7 downto 0);
 --   -- UART wires
 --   signal rx_byte    : std_logic_vector(7 downto 0);
 --   signal rx_valid   : std_logic;
@@ -79,7 +80,7 @@ architecture rtl of top_alu is
 --   signal p_b        : unsigned(7 downto 0);
    signal p_stb      : std_logic; -- save for compilation
 
--- begin
+ begin
 
 --   -- UART
 --  -- u_rx: entity work.uart_rx
@@ -186,8 +187,14 @@ architecture rtl of top_alu is
    -- ALU Status
   led_zero_o <= Z; led_carry_o<=C; led_over_o<=V; led_neg_o<=N;
 
+ 
+  
+  duty_r <= std_logic_vector(unsigned(Y(15 downto 8)));  
+  duty_g <= std_logic_vector(unsigned(Y(7 downto 0)));   
+  duty_b <= std_logic_vector(unsigned(Y(7 downto 0)));        
+
   -- PWM  --  std_logic_vector(unsigned(Y) / 256); 
- u_pwm_r: entity work.pwm8 port map(clk, rst_n, std_logic_vector(unsigned(Y) / 256) , pwm_r_o);
- u_pwm_g: entity work.pwm8 port map(clk, rst_n, std_logic_vector(unsigned(Y) / 256) , pwm_g_o);
- u_pwm_b: entity work.pwm8 port map(clk, rst_n, std_logic_vector(unsigned(Y) / 256) , pwm_b_o);
+ u_pwm_r: entity work.pwm8 port map(clk=>clk, rst_n=>rst_n, duty => duty_r , pwm => pwm_r_o);
+ u_pwm_g: entity work.pwm8 port map(clk=>clk, rst_n=>rst_n, duty => duty_g , pwm => pwm_g_o);
+ u_pwm_b: entity work.pwm8 port map(clk=>clk, rst_n=>rst_n, duty => duty_b , pwm => pwm_b_o);
 end architecture;
