@@ -21,3 +21,10 @@ set_property -dict { PACKAGE_PIN M19  IOSTANDARD LVCMOS33 } [get_ports { ctrl_mo
 set_property -dict { PACKAGE_PIN L15    IOSTANDARD LVCMOS33 } [get_ports { pwm_r_o }]; #IO_L22N_T3_AD7P_35 Sch=LED4_B
 set_property -dict { PACKAGE_PIN G17    IOSTANDARD LVCMOS33 } [get_ports { pwm_g_o }]; #IO_L16P_T2_35 Sch=LED4_G
 set_property -dict { PACKAGE_PIN N15    IOSTANDARD LVCMOS33 } [get_ports { pwm_b_o }]; #IO_L21P_T3_DQS_AD14P_35 Sch=LED4_R
+
+
+# # ChipKit Serial
+set_property -dict { PACKAGE_PIN W15   IOSTANDARD LVCMOS33 } [get_ports { uart_tx_o }]; #IO_L10N_T1_34 Sch=CK_MISO
+#set_property -dict { PACKAGE_PIN T12   IOSTANDARD LVCMOS33 } [get_ports { uart_rx_i }]; #IO_L2P_T0_34  Sch=CK_MISO
+# set_property -dict { PACKAGE_PIN H15   IOSTANDARD LVCMOS33 } [get_ports { ck_sck  }]; #IO_L19P_T3_35 Sch=CK_SCK
+set_property -dict { PACKAGE_PIN F16   IOSTANDARD LVCMOS33 } [get_ports { uart_rx_i   }]; #IO_L6P_T0_35  Sch=CK_SS
