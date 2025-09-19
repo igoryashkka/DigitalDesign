@@ -80,6 +80,11 @@ architecture rtl of top_alu is
    signal p_a        : unsigned(7 downto 0);
    signal p_b        : unsigned(7 downto 0);
    signal p_stb      : std_logic; -- save for compilation
+--   -- Echo buffer 
+ 
+signal echo_buf    : std_logic_vector(7 downto 0) := (others=>'0');
+signal echo_have   : std_logic := '0'; 
+
 
  begin
 
@@ -99,17 +104,35 @@ architecture rtl of top_alu is
       tx_pin=>uart_tx_o
     );
   
-  process(clk, rst_n) begin
-    if rst_n='0' then
-      tx_start <= '0';
-    elsif rising_edge(clk) then
-      tx_start <= '0';
-      if rx_valid='1' and tx_ready='1' then
-        tx_byte  <= rx_byte;
-        tx_start <= '1';
+
+
+process(clk, rst_n) begin
+  if rst_n='0' then
+    tx_start  <= '0';
+    tx_byte   <= (others=>'0');
+    echo_buf  <= (others=>'0');
+    echo_have <= '0';
+  elsif rising_edge(clk) then
+    tx_start <= '0'; 
+
+    
+    if rx_valid = '1' then
+      if echo_have = '0' then
+        echo_buf  <= rx_byte;
+        echo_have <= '1';
+      else
+        
       end if;
     end if;
-  end process;
+
+
+    if echo_have = '1' and tx_ready = '1' then
+      tx_byte   <= echo_buf;
+      tx_start  <= '1';      
+      echo_have <= '0';     
+    end if;
+  end if;
+end process;
 
 --  alu:<op>:<A>;<B>\n
  u_parser: entity work.uart_alu_parser
