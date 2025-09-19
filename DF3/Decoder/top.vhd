@@ -81,6 +81,9 @@ architecture rtl of top_alu is
    signal p_b        : unsigned(7 downto 0);
    signal p_stb      : std_logic; -- save for compilation
 
+signal echo_buf    : std_logic_vector(7 downto 0) := (others=>'0');
+signal echo_have   : std_logic := '0'; 
+
  begin
 
 --   -- UART
