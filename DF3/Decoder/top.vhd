@@ -105,7 +105,6 @@ signal echo_have   : std_logic := '0';
     );
   
 
-
 process(clk, rst_n) begin
   if rst_n='0' then
     tx_start  <= '0';
@@ -133,6 +132,7 @@ process(clk, rst_n) begin
     end if;
   end if;
 end process;
+
 
 --  alu:<op>:<A>;<B>\n
  u_parser: entity work.uart_alu_parser
