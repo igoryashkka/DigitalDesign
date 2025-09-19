@@ -4,10 +4,10 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity uart_tx is
-  generic(
-    CLK_FREQ_HZ : integer := 50_000_000;
-    BAUD        : integer := 115200
-  );
+generic (
+  CLK_FREQ_HZ : integer := 125_000_000;
+  BAUD        : integer := 115200
+);
   port(
     clk           : in  std_logic;
     rst_n         : in  std_logic;
