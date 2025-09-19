@@ -13,15 +13,15 @@ entity uart_rx is
     rst_n         : in  std_logic;
     rx_pin        : in  std_logic;               -- serial RX
     rx_data       : out std_logic_vector(7 downto 0);
-    rx_data_valid : out std_logic;               -- pulses '1' for one clk when a byte ready
-    rx_data_ready : in  std_logic                -- assert '1' to drop valid (classic handshake)
+    rx_data_valid : out std_logic;               -- 1 clk pulse when a byte is ready
+    rx_data_ready : in  std_logic                -- handshake: drop valid when '1'
   );
 end entity;
 
 architecture rtl of uart_rx is
   constant CYCLE : integer := integer(CLK_FREQ_HZ / BAUD);
 
-  type rx_state_t is (RX_IDLE, RX_START, RX_DATA, RX_STOP, RX_HOLD);
+  type rx_state_t is (RX_IDLE, RX_START, RX_DATA_STATE, RX_STOP, RX_HOLD);
   signal state, nxt : rx_state_t := RX_IDLE;
 
   -- sync / edge detect
@@ -36,21 +36,25 @@ architecture rtl of uart_rx is
   signal valid_q      : std_logic := '0';
   signal data_q       : std_logic_vector(7 downto 0) := (others=>'0');
 begin
+  -- outputs
   rx_data       <= data_q;
   rx_data_valid <= valid_q;
 
   -- 2FF synchronizer
   process(clk, rst_n) begin
     if rst_n='0' then
-      rx_d0 <= '1'; rx_d1 <='1';
+      rx_d0 <= '1';
+      rx_d1 <= '1';
     elsif rising_edge(clk) then
       rx_d0 <= rx_pin;
       rx_d1 <= rx_d0;
     end if;
   end process;
-  start_edge <= rx_d1 and not rx_d0; -- falling edge
 
-  -- state reg
+  -- detect start (falling edge)
+  start_edge <= rx_d1 and not rx_d0;
+
+  -- state register
   process(clk, rst_n) begin
     if rst_n='0' then
       state <= RX_IDLE;
@@ -59,28 +63,46 @@ begin
     end if;
   end process;
 
-  -- next-state
   process(state, start_edge, baud_cnt, bit_idx, rx_data_ready) begin
-    nxt := state;
+    nxt <= state;
     case state is
-      when RX_IDLE  => if start_edge='1'              then nxt := RX_START; end if;
-      when RX_START => if to_integer(baud_cnt)=CYCLE-1 then nxt := RX_DATA;  end if;
-      when RX_DATA  =>
-        if to_integer(baud_cnt)=CYCLE-1 and bit_idx=7 then nxt := RX_STOP; end if;
-      when RX_STOP  =>
-        if to_integer(baud_cnt)=(CYCLE/2 - 1) then nxt := RX_HOLD; end if;
-      when RX_HOLD  => if rx_data_ready='1' then nxt := RX_IDLE; end if;
+      when RX_IDLE =>
+        if start_edge = '1' then
+          nxt <= RX_START;
+        end if;
+
+      when RX_START =>
+        if to_integer(baud_cnt) = CYCLE - 1 then
+          nxt <= RX_DATA_STATE;
+        end if;
+
+      when RX_DATA_STATE =>
+        if (to_integer(baud_cnt) = CYCLE - 1) and
+           (bit_idx = to_unsigned(7, bit_idx'length)) then
+          nxt <= RX_STOP;
+        end if;
+
+      when RX_STOP =>
+        if to_integer(baud_cnt) = (CYCLE/2 - 1) then
+          nxt <= RX_HOLD;
+        end if;
+
+      when RX_HOLD =>
+        if rx_data_ready = '1' then
+          nxt <= RX_IDLE;
+        end if;
     end case;
   end process;
 
-  -- counters
-  sample_mid <= '1' when to_integer(baud_cnt)=(CYCLE/2 - 1) else '0';
+  -- half-bit sample point
+  sample_mid <= '1' when to_integer(baud_cnt) = (CYCLE/2 - 1) else '0';
 
+  -- baud counter
   process(clk, rst_n) begin
     if rst_n='0' then
       baud_cnt <= (others=>'0');
     elsif rising_edge(clk) then
-      if (state=RX_DATA and to_integer(baud_cnt)=CYCLE-1) or (state/=nxt) then
+      if (state = RX_DATA_STATE and to_integer(baud_cnt) = CYCLE - 1) or (state /= nxt) then
         baud_cnt <= (others=>'0');
       else
         baud_cnt <= baud_cnt + 1;
@@ -88,12 +110,13 @@ begin
     end if;
   end process;
 
+  -- bit index
   process(clk, rst_n) begin
     if rst_n='0' then
       bit_idx <= (others=>'0');
     elsif rising_edge(clk) then
-      if state=RX_DATA then
-        if to_integer(baud_cnt)=CYCLE-1 then
+      if state = RX_DATA_STATE then
+        if to_integer(baud_cnt) = CYCLE - 1 then
           bit_idx <= bit_idx + 1;
         end if;
       else
@@ -102,27 +125,27 @@ begin
     end if;
   end process;
 
-  -- sample bits at middle of each bit time
+  
   process(clk, rst_n) begin
     if rst_n='0' then
       bits <= (others=>'0');
     elsif rising_edge(clk) then
-      if state=RX_DATA and sample_mid='1' then
+      if state = RX_DATA_STATE and sample_mid = '1' then
         bits(to_integer(bit_idx)) <= rx_d1;
       end if;
     end if;
   end process;
 
-  -- output/valid
+  
   process(clk, rst_n) begin
     if rst_n='0' then
       data_q  <= (others=>'0');
       valid_q <= '0';
     elsif rising_edge(clk) then
-      if state=RX_STOP and state/=nxt then
+      if state = RX_STOP and state /= nxt then
         data_q  <= bits;
         valid_q <= '1';
-      elsif state=RX_HOLD and rx_data_ready='1' then
+      elsif state = RX_HOLD and rx_data_ready = '1' then
         valid_q <= '0';
       end if;
     end if;

@@ -23,8 +23,8 @@ entity top_alu is
     btn_b_down     : in  std_logic;
 
     -- UART
-   -- uart_rx_i      : in  std_logic;
-   -- uart_tx_o      : out std_logic;
+    uart_rx_i      : in  std_logic;
+    uart_tx_o      : out std_logic;
 
     -- sts
     led_zero_o     : out std_logic;
@@ -155,7 +155,7 @@ architecture rtl of top_alu is
             when others => op_sel <= OP_ADD;
           end case;
           reg_a <= p_a;
-          reg_b <= p_b; init via uart 
+          reg_b <= p_b; 
         end if;
       end if;
     end if;
