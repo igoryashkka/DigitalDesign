@@ -24,7 +24,7 @@ generic (
 
     -- UART
     uart_rx_i      : in  std_logic;
-    uart_tx_o      : out std_logic;
+    --uart_tx_o      : out std_logic;
 
     -- sts
     led_zero_o     : out std_logic;
@@ -81,8 +81,8 @@ architecture rtl of top_alu is
    signal p_b        : unsigned(7 downto 0);
    signal p_stb      : std_logic; -- save for compilation
 
-signal echo_buf    : std_logic_vector(7 downto 0) := (others=>'0');
-signal echo_have   : std_logic := '0'; 
+-- signal echo_buf    : std_logic_vector(7 downto 0) := (others=>'0');
+-- signal echo_have   : std_logic := '0'; 
 
  begin
 
@@ -94,41 +94,41 @@ signal echo_have   : std_logic := '0';
      rx_data=>rx_byte, rx_data_valid=>rx_valid, rx_data_ready=>rx_ready
     );
 
-  u_tx: entity work.uart_tx
-   generic map(CLK_FREQ_HZ=>CLK_FREQ_HZ, BAUD=>BAUD)
-    port map(
-     clk=>clk, rst_n=>rst_n,
-      tx_data=>tx_byte, tx_data_valid=>tx_start, tx_data_ready=>tx_ready,
-      tx_pin=>uart_tx_o
-    );
+  -- u_tx: entity work.uart_tx
+  --  generic map(CLK_FREQ_HZ=>CLK_FREQ_HZ, BAUD=>BAUD)
+  --   port map(
+  --    clk=>clk, rst_n=>rst_n,
+  --     tx_data=>tx_byte, tx_data_valid=>tx_start, tx_data_ready=>tx_ready,
+  --     tx_pin=>uart_tx_o
+  --   );
   
-process(clk, rst_n) begin
-  if rst_n='0' then
-    tx_start  <= '0';
-    tx_byte   <= (others=>'0');
-    echo_buf  <= (others=>'0');
-    echo_have <= '0';
-  elsif rising_edge(clk) then
-    tx_start <= '0'; 
+-- process(clk, rst_n) begin
+--   if rst_n='0' then
+--     tx_start  <= '0';
+--     tx_byte   <= (others=>'0');
+--     echo_buf  <= (others=>'0');
+--     echo_have <= '0';
+--   elsif rising_edge(clk) then
+--     tx_start <= '0'; 
 
     
-    if rx_valid = '1' then
-      if echo_have = '0' then
-        echo_buf  <= rx_byte;
-        echo_have <= '1';
-      else
+--     if rx_valid = '1' then
+--       if echo_have = '0' then
+--         echo_buf  <= rx_byte;
+--         echo_have <= '1';
+--       else
         
-      end if;
-    end if;
+--       end if;
+--     end if;
 
 
-    if echo_have = '1' and tx_ready = '1' then
-      tx_byte   <= echo_buf;
-      tx_start  <= '1';      
-      echo_have <= '0';     
-    end if;
-  end if;
-end process;
+--     if echo_have = '1' and tx_ready = '1' then
+--       tx_byte   <= echo_buf;
+--       tx_start  <= '1';      
+--       echo_have <= '0';     
+--     end if;
+--   end if;
+-- end process;
 
 
 --  alu:<op>:<A>;<B>\n
