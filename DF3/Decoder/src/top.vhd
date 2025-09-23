@@ -13,18 +13,12 @@ generic (
   port(
     clk            : in  std_logic;
     rst_n          : in  std_logic;
-
-    ctrl_mode      : in  std_logic;               -- '0' = buttons, '1' = uart
-
    
     btn_a_up       : in  std_logic;
     btn_a_down     : in  std_logic;
     btn_b_up       : in  std_logic;
     btn_b_down     : in  std_logic;
-
-    -- UART
-    uart_rx_i      : in  std_logic;
-    uart_tx_o      : out std_logic;
+    op_next        : in  std_logic;
 
     -- sts
     led_zero_o     : out std_logic;
@@ -53,6 +47,9 @@ architecture rtl of top_alu is
   --
   signal op_sel   : op_t := OP_ADD;
 
+  signal op_pulse : std_logic;
+  signal op_idx   : unsigned(2 downto 0) := (others=>'0'); 
+
 --   --  ALU
   signal y_add,y_sub,y_mul,y_shl,y_shr,y_sar : std_logic_vector(15 downto 0);
   signal c_add,v_add,n_add,z_add : std_logic;
@@ -67,78 +64,8 @@ architecture rtl of top_alu is
 
   signal duty_r, duty_g, duty_b : std_logic_vector(7 downto 0);
     
---   -- UART wires
-  signal rx_byte    : std_logic_vector(7 downto 0);
-  signal rx_valid   : std_logic;
-  signal rx_ready   : std_logic := '1';
-
-  signal tx_ready   : std_logic;
-  signal tx_start   : std_logic := '0';
-  signal tx_byte    : std_logic_vector(7 downto 0) := (others=>'0');
-
---   -- Parser outputs
-   signal p_op       : unsigned(2 downto 0);
-   signal p_a        : unsigned(7 downto 0);
-   signal p_b        : unsigned(7 downto 0);
-   signal p_stb      : std_logic; 
-
-signal echo_buf    : std_logic_vector(7 downto 0) := (others=>'0');
-signal echo_have   : std_logic := '0'; 
-
  begin
 
---   -- UART
-  u_rx: entity work.uart_rx
-   generic map(CLK_FREQ_HZ=>CLK_FREQ_HZ, BAUD=>BAUD)
-    port map(
-     clk=>clk, rst_n=>rst_n, rx_pin=>uart_rx_i,
-     rx_data=>rx_byte, rx_data_valid=>rx_valid, rx_data_ready=>rx_ready
-    );
-
-  u_tx: entity work.uart_tx
-   generic map(CLK_FREQ_HZ=>CLK_FREQ_HZ, BAUD=>BAUD)
-    port map(
-     clk=>clk, rst_n=>rst_n,
-      tx_data=>tx_byte, tx_data_valid=>tx_start, tx_data_ready=>tx_ready,
-      tx_pin=>uart_tx_o
-    );
-  
-process(clk, rst_n) begin
-  if rst_n='0' then
-    tx_start  <= '0';
-    tx_byte   <= (others=>'0');
-    echo_buf  <= (others=>'0');
-    echo_have <= '0';
-  elsif rising_edge(clk) then
-    tx_start <= '0'; 
-
-    
-    if rx_valid = '1' then
-      if echo_have = '0' then
-        echo_buf  <= rx_byte;
-        echo_have <= '1';
-      else
-        
-      end if;
-    end if;
-
-
-    if echo_have = '1' and tx_ready = '1' then
-      tx_byte   <= echo_buf;
-      tx_start  <= '1';      
-      echo_have <= '0';     
-    end if;
-  end if;
-end process;
-
-
---  alu:<op>:<A>;<B>\n
- u_parser: entity work.uart_alu_parser
-   port map(
-     clk=>clk, rst_n=>rst_n,
-     rx_data=>rx_byte, rx_valid=>rx_valid, rx_ready=>open,
-     op_out=>p_op, a_out=>p_a, b_out=>p_b, cmd_stb=>p_stb
-    );
 
 --   ----------------------------------------------------------------------------
 --   -- Buttons → pulses
@@ -146,8 +73,8 @@ end process;
   db_adn : entity work.debounce_onepulse generic map(N_SAMPLES=>20000) port map(clk,rst_n,btn_a_down,a_dn_p);
   db_bup : entity work.debounce_onepulse generic map(N_SAMPLES=>20000) port map(clk,rst_n,btn_b_up ,b_up_p);
   db_bdn : entity work.debounce_onepulse generic map(N_SAMPLES=>20000) port map(clk,rst_n,btn_b_down,b_dn_p);
+  db_op : entity work.debounce_onepulse generic map(N_SAMPLES=>20000) port map(clk, rst_n, op_next, op_pulse);
 
- 
   regA_btn: entity work.updown_byte port map(clk,rst_n,a_up_p,a_dn_p,btn_a_q);
   regB_btn: entity work.updown_byte port map(clk,rst_n,b_up_p,b_dn_p,btn_b_q);
 
@@ -158,28 +85,26 @@ end process;
       reg_b <= (others=>'0');
       op_sel <= OP_ADD;
     elsif rising_edge(clk) then
-      if ctrl_mode='0' then
-
-        reg_a <= unsigned(btn_a_q);
-        reg_b <= unsigned(btn_b_q);
-    
+    reg_a <= unsigned(btn_a_q);
+    reg_b <= unsigned(btn_b_q);
+    if op_pulse='1' then
+      if op_idx = "101" then     
+        op_idx <= (others=>'0'); 
       else
-       
-        if p_stb='1' then
-          case to_integer(p_op) is
-            when 0 => op_sel <= OP_ADD;
-            when 1 => op_sel <= OP_SUB;
-            when 2 => op_sel <= OP_MUL;
-            when 3 => op_sel <= OP_SHL;
-            when 4 => op_sel <= OP_SHR;
-            when 5 => op_sel <= OP_SAR;
-            when others => op_sel <= OP_ADD;
-          end case;
-          reg_a <= p_a;
-          reg_b <= p_b; 
-        end if;
+        op_idx <= op_idx + 1;
       end if;
     end if;
+    case op_idx is
+      when "000" => op_sel <= OP_ADD; 
+      when "001" => op_sel <= OP_SUB; 
+      when "010" => op_sel <= OP_MUL; 
+      when "011" => op_sel <= OP_SHL; 
+      when "100" => op_sel <= OP_SHR; 
+      when "101" => op_sel <= OP_SAR; 
+      when others => op_sel <= OP_ADD;
+    end case;
+  end if;
+
   end process;
 
 --   ----------------------------------------------------------------------------
