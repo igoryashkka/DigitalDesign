@@ -18,8 +18,8 @@ EOL_MAP = {
 def format_cmd(op: int, a: int, b: int, eol: str) -> bytes:
     if not (0 <= op <= 5):
         raise ValueError("op must be 0..5 (0=ADD,1=SUB,2=MUL,3=SHL,4=SHR,5=SAR)")
-    if not (0 <= a <= 255 and 0 <= b <= 255):
-        raise ValueError("A and B must be 0..255")
+    if not (-128 <= a <= 127 and -128 <= b <= 127):
+        raise ValueError("A and B must be -128..127")
     cmd = f"alu:{op}:{a};{b}{eol}"
     return cmd.encode("ascii")
 
@@ -90,9 +90,9 @@ def run_selftest(ser, eol: str, rounds: int = 50, seed: int = 1):
     print(f"Running selftest: {rounds} random commands...")
     ok, bad = 0, 0
     for i in range(rounds):
-        op = rng.randint(0, 2)   # use 0..2 since SHL/SHR/SAR may be disabled
-        a  = rng.randint(0, 255)
-        b  = rng.randint(0, 255)
+        op = rng.randint(0, 5)   # use 0..2 since SHL/SHR/SAR may be disabled
+        a  = rng.randint(-128, 127)
+        b  = rng.randint(-128, 127)
         tx = format_cmd(op, a, b, eol)
         ser.write(tx); ser.flush()
         rx = read_exact(ser, len(tx), ser.timeout or 1.0)
