@@ -20,9 +20,7 @@ generic (
     btn_b_down     : in  std_logic;
 
     -- PWM RGB
-    pwm_r_o        : out std_logic;
-    pwm_g_o        : out std_logic;
-    pwm_b_o        : out std_logic
+    pwm_muxed_o    : out std_logic;
   );
 end entity;
 
@@ -58,42 +56,20 @@ architecture rtl of top_alu is
   regB_btn: entity work.updown_byte port map(clk,rst_n,b_up_p,b_dn_p,btn_b_q);
 
 
-  process(clk, rst_n) begin
-    if rst_n='0' then
-      reg_a <= (others=>'0');
-      reg_b <= (others=>'0');
-      op_sel <= OP_ADD;
-    elsif rising_edge(clk) then
-    reg_a <= unsigned(btn_a_q);
-    reg_b <= unsigned(btn_b_q);
-    if op_pulse='1' then
-      if op_idx = "101" then     
-        op_idx <= (others=>'0'); 
-      else
-        op_idx <= op_idx + 1;
-      end if;
-    end if;
-    case op_idx is
-      when "000" => op_sel <= OP_ADD; 
-      when "001" => op_sel <= OP_SUB; 
-      when "010" => op_sel <= OP_MUL; 
-      when "011" => op_sel <= OP_SHL; 
-      when "100" => op_sel <= OP_SHR; 
-      when "101" => op_sel <= OP_SAR; 
-      when others => op_sel <= OP_ADD;
-    end case;
-  end if;
-
-  end process;
+  -- Mux : counter -> pwm channel 
+  u_mux : entity work.mux2
+    generic map (N_BITS => N_BITS)
+    port map (
+      sel => sw0_sync,
+      a   => level_a,
+      b   => level_b,
+      y   => level_sel
+    );
 
 
+  -- PWM 
+  u_pwm: entity work.pwm8 port map(clk  => clk,rst_n=> rst_n,duty => duty_sel,pwm  => pwm_core);
 
-  duty_r <= std_logic_vector(unsigned(Y(15 downto 8)));  
-  duty_g <= std_logic_vector(unsigned(Y(7 downto 0)));   
-  duty_b <= std_logic_vector(unsigned(Y(7 downto 0)));        
+  pwm_muxed_o <= pwm_core;
 
-  -- PWM  
- u_pwm_r: entity work.pwm8 port map(clk=>clk, rst_n=>rst_n, duty => duty_r , pwm => pwm_r_o);
- u_pwm_g: entity work.pwm8 port map(clk=>clk, rst_n=>rst_n, duty => duty_g , pwm => pwm_g_o);
- u_pwm_b: entity work.pwm8 port map(clk=>clk, rst_n=>rst_n, duty => duty_b , pwm => pwm_b_o);
 end architecture;
