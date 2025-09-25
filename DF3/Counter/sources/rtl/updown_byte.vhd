@@ -3,11 +3,14 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity updown_byte is
+generic(
+    N_BITS : positive := 8
+  );
   port(
     clk, rst_n : in  std_logic;
     inc_pulse  : in  std_logic;       
     dec_pulse  : in  std_logic;
-    q          : out std_logic_vector(7 downto 0)
+    q          : out std_logic_vector(N_BITS-1 downto 0)
   );
 end entity;
 

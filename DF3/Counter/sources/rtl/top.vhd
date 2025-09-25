@@ -7,8 +7,8 @@ use work.alu_pkg.all;
 
 entity top_alu is
 generic (
-  CLK_FREQ_HZ : integer := 125_000_000;
-  BAUD        : integer := 115200
+  CLK_FREQ_HZ : integer  := 125_000_000;
+  N_BITS      : positive := 8
 );
   port(
     clk            : in  std_logic;
@@ -19,8 +19,10 @@ generic (
     btn_b_up       : in  std_logic;
     btn_b_down     : in  std_logic;
 
+    sw_op       : in  std_logic;
+
     -- PWM RGB
-    pwm_muxed_o    : out std_logic;
+    pwm_o    : out std_logic;
   );
 end entity;
 
@@ -34,8 +36,6 @@ architecture rtl of top_alu is
 
   --  A/B btns
   signal btn_a_q, btn_b_q : std_logic_vector(7 downto 0);
-
-
 
   signal Y          : std_logic_vector(15 downto 0);
 
@@ -52,24 +52,22 @@ architecture rtl of top_alu is
   db_bdn : entity work.debounce_onepulse generic map(N_SAMPLES=>20000) port map(clk,rst_n,btn_b_down,b_dn_p);
   db_op : entity work.debounce_onepulse generic map(N_SAMPLES=>20000) port map(clk, rst_n, op_next, op_pulse);
 
-  regA_btn: entity work.updown_byte port map(clk,rst_n,a_up_p,a_dn_p,btn_a_q);
-  regB_btn: entity work.updown_byte port map(clk,rst_n,b_up_p,b_dn_p,btn_b_q);
+  regA_btn: entity work.updown_byte  generic map (N_BITS => N_BITS) port map(clk,rst_n,a_up_p,a_dn_p,btn_a_q);
+  regB_btn: entity work.updown_byte  generic map (N_BITS => N_BITS) port map(clk,rst_n,b_up_p,b_dn_p,btn_b_q);
 
 
   -- Mux : counter -> pwm channel 
   u_mux : entity work.mux2
     generic map (N_BITS => N_BITS)
     port map (
-      sel => sw0_sync,
-      a   => level_a,
-      b   => level_b,
-      y   => level_sel
+      sel => sw_op,
+      a   => btn_a_q,
+      b   => btn_b_q,
+      y   => duty_sel
     );
 
 
   -- PWM 
-  u_pwm: entity work.pwm8 port map(clk  => clk,rst_n=> rst_n,duty => duty_sel,pwm  => pwm_core);
-
-  pwm_muxed_o <= pwm_core;
+  u_pwm: entity work.pwm8 port map(clk  => clk,rst_n=> rst_n,duty => duty_sel,pwm  => pwm_o);
 
 end architecture;
