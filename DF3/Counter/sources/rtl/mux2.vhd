@@ -8,9 +8,9 @@ entity mux2 is
   );
   port(
     sel : in  std_logic;                                  -- 0->a, 1->b
-    a   : in  unsigned(N_BITS-1 downto 0);
-    b   : in  unsigned(N_BITS-1 downto 0);
-    y   : out unsigned(N_BITS-1 downto 0)
+    a   : in  std_logic_vector(N_BITS-1 downto 0);
+    b   : in  std_logic_vector(N_BITS-1 downto 0);
+    y   : out std_logic_vector(N_BITS-1 downto 0)
   );
 end entity;
 
