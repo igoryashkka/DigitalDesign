@@ -13,14 +13,16 @@ generic (
     clk            : in  std_logic;
     rst_n          : in  std_logic;
    
-    sw_op         : in  std_logic;
+    sw_op          : in  std_logic;
     btn_a_up       : in  std_logic;
     btn_a_down     : in  std_logic;
     btn_b_up       : in  std_logic;
     btn_b_down     : in  std_logic;
 
     -- PWM RGB
-    pwm_muxed_o    : out std_logic 
+    pwm_muxed_o    : out std_logic;
+    led            : out std_logic_vector(3 downto 0)
+
   );
 end entity;
 
@@ -37,7 +39,7 @@ architecture rtl of top is
 
 
 
-  signal Y_sel          : std_logic_vector(7 downto 0);
+  signal Y_sel           : std_logic_vector(7 downto 0);
 
   signal duty_r, duty_g, duty_b : std_logic_vector(7 downto 0);
     
@@ -65,7 +67,10 @@ architecture rtl of top is
       y   => Y_sel
     );
 
+  -- LED 
 
+    led(3 downto 0) <= btn_b_q(3 downto 0) when sw_op = '1'
+                   else btn_a_q(3 downto 0);
   -- PWM 
   u_pwm: entity work.pwm8 port map(clk  => clk,rst_n=> rst_n,duty => Y_sel ,pwm  => pwm_muxed_o);
 
