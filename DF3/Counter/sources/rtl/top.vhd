@@ -66,8 +66,8 @@ architecture rtl of top is
   -- Scale to PWM range
   u_scale : entity work.scale_bits generic map(N_IN=>N_BITS, N_OUT=>N_PWM_BITS) port map(x=>y_raw, y=>duty8);
 
-  -- LEDs for regs
-  led(3 downto 0) <= btn_b_q(3 downto 0) when sw_op = '1' else btn_a_q(3 downto 0);
+  -- LEDs for regs works fine if STEP for regs is '1', need more leds :(
+   led(3 downto 0) <= btn_b_q(3 downto 0) when sw_op = '1' else btn_a_q(3 downto 0);
 
   -- PWM 
   u_pwm: entity work.pwm8 generic map(N_BITS => N_PWM_BITS) port map(clk  => clk,rst_n=> rst_n,duty => duty8,pwm  => pwm_muxed_o);
