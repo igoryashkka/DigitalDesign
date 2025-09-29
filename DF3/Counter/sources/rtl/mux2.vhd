@@ -7,7 +7,7 @@ entity mux2 is
     N_BITS : positive := 8
   );
   port(
-    sel : in  std_logic;                                  -- 0->a, 1->b
+    sel : in  std_logic;                                 
     a   : in  std_logic_vector(N_BITS-1 downto 0);
     b   : in  std_logic_vector(N_BITS-1 downto 0);
     y   : out std_logic_vector(N_BITS-1 downto 0)

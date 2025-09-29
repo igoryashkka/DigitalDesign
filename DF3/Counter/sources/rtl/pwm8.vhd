@@ -3,15 +3,18 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity pwm8 is
+ generic(
+    N_BITS : positive := 8
+  );
   port(
     clk, rst_n : in  std_logic;
-    duty       : in  std_logic_vector(7 downto 0);
+    duty       : in  std_logic_vector(N_BITS - 1 downto 0);
     pwm        : out std_logic
   );
 end entity;
 
 architecture rtl of pwm8 is
-  signal cnt : unsigned(7 downto 0) := (others=>'0');
+  signal cnt : unsigned(N_BITS - 1 downto 0) := (others=>'0');
 begin
   process(clk, rst_n) begin
     if rst_n='0' then

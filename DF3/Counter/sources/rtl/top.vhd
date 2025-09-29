@@ -5,9 +5,9 @@ use ieee.numeric_std.all;
 
 entity top is
 generic (
-  CLK_FREQ_HZ : integer  := 125_000_000;
-  BAUD        : integer  := 115200;
-  N_BITS      : positive := 8
+    N_BITS     : positive := 16;   
+    N_PWM_BITS : positive := 8;
+    STEP       : positive := 32
 );
   port(
     clk            : in  std_logic;
@@ -31,17 +31,13 @@ architecture rtl of top is
   -- Debounced pulses
   signal a_up_p, a_dn_p, b_up_p, b_dn_p : std_logic;
 
-  -- A/B regs 
-  signal reg_a, reg_b : unsigned(7 downto 0) := (others=>'0');
-
   --  A/B btns
-  signal btn_a_q, btn_b_q : std_logic_vector(7 downto 0);
-
-
-
-  signal Y_sel           : std_logic_vector(7 downto 0);
-
-  signal duty_r, duty_g, duty_b : std_logic_vector(7 downto 0);
+  signal btn_a_q, btn_b_q : std_logic_vector(N_BITS - 1 downto 0);
+ 
+  -- PWM out to rgb led
+  
+  signal y_raw            : std_logic_vector(N_BITS-1 downto 0);
+  signal duty8            : std_logic_vector(N_PWM_BITS-1 downto 0);
     
  begin
 
@@ -53,8 +49,8 @@ architecture rtl of top is
   db_bup : entity work.debounce_onepulse generic map(N_SAMPLES=>20000) port map(clk,rst_n,btn_b_up ,b_up_p);
   db_bdn : entity work.debounce_onepulse generic map(N_SAMPLES=>20000) port map(clk,rst_n,btn_b_down,b_dn_p);
 
-  regA_btn: entity work.updown_byte port map(clk,rst_n,a_up_p,a_dn_p,btn_a_q);
-  regB_btn: entity work.updown_byte port map(clk,rst_n,b_up_p,b_dn_p,btn_b_q);
+  regA_btn: entity work.updown_byte generic map(N_BITS => N_BITS, STEP=>STEP) port map(clk,rst_n,a_up_p,a_dn_p,btn_a_q);
+  regB_btn: entity work.updown_byte generic map(N_BITS => N_BITS, STEP=>STEP) port map(clk,rst_n,b_up_p,b_dn_p,btn_b_q);
 
 
   -- Mux : counter -> pwm channel 
@@ -64,14 +60,16 @@ architecture rtl of top is
       sel => sw_op,
       a   => btn_a_q,
       b   => btn_b_q,
-      y   => Y_sel
+      y   => y_raw
     );
 
-  -- LED 
+  -- Scale to PWM range
+  u_scale : entity work.scale_bits generic map(N_IN=>N_BITS, N_OUT=>N_PWM_BITS) port map(x=>y_raw, y=>duty8);
 
-    led(3 downto 0) <= btn_b_q(3 downto 0) when sw_op = '1'
-                   else btn_a_q(3 downto 0);
+  -- LEDs for regs
+  led(3 downto 0) <= btn_b_q(3 downto 0) when sw_op = '1' else btn_a_q(3 downto 0);
+
   -- PWM 
-  u_pwm: entity work.pwm8 port map(clk  => clk,rst_n=> rst_n,duty => Y_sel ,pwm  => pwm_muxed_o);
+  u_pwm: entity work.pwm8 generic map(N_BITS => N_PWM_BITS) port map(clk  => clk,rst_n=> rst_n,duty => duty8,pwm  => pwm_muxed_o);
 
 end architecture;
