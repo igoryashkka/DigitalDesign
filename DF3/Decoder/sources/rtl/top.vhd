@@ -79,8 +79,8 @@ begin
     port map(
       clk       => clk,
       rst_n     => rst_n,
-      inc_pulse => btn_lvl(0),  
-      dec_pulse => btn_lvl(1),  
+      inc_lvl   => btn_lvl(0),  
+      dec_lvl   => btn_lvl(1),  
       q         => btn_a_q
     );
 
@@ -89,8 +89,8 @@ begin
     port map(
       clk       => clk,
       rst_n     => rst_n,
-      inc_pulse => btn_lvl(2), 
-      dec_pulse => btn_lvl(3),  
+      inc_lvl   => btn_lvl(2), 
+      dec_lvl   => btn_lvl(3),  
       q         => btn_b_q
     );
 

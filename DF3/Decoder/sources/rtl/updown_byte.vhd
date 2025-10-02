@@ -12,8 +12,8 @@ entity updown_byte is
   );
   port(
     clk, rst_n : in  std_logic;
-    inc_pulse    : in  std_logic;
-    dec_pulse    : in  std_logic;  
+    inc_lvl    : in  std_logic;
+    dec_lvl    : in  std_logic;  
     q          : out std_logic_vector(N_BITS-1 downto 0)
   );
 end entity;
@@ -67,23 +67,23 @@ begin
 
     elsif rising_edge(clk) then
 
-      inc_rise <= '1' when (inc_pulse='1' and inc_q='0') else '0';
-      dec_rise <= '1' when (dec_pulse='1' and dec_q='0') else '0';
-      inc_q    <= inc_pulse;
-      dec_q    <= dec_pulse;
+      inc_rise <= '1' when (inc_lvl='1' and inc_q='0') else '0';
+      dec_rise <= '1' when (dec_lvl='1' and dec_q='0') else '0';
+      inc_q    <= inc_lvl;
+      dec_q    <= dec_lvl;
 
 
-      if inc_rise='1' and dec_pulse='0' then
+      if inc_rise='1' and dec_lvl='0' then
         dir_up <= '1';
-      elsif dec_rise='1' and inc_pulse='0' then
+      elsif dec_rise='1' and inc_lvl='0' then
         dir_up <= '0';
       end if;
 
-      if (inc_pulse='1' or dec_pulse='1') then
+      if (inc_lvl='1' or dec_lvl='1') then
 
-        if inc_rise='1' and dec_pulse='0' then
+        if inc_rise='1' and dec_lvl='0' then
           reg_value <= sat_add(reg_value, STEP);
-        elsif dec_rise='1' and inc_pulse='0' then
+        elsif dec_rise='1' and inc_lvl='0' then
           reg_value <= sat_sub(reg_value, STEP);
         end if;
 
@@ -99,9 +99,9 @@ begin
             rep_time <= rep_time + 1;
           else
             rep_time <= (others=>'0');
-            if dir_up='1' and inc_pulse='1' and dec_pulse='0' then
+            if dir_up='1' and inc_lvl='1' and dec_lvl='0' then
               reg_value <= sat_add(reg_value, STEP);
-            elsif dir_up='0' and dec_pulse='1' and inc_pulse='0' then
+            elsif dir_up='0' and dec_lvl='1' and inc_lvl='0' then
               reg_value <= sat_sub(reg_value, STEP);
             end if;
           end if;
