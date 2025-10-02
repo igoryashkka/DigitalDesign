@@ -7,8 +7,10 @@ use work.alu_pkg.all;
 entity top_alu is
   generic (
     CLK_FREQ_HZ : integer := 125_000_000;
-    BAUD        : integer := 115200;
-    BTN_DEB_N_SAMPLES : natural := 20_000  
+    BTN_DEB_N_SAMPLES : natural := 20_000;
+    N_BITS     : positive := 8;   
+    N_PWM_BITS : positive := 16;
+    STEP       : positive := 1 
   );
   port(
     clk    : in  std_logic;
@@ -34,15 +36,15 @@ architecture rtl of top_alu is
   signal btn_pulse : std_logic_vector(4 downto 0);
 
   -- A/B regs
-  signal reg_a, reg_b : unsigned(7 downto 0) := (others=>'0');
-  signal btn_a_q, btn_b_q : std_logic_vector(7 downto 0);
+  signal reg_a, reg_b : unsigned(N_BITS - 1 downto 0) := (others=>'0');
+  signal btn_a_q, btn_b_q : std_logic_vector(N_BITS - 1 downto 0);
 
   -- Op select
   signal op_sel   : op_t := OP_ADD;
   signal op_idx   : unsigned(2 downto 0) := (others=>'0');
 
   -- ALU signals
-  signal y_add,y_sub,y_mul,y_shl,y_shr,y_sar : std_logic_vector(15 downto 0);
+  signal y_add,y_sub,y_mul,y_shl,y_shr,y_sar : std_logic_vector(N_PWM_BITS - 1 downto 0);
   signal c_add,v_add,n_add,z_add : std_logic;
   signal c_sub,v_sub,n_sub,z_sub : std_logic;
   signal c_mul,v_mul,n_mul,z_mul : std_logic;
@@ -50,10 +52,10 @@ architecture rtl of top_alu is
   signal c_shr,v_shr,n_shr,z_shr : std_logic;
   signal c_sar,v_sar,n_sar,z_sar : std_logic;
 
-  signal Y          : std_logic_vector(15 downto 0);
+  signal Y          : std_logic_vector(N_PWM_BITS - 1 downto 0);
   signal C,V,N,Z    : std_logic;
 
-  signal duty_r, duty_g, duty_b : std_logic_vector(7 downto 0);
+  signal duty_r, duty_g, duty_b : std_logic_vector(N_BITS - 1 downto 0);
 begin
   ------------------------------------------------------------------------------
   gen_deb: for i in 0 to 4 generate
@@ -72,6 +74,7 @@ begin
   ------------------------------------------------------------------------------
   -- Up/Down regs
   regA_btn: entity work.updown_byte
+  generic map(N_BITS => N_BITS, STEP=>STEP)
     port map(
       clk       => clk,
       rst_n     => rst_n,
@@ -81,6 +84,7 @@ begin
     );
 
   regB_btn: entity work.updown_byte
+  generic map(N_BITS => N_BITS, STEP=>STEP)
     port map(
       clk       => clk,
       rst_n     => rst_n,
@@ -131,6 +135,7 @@ begin
 
   -- ALU mux
   u_mux: entity work.alu_mux
+   generic map (N_PWM_BITS => N_PWM_BITS)
     port map(
       sel=>op_sel,
       y_add=>y_add, c_add=>c_add, v_add=>v_add, n_add=>n_add, z_add=>z_add,

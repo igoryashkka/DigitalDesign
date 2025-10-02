@@ -11,7 +11,6 @@ entity debounce_onepulse is
     rst_n  : in  std_logic;
     din    : in  std_logic;
     q      : out std_logic          
-    --pulse  : out std_logic           -- one clk on 0->1
   );
 end entity;
 

@@ -10,15 +10,18 @@ use ieee.std_logic_1164.all;
 use work.alu_pkg.all;
 
 entity alu_mux is
+  generic(
+    N_PWM_BITS : positive := 16
+  );
   port(
     sel      : in  op_t;
-    y_add    : in  std_logic_vector(15 downto 0); c_add, v_add, n_add, z_add : in std_logic;
-    y_sub    : in  std_logic_vector(15 downto 0); c_sub, v_sub, n_sub, z_sub : in std_logic;
-    y_mul    : in  std_logic_vector(15 downto 0); c_mul, v_mul, n_mul, z_mul : in std_logic;
-    y_shl    : in  std_logic_vector(15 downto 0); c_shl, v_shl, n_shl, z_shl : in std_logic;
-    y_shr    : in  std_logic_vector(15 downto 0); c_shr, v_shr, n_shr, z_shr : in std_logic;
-    y_sar    : in  std_logic_vector(15 downto 0); c_sar, v_sar, n_sar, z_sar : in std_logic;
-    y        : out std_logic_vector(15 downto 0);
+    y_add    : in  std_logic_vector(N_PWM_BITS - 1 downto 0); c_add, v_add, n_add, z_add : in std_logic;
+    y_sub    : in  std_logic_vector(N_PWM_BITS - 1 downto 0); c_sub, v_sub, n_sub, z_sub : in std_logic;
+    y_mul    : in  std_logic_vector(N_PWM_BITS - 1 downto 0); c_mul, v_mul, n_mul, z_mul : in std_logic;
+    y_shl    : in  std_logic_vector(N_PWM_BITS - 1 downto 0); c_shl, v_shl, n_shl, z_shl : in std_logic;
+    y_shr    : in  std_logic_vector(N_PWM_BITS - 1 downto 0); c_shr, v_shr, n_shr, z_shr : in std_logic;
+    y_sar    : in  std_logic_vector(N_PWM_BITS - 1 downto 0); c_sar, v_sar, n_sar, z_sar : in std_logic;
+    y        : out std_logic_vector(N_PWM_BITS - 1 downto 0);
     carry, overflow, negative, zero : out std_logic
   );
 end entity;
