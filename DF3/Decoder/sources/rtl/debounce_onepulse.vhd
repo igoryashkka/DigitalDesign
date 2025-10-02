@@ -7,10 +7,11 @@ entity debounce_onepulse is
     N_SAMPLES : natural := 16
   );
   port(
-    clk    : in  std_logic;
-    rst_n  : in  std_logic;
-    din    : in  std_logic;
-    q      : out std_logic          
+    clk     : in  std_logic;
+    rst_n   : in  std_logic;
+    din     : in  std_logic;
+    q_lvl   : out std_logic;
+    q_pulse : out std_logic
   );
 end entity;
 
@@ -45,6 +46,6 @@ begin
     end if;
   end process;
 
-  q     <= stable;                                
-  --pulse <= '1' when (prev_stable='0' and stable='1') else '0';
+  q_lvl     <= stable;                                
+  q_pulse <= '1' when (prev_stable='0' and stable='1') else '0';
 end architecture;

@@ -33,8 +33,8 @@ end entity;
 
 architecture rtl of top_alu is
 
+  signal btn_lvl   : std_logic_vector(4 downto 0);
   signal btn_pulse : std_logic_vector(4 downto 0);
-
   -- A/B regs
   signal reg_a, reg_b : unsigned(N_BITS - 1 downto 0) := (others=>'0');
   signal btn_a_q, btn_b_q : std_logic_vector(N_BITS - 1 downto 0);
@@ -64,10 +64,11 @@ begin
         N_SAMPLES => BTN_DEB_N_SAMPLES
       )
       port map(
-        clk   => clk,
-        rst_n => rst_n,
-        din   => btn_raw(i),
-        q => btn_pulse(i)
+        clk     => clk,
+        rst_n   => rst_n,
+        din     => btn_raw(i),
+        q_lvl   => btn_lvl(i),
+        q_pulse => btn_pulse(i)
       );
   end generate;
 
@@ -78,8 +79,8 @@ begin
     port map(
       clk       => clk,
       rst_n     => rst_n,
-      inc_pulse => btn_pulse(0),  
-      dec_pulse => btn_pulse(1),  
+      inc_pulse => btn_lvl(0),  
+      dec_pulse => btn_lvl(1),  
       q         => btn_a_q
     );
 
@@ -88,8 +89,8 @@ begin
     port map(
       clk       => clk,
       rst_n     => rst_n,
-      inc_pulse => btn_pulse(2), 
-      dec_pulse => btn_pulse(3),  
+      inc_pulse => btn_lvl(2), 
+      dec_pulse => btn_lvl(3),  
       q         => btn_b_q
     );
 
