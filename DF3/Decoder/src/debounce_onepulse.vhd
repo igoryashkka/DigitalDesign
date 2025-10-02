@@ -1,16 +1,17 @@
-library ieee;
-use ieee.std_logic_1164.all;
+library ieee; 
+use ieee.std_logic_1164.all; 
 use ieee.numeric_std.all;
 
 entity debounce_onepulse is
   generic(
-    N_SAMPLES : natural := 16         -- length of stable period
+    N_SAMPLES : natural := 16
   );
   port(
     clk    : in  std_logic;
     rst_n  : in  std_logic;
-    din    : in  std_logic;           -- raw button (async)
-    pulse  : out std_logic            -- 1 clk cycle when a stable rising edge detected
+    din    : in  std_logic;
+    q      : out std_logic          
+    --pulse  : out std_logic           -- one clk on 0->1
   );
 end entity;
 
@@ -19,14 +20,12 @@ architecture rtl of debounce_onepulse is
   signal filt  : unsigned(15 downto 0) := (others=>'0');
   signal stable, prev_stable : std_logic := '0';
 begin
-
   process(clk) begin
     if rising_edge(clk) then
       sync(0) <= din;
       sync(1) <= sync(0);
     end if;
   end process;
-
 
   process(clk, rst_n) begin
     if rst_n='0' then
@@ -47,5 +46,6 @@ begin
     end if;
   end process;
 
-  pulse <= '1' when (prev_stable='0' and stable='1') else '0';
+  q     <= stable;                                
+  --pulse <= '1' when (prev_stable='0' and stable='1') else '0';
 end architecture;
