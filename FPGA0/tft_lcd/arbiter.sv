@@ -22,7 +22,7 @@ module two_src_arb(
   always_comb begin
     // default
     o_valid = 1'b0;
-    o_item  = '{is_cmd:1'b0, byte:8'h00};
+    o_item  = '{is_cmd:1'b0, byte_pack:8'h00};
     a_ready = 1'b0;
     b_ready = 1'b0;
 

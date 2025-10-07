@@ -123,7 +123,7 @@ module ili934x_driver #(
     .rst_n      (rst_n),
     .item_valid (fifo_out_valid),
     .item_is_cmd(fifo_out_item.is_cmd),
-    .item_byte  (fifo_out_item.byte),
+    .item_byte  (fifo_out_item.byte_pack),
     .item_ready (fifo_out_ready),
     .lcd_cs_n   (lcd_cs_n),
     .lcd_rd_n   (lcd_rd_n),
