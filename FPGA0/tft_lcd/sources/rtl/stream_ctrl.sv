@@ -42,16 +42,15 @@ module ili934x_win_stream #(
   assign item       = item_q;
   assign item_valid = item_valid_q;
 
-  // We can push a new byte only if:
-  //   - downstream is ready,
-  //   - downstream can accept (hint),
-  //   - we're NOT already holding a valid byte waiting to fire
-  wire can_push = item_ready && sink_can_accept && !item_valid_q;
+// We can stage (present) a new byte whenever:
+//   - the output register is free (no valid byte currently waiting),
+//   - downstream *may* accept data soon (optional hint),
+//   - the downstream READY will eventually complete the handshake.
+  wire can_stage  = !item_valid_q;
 
   // pix_ready when we are in streaming state, no low byte pending,
   // and we can present the high byte of a new pixel right now
-  assign pix_ready = (st == D_STREAM) && !have_low && can_push;
-
+  assign pix_ready = (st == D_STREAM) && !have_low && can_stage;
   // helper: present one byte (holds valid until handshake fires)
   task automatic send_byte(input logic is_cmd, input logic [7:0] b);
     if (!item_valid_q) begin
@@ -93,16 +92,16 @@ module ili934x_win_stream #(
         // Send window: 2A x0H x0L x1H x1L, then 2B y0H y0L y1H y1L
         D_SEND: begin
           case (step)
-            0:  if (can_push) begin send_byte(1'b1, 8'h2A);        step <= 1; end
-            1:  if (can_push) begin send_byte(1'b0, x0[15:8]);     step <= 2; end
-            2:  if (can_push) begin send_byte(1'b0, x0[7:0]);      step <= 3; end
-            3:  if (can_push) begin send_byte(1'b0, x1[15:8]);     step <= 4; end
-            4:  if (can_push) begin send_byte(1'b0, x1[7:0]);      step <= 5; end
-            5:  if (can_push) begin send_byte(1'b1, 8'h2B);        step <= 6; end
-            6:  if (can_push) begin send_byte(1'b0, y0[15:8]);     step <= 7; end
-            7:  if (can_push) begin send_byte(1'b0, y0[7:0]);      step <= 8; end
-            8:  if (can_push) begin send_byte(1'b0, y1[15:8]);     step <= 9; end
-            9:  if (can_push) begin send_byte(1'b0, y1[7:0]);      st   <= D_IDLE; end
+            0:  if (can_stage) begin send_byte(1'b1, 8'h2A);        step <= 1; end
+            1:  if (can_stage) begin send_byte(1'b0, x0[15:8]);     step <= 2; end
+            2:  if (can_stage) begin send_byte(1'b0, x0[7:0]);      step <= 3; end
+            3:  if (can_stage) begin send_byte(1'b0, x1[15:8]);     step <= 4; end
+            4:  if (can_stage) begin send_byte(1'b0, x1[7:0]);      step <= 5; end
+            5:  if (can_stage) begin send_byte(1'b1, 8'h2B);        step <= 6; end
+            6:  if (can_stage) begin send_byte(1'b0, y0[15:8]);     step <= 7; end
+            7:  if (can_stage) begin send_byte(1'b0, y0[7:0]);      step <= 8; end
+            8:  if (can_stage) begin send_byte(1'b0, y1[15:8]);     step <= 9; end
+            9:  if (can_stage) begin send_byte(1'b0, y1[7:0]);      st   <= D_IDLE; end
             default: st <= D_IDLE;
           endcase
         end
@@ -110,7 +109,7 @@ module ili934x_win_stream #(
         // ----------------------------------------------------------
         // MEMORY WRITE (2C)
         D_MEMWR: begin
-          if (can_push) begin
+          if (can_stage) begin
             send_byte(1'b1, 8'h2C);
             // move to STREAM after the byte is accepted
             if (fire) begin
@@ -125,7 +124,7 @@ module ili934x_win_stream #(
         D_STREAM: begin
           // If a low byte is pending, send it
           if (have_low) begin
-            if (can_push) begin
+            if (can_stage) begin
               send_byte(1'b0, low_b);
               if (fire) have_low <= 1'b0;
             end
@@ -134,7 +133,7 @@ module ili934x_win_stream #(
             if (pix_valid && pix_ready) begin
               // push high byte now, queue low for next transfer
               send_byte(1'b0, pix_data[15:8]);
-              if (can_push) begin
+              if (can_stage) begin
                 // byte is now presented; the sink may accept later
                 low_b    <= pix_data[7:0];
                 have_low <= 1'b1;
