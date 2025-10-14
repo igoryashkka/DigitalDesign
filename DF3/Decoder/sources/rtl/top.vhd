@@ -56,6 +56,19 @@ architecture rtl of top_alu is
   signal C,V,N,Z    : std_logic;
 
   signal duty_r, duty_g, duty_b : std_logic_vector(N_BITS - 1 downto 0);
+  
+  
+  
+ signal disp_digits  : std_logic_vector(31 downto 0);
+signal disp_strobe  : std_logic := '0';
+signal disp_busy    : std_logic;
+signal i2c_sda_out  : std_logic;
+signal i2c_sda_oe   : std_logic;
+signal i2c_scl      : std_logic;
+signal i2c_sda_in   : std_logic;  
+
+  
+  
 begin
   ------------------------------------------------------------------------------
   gen_deb: for i in 0 to 4 generate
@@ -93,6 +106,24 @@ begin
       dec_lvl   => btn_lvl(3),  
       q         => btn_b_q
     );
+
+
+  u_disp : entity work.driver_wrap
+  generic map (CLK_DIV => 1024)
+  port map (
+    clk         => clk,
+    rst_n       => rst_n,
+    sync_reset  => '0',
+    digits_flat => disp_digits,
+    disp_strobe => disp_strobe,
+    busy        => disp_busy,
+    sda_out     => i2c_sda_out,
+    sda_in      => i2c_sda_in,
+    sda_out_en  => i2c_sda_oe,
+    scl         => i2c_scl
+  );
+
+
 
   ------------------------------------------------------------------------------
   process(clk, rst_n) begin
