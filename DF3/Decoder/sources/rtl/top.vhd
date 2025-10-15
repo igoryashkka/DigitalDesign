@@ -3,6 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.alu_pkg.all;
+use work.driver_pkg.all;
 
 entity top_alu is
   generic (
@@ -16,7 +17,7 @@ entity top_alu is
     clk    : in  std_logic;
     rst_n  : in  std_logic;
 
-    btn_raw : in  std_logic_vector(4 downto 0);
+    btn_raw : in  std_logic_vector(5 downto 0);
 
     -- sts
     led_zero_o  : out std_logic;
@@ -27,14 +28,18 @@ entity top_alu is
     -- PWM RGB
     pwm_r_o     : out std_logic;
     pwm_g_o     : out std_logic;
-    pwm_b_o     : out std_logic
+    pwm_b_o     : out std_logic;
+
+    -- SDA 
+    sda         : inout std_logic;
+    scl         : in    std_logic
   );
 end entity;
 
 architecture rtl of top_alu is
 
-  signal btn_lvl   : std_logic_vector(4 downto 0);
-  signal btn_pulse : std_logic_vector(4 downto 0);
+  signal btn_lvl   : std_logic_vector(5 downto 0);
+  signal btn_pulse : std_logic_vector(5 downto 0);
   -- A/B regs
   signal reg_a, reg_b : unsigned(N_BITS - 1 downto 0) := (others=>'0');
   signal btn_a_q, btn_b_q : std_logic_vector(N_BITS - 1 downto 0);
@@ -71,7 +76,7 @@ signal i2c_sda_in   : std_logic;
   
 begin
   ------------------------------------------------------------------------------
-  gen_deb: for i in 0 to 4 generate
+  gen_deb: for i in 0 to 5 generate
     db_i : entity work.debounce_onepulse
       generic map(
         N_SAMPLES => BTN_DEB_N_SAMPLES
@@ -107,6 +112,20 @@ begin
       q         => btn_b_q
     );
 
+process(all)
+  variable d3,d2,d1,d0 : std_logic_vector(7 downto 0);
+  variable v : std_logic_vector(7 downto 0);
+begin
+
+
+  if btn_pulse(5)='1' then
+--    case view_st is
+--     when VIEW_A => view_st_n <= VIEW_B;
+ --     when VIEW_B => view_st_n <= VIEW_Y;
+  --    when others => view_st_n <= VIEW_A;
+   -- end case;
+  end if;
+end process;
 
   u_disp : entity work.driver_wrap
   generic map (CLK_DIV => 1024)
@@ -124,6 +143,10 @@ begin
   );
 
 
+  
+  i2c_sda_in <= sda;
+  i2c_scl    <= scl;
+  sda        <= 'Z' when ((not i2c_sda_oe) = '1' or i2c_sda_out = '1') else '0';
 
   ------------------------------------------------------------------------------
   process(clk, rst_n) begin
