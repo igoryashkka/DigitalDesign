@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 
 package driver_pkg is
   constant SEG_A : std_logic_vector(7 downto 0) := x"77";
-  constant SEG_B : std_logic_vector(7 downto 0) := x"7F";
+  constant SEG_B : std_logic_vector(7 downto 0) := x"7C";
   constant SEG_C : std_logic_vector(7 downto 0) := x"39";
   constant SEG_D : std_logic_vector(7 downto 0) := x"3F";
   constant SEG_E : std_logic_vector(7 downto 0) := x"79";
@@ -27,6 +27,8 @@ package driver_pkg is
   constant SEG_5 : std_logic_vector(7 downto 0) := x"6D";
   constant SEG_6 : std_logic_vector(7 downto 0) := x"7D";
   constant SEG_7 : std_logic_vector(7 downto 0) := x"07";
+  constant SEG_8 : std_logic_vector(7 downto 0) := x"7F";
+  constant SEG_9 : std_logic_vector(7 downto 0) := x"6F";
 
 end package driver_pkg;
 
