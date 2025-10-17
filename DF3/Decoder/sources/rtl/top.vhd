@@ -270,7 +270,7 @@ begin
     );
 
   i2c_sda_in <= sda;
-  i2c_scl    <= scl;
+  scl <=  i2c_scl ;
   sda <= 'Z' when (i2c_sda_oe = '0' or i2c_sda_out = '1') else '0';
 
   process(clk, rst_n)
