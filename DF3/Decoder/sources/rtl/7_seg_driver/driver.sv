@@ -24,7 +24,7 @@ typedef enum logic [2:0] {
 } state_t;
 
 state_t fsm_state_ff, fsm_next;
-
+//logic disp_strobe_i;
 logic seg_start, seg_busy, seg_done;
 logic [7:0] seg_data [0:7]; 
 logic [2:0] seg_byte_num;

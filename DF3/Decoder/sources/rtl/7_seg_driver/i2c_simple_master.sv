@@ -37,7 +37,6 @@ module i2c_simple_master #(
     logic [7:0] shift_reg;
     logic       sda_out_val;
     logic       scl_int;
-    logic       sda_in;
     logic [9:0] clk_div_cnt;
     logic       scl_tick;
     logic       start_d, start_rising;
@@ -201,6 +200,7 @@ module i2c_simple_master #(
             STOP_LOW:         next_state = STOP_HIGH;
             STOP_HIGH:        next_state = DONE_STATE;
             DONE_STATE:       next_state = IDLE;
+            default: next_state = IDLE;
         endcase
     end
 
