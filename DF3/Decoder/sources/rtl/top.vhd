@@ -32,7 +32,7 @@ entity top_alu is
 
     -- SDA 
     sda         : inout std_logic;
-    scl         : in    std_logic
+    scl         : out    std_logic
   );
 end entity;
 
