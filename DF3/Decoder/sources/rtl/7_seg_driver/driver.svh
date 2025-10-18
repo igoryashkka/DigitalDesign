@@ -55,6 +55,6 @@ typedef enum logic [3:0] {
 `define ADRR_SNGL_MODE 8'h44
 `define FIRST_TILE_ADDR 8'hc0
 `define DISP_BRIGHTNESS 8'h2 // LED brightness - seven levels, will be embedded in display command 
-`define CMD_DISPLAY (8'hf8|`DISP_BRIGHTNESS)
+`define CMD_DISPLAY (8'h88|`DISP_BRIGHTNESS)
 
 `endif // __DRIVER__

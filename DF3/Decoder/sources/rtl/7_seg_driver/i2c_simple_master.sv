@@ -1,5 +1,5 @@
 module i2c_simple_master #(
-    parameter int CLOCK_DIVIDER = 100  // Must be even
+    parameter int CLOCK_DIVIDER = 12500  // Must be even // 62/67 - 1950
 )(
     input  logic         clk,
     input  logic         rst_n,
@@ -37,14 +37,16 @@ module i2c_simple_master #(
     logic [7:0] shift_reg;
     logic       sda_out_val;
     logic       scl_int;
-    logic       sda_in;
-    logic [9:0] clk_div_cnt;
+    logic [16:0] clk_div_cnt;
     logic       scl_tick;
     logic       start_d, start_rising;
     logic       start_req;
     logic       done_pulse;
 
     assign scl    = scl_int;
+    
+    
+
 
     // Detect rising edge of start input
     always_ff @(posedge clk or negedge rst_n) begin
@@ -76,13 +78,16 @@ module i2c_simple_master #(
             start_req <= 0;
     end
 
+        
+
+
     // Clock divider and scl_tick
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             clk_div_cnt <= 0;
             scl_tick    <= 0;
         end else if (state != IDLE || start_req) begin
-            if (clk_div_cnt == (CLOCK_DIVIDER/2 - 1)) begin
+            if (clk_div_cnt == (CLOCK_DIVIDER/2 - 1)) begin // 1025
                 clk_div_cnt <= 0;
                 scl_tick    <= 1;
             end else begin
@@ -201,6 +206,7 @@ module i2c_simple_master #(
             STOP_LOW:         next_state = STOP_HIGH;
             STOP_HIGH:        next_state = DONE_STATE;
             DONE_STATE:       next_state = IDLE;
+            default: next_state = IDLE;
         endcase
     end
 

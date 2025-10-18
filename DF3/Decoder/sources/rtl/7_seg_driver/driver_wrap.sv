@@ -1,3 +1,5 @@
+`timescale 1ns/1ps
+
 module driver_wrap #(
   parameter int CLK_DIV = 1024  // forwarded to i2c master via driver
 )(
