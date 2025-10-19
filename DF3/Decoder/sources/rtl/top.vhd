@@ -43,8 +43,8 @@ architecture rtl of top_alu is
   signal reg_a_u    : unsigned(N_BITS-1 downto 0) := (others => '0');
   signal reg_b_u    : unsigned(N_BITS-1 downto 0) := (others => '0');
 
-  signal Y          : std_logic_vector(N_PWM_BITS-1 downto 0);
-  signal C, V, N, Z : std_logic;
+  signal result          : std_logic_vector(N_PWM_BITS-1 downto 0);
+  signal carry, overflow, negative, zero : std_logic;
   signal op_sel     : op_t := OP_ADD;
   signal duty_r, duty_g, duty_b : std_logic_vector(N_BITS-1 downto 0);
 begin
@@ -73,7 +73,7 @@ begin
       rst_n   => rst_n,
       inc_lvl => btn_lvl(0),
       dec_lvl => btn_lvl(1),
-      q       => btn_a_q
+      reg_val => btn_a_q
     );
 
   u_reg_b_btn : entity work.updown_byte
@@ -86,7 +86,7 @@ begin
       rst_n   => rst_n,
       inc_lvl => btn_lvl(2),
       dec_lvl => btn_lvl(3),
-      q       => btn_b_q
+      reg_val => btn_b_q
     );
 
   reg_a_u <= unsigned(btn_a_q);
@@ -109,21 +109,21 @@ begin
       a      => reg_a_u,
       b      => reg_b_u,
       op_sel => op_sel,
-      Y      => Y,
-      C      => C,
-      V      => V,
-      N      => N,
-      Z      => Z
+      Y      => result,
+      C      => carry,
+      V      => overflow,
+      N      => negative,
+      Z      => zero
     );
 
-  led_zero_o  <= Z;
-  led_carry_o <= C;
-  led_over_o  <= V;
-  led_neg_o   <= N;
+  led_zero_o  <= zero;
+  led_carry_o <= carry;
+  led_over_o  <= overflow;
+  led_neg_o   <= negative;
 
-  duty_r(7 downto 2) <= Y(15 downto 10);  
-  duty_g(7 downto 3) <= Y(9  downto 5); 
-  duty_b(7 downto 3) <= Y(4  downto 0);   
+  duty_r(7 downto 2) <= result(15 downto 10);  
+  duty_g(7 downto 3) <= result(9  downto 5); 
+  duty_b(7 downto 3) <= result(4  downto 0);   
 
   u_pwm_r : entity work.pwm8
     port map (
@@ -161,7 +161,7 @@ begin
       rst_n     => rst_n,
       reg_a     => reg_a_u,
       reg_b     => reg_b_u,
-      Y         => Y,
+      Y         => result,
       mode_step => btn_pulse(5),  
       sda       => sda,
       scl       => scl

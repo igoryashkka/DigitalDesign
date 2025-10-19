@@ -14,7 +14,7 @@ entity updown_byte is
     clk, rst_n : in  std_logic;
     inc_lvl    : in  std_logic;
     dec_lvl    : in  std_logic;  
-    q          : out std_logic_vector(N_BITS-1 downto 0)
+    reg_val    : out std_logic_vector(N_BITS-1 downto 0)
   );
 end entity;
 
@@ -116,5 +116,5 @@ begin
     end if;
   end process;
 
-  q <= std_logic_vector(reg_value);
+  reg_val <= std_logic_vector(reg_value);
 end architecture;
