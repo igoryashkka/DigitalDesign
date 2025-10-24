@@ -38,9 +38,7 @@ static inline void pulse_one(XGpio* g, u32 bitmask, uint32_t pulse_us)
 
 int main(void)
 {
-    //xil_printf("\r\n[Zynq] Driving btn_raw[5:0] via AXI GPIO...\r\n");
-
-    // --- Init AXI GPIO via lookup (since *_DEVICE_ID isn't present) ---
+ 
     XGpio Gpio;
     XGpio_Config* Cfg = XGpio_LookupConfig(0);
    // if (!Cfg) { xil_printf("XGpio_LookupConfig failed\r\n"); return XST_FAILURE; }
@@ -53,36 +51,17 @@ int main(void)
     gpio_write_masked(&Gpio, 0);
 
 
-    const uint32_t T = 1000; // 1 ms
+    const uint32_t T = 1000; 
 
-   // xil_printf("Increment A 3x\r\n");
      press_level(&Gpio, BTN_INC_A, T);
      press_level(&Gpio, BTN_INC_A, T);
      press_level(&Gpio, BTN_INC_A, T);
      press_level(&Gpio, BTN_INC_A, T);
      press_level(&Gpio, BTN_INC_A, T);
      press_level(&Gpio, BTN_INC_A, T);
-//    // xil_printf("Decrement A 1x\r\n");
-//     press_level(&Gpio, BTN_DEC_A, T);
 
-//    // xil_printf("Increment B 2x\r\n");
-//     press_level(&Gpio, BTN_INC_B, T);
-//     press_level(&Gpio, BTN_INC_B, T);
-
-//    // xil_printf("Decrement B 1x\r\n");
-//     press_level(&Gpio, BTN_DEC_B, T);
-
-//     //xil_printf("ALU op_select step (one pulse on btn_raw(4))\r\n");
-//     pulse_one(&Gpio, BTN_OP_STEP, T);
-
-//    // xil_printf("Display mode step (one pulse on btn_raw(5))\r\n");
-//     pulse_one(&Gpio, BTN_MODE_STEP, T);
-
-    //xil_printf("Start a simple loop: A++, B--, op step, mode step\r\n");
     while (1) {
-         press_level(&Gpio, BTN_INC_A, T);
-    //     press_level(&Gpio, BTN_DEC_B, T);
-    //     pulse_one(&Gpio, BTN_OP_STEP, T);
+        press_level(&Gpio, BTN_INC_A, T);
         pulse_one(&Gpio, BTN_MODE_STEP, T);
         usleep(50 * T);
     }

@@ -72,7 +72,7 @@ if {![string length $src_fs]} {
 }
 
 # Collect sources
-set files [get_file_list [get_dir_list $_src_dir_] "sv,svh,v,vh,vhd,mif"]
+set files [get_file_list [get_dir_list $_src_dir_] "sv,svh,v,vh,vhd,mif,bd"]
 
 # Add sources
 if {[llength $files]} {
