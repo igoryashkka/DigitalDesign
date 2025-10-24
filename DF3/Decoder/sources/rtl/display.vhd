@@ -64,6 +64,39 @@ architecture rtl of display is
     end case;
   end function;
 
+--function bin8_to_bcd3(x : unsigned(7 downto 0)) return std_logic_vector is
+--  variable b    : unsigned(7 downto 0) := x;
+--  variable bcd  : unsigned(11 downto 0) := (others => '0'); 
+--begin
+--  for i in 0 to 7 loop
+
+--    if bcd(11 downto 8) > 4 then bcd(11 downto 8) := bcd(11 downto 8) + 3; end if; -- hundreds
+--    if bcd(7 downto 4)  > 4 then bcd(7 downto 4)  := bcd(7 downto 4)  + 3; end if; -- tens
+--    if bcd(3 downto 0)  > 4 then bcd(3 downto 0)  := bcd(3 downto 0)  + 3; end if; -- ones
+
+--    bcd := bcd(10 downto 0) & b(7);
+--    b   := b(6 downto 0) & '0';
+--  end loop;
+--  return std_logic_vector(bcd); 
+--end function;
+
+--function bin16_to_bcd5(x : unsigned(15 downto 0)) return std_logic_vector is
+--  variable b    : unsigned(15 downto 0) := x;
+--  variable bcd  : unsigned(19 downto 0) := (others => '0'); 
+--begin
+--  for i in 0 to 15 loop
+--    if bcd(19 downto 16) > 4 then bcd(19 downto 16) := bcd(19 downto 16) + 3; end if; -- ten-thousands
+--    if bcd(15 downto 12) > 4 then bcd(15 downto 12) := bcd(15 downto 12) + 3; end if; -- thousands
+--    if bcd(11 downto 8)  > 4 then bcd(11 downto 8)  := bcd(11 downto 8)  + 3; end if; -- hundreds
+--    if bcd(7 downto 4)   > 4 then bcd(7 downto 4)   := bcd(7 downto 4)   + 3; end if; -- tens
+--    if bcd(3 downto 0)   > 4 then bcd(3 downto 0)   := bcd(3 downto 0)   + 3; end if; -- ones
+--    bcd := bcd(18 downto 0) & b(15);
+--    b   := b(14 downto 0) & '0';
+--  end loop;
+--  return std_logic_vector(bcd);
+--end function;
+
+
 begin
   process(clk, rst_n)
   begin
@@ -87,35 +120,63 @@ begin
     end if;
   end process;
 
-  process(all)
-    variable a7_0  : std_logic_vector(7 downto 0);
-    variable b7_0  : std_logic_vector(7 downto 0);
-    variable y15_0 : std_logic_vector(15 downto 0);
-  begin
-    a7_0  := std_logic_vector(reg_a(7 downto 0));
-    b7_0  := std_logic_vector(reg_b(7 downto 0));
-    y15_0 := Y(15 downto 0);
+--process(all)
+--  variable bcdA : std_logic_vector(11 downto 0);
+--  variable bcdB : std_logic_vector(11 downto 0);
+--  variable bcdY : std_logic_vector(19 downto 0);
+--begin
+--  bcdA := bin8_to_bcd3(reg_a);
+--  bcdB := bin8_to_bcd3(reg_b);
+--  bcdY := bin16_to_bcd5(unsigned(Y(15 downto 0)));
 
-    case mode_i is
-      when 0 =>  
-        dig3 <= nibble_to_seg(a7_0(3 downto 0));
-        dig2 <= nibble_to_seg(a7_0(7 downto 4));
-        dig1 <= SEG_BLANK;
-        dig0 <= SEG_A;
+--  case mode_i is
+--    when 0 => 
+--      dig0 <= SEG_A;
+--      dig1 <= nibble_to_seg(bcdA(11 downto 8)); 
+--      dig2 <= nibble_to_seg(bcdA(7  downto 4)); 
+--      dig3 <= nibble_to_seg(bcdA(3  downto 0)); 
+--    when 1 =>  
+--      dig0 <= SEG_B; 
+--      dig1 <= nibble_to_seg(bcdB(11 downto 8));
+--      dig2 <= nibble_to_seg(bcdB(7  downto 4));
+--      dig3 <= nibble_to_seg(bcdB(3  downto 0));
+--    when others =>  
+--      dig0 <= nibble_to_seg(bcdY(15 downto 12)); 
+--      dig1 <= nibble_to_seg(bcdY(11 downto 8));  
+--      dig2 <= nibble_to_seg(bcdY(7  downto 4));  
+--      dig3 <= nibble_to_seg(bcdY(3  downto 0));  
+--  end case;
+--end process;
 
-      when 1 =>  
-        dig3 <= nibble_to_seg(b7_0(3 downto 0));
-        dig2 <= nibble_to_seg(b7_0(7 downto 4));
-        dig1 <= SEG_BLANK;
-        dig0 <= SEG_B;
+   process(all)
+     variable a7_0  : std_logic_vector(7 downto 0);
+     variable b7_0  : std_logic_vector(7 downto 0);
+     variable y15_0 : std_logic_vector(15 downto 0);
+   begin
+     a7_0  := std_logic_vector(reg_a(7 downto 0));
+     b7_0  := std_logic_vector(reg_b(7 downto 0));
+     y15_0 := Y(15 downto 0);
 
-      when others =>  
-        dig3 <= nibble_to_seg(y15_0(3  downto 0));
-        dig2 <= nibble_to_seg(y15_0(7  downto 4));
-        dig1 <= nibble_to_seg(y15_0(11 downto 8));
-        dig0 <= nibble_to_seg(y15_0(15 downto 12));
-    end case;
-  end process;
+     case mode_i is
+       when 0 =>  
+         dig3 <= nibble_to_seg(a7_0(3 downto 0));
+         dig2 <= nibble_to_seg(a7_0(7 downto 4));
+         dig1 <= SEG_BLANK;
+         dig0 <= SEG_A;
+
+       when 1 =>  
+         dig3 <= nibble_to_seg(b7_0(3 downto 0));
+         dig2 <= nibble_to_seg(b7_0(7 downto 4));
+         dig1 <= SEG_BLANK;
+         dig0 <= SEG_B;
+
+       when others =>  
+         dig3 <= nibble_to_seg(y15_0(3  downto 0));
+         dig2 <= nibble_to_seg(y15_0(7  downto 4));
+         dig1 <= nibble_to_seg(y15_0(11 downto 8));
+         dig0 <= nibble_to_seg(y15_0(15 downto 12));
+     end case;
+   end process;
 
   digits_flat <= dig3 & dig2 & dig1 & dig0;
 
