@@ -2,7 +2,7 @@
 //Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 //--------------------------------------------------------------------------------
 //Tool Version: Vivado v.2024.2 (win64) Build 5239630 Fri Nov 08 22:35:27 MST 2024
-//Date        : Mon Oct 27 17:50:57 2025
+//Date        : Fri Oct 31 15:41:16 2025
 //Host        : DESKTOP-C9DG6FV running 64-bit major release  (build 9200)
 //Command     : generate_target design_1_wrapper.bd
 //Design      : design_1_wrapper
@@ -102,6 +102,9 @@ module design_1_wrapper
   wire pwm_r_o_0;
   wire scl_0;
   wire sda_0;
+ // wire sda_in_0;
+ // wire sda_out_0;
+ // wire sda_out_en_0;
 
   design_1 design_1_i
        (.DDR_addr(DDR_addr),
@@ -133,5 +136,11 @@ module design_1_wrapper
         .pwm_g_o_0(pwm_g_o_0),
         .pwm_r_o_0(pwm_r_o_0),
         .scl_0(scl_0),
-        .sda_0(sda_0));
+        .sda_in_0(sda_in_0),
+        .sda_out_0(sda_out_0),
+        .sda_out_en_0(sda_out_en_0));
+        
+        assign sda_0 = (!sda_out_en_0 || sda_out_0) ? 1'bz : 1'b0;
+        assign sda_in_0 = sda_0;
+        
 endmodule

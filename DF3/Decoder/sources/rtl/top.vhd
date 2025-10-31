@@ -28,7 +28,9 @@ entity top_alu is
     pwm_g_o     : out std_logic;
     pwm_b_o     : out std_logic;
 
-    sda         : inout std_logic;
+    sda_in     : in  std_logic;
+    sda_out_en : out std_logic;
+    sda_out    : out std_logic;
     scl         : out   std_logic
   );
 end entity;
@@ -163,7 +165,9 @@ begin
       reg_b     => reg_b_u,
       Y         => result,
       mode_step => btn_pulse(5),  
-      sda       => sda,
+      sda_out       => sda_out,
+      sda_out_en       => sda_out_en,
+      sda_in       => sda_in,
       scl       => scl
     );
 
