@@ -1,7 +1,7 @@
 {
   "design": {
     "design_info": {
-      "boundary_crc": "0x8FCF8C351329DD6",
+      "boundary_crc": "0x52345D37D2EF46BD",
       "device": "xc7z010clg400-1",
       "gen_directory": "../../../../Task_6_DF3_Decoder.gen/sources_1/bd/design_1",
       "name": "design_1",
@@ -19,8 +19,7 @@
       "axi_gpio_0": "",
       "proc_sys_reset_0": "",
       "top_alu_0": "",
-      "processing_system7_0": "",
-      "dsp_macro_0": ""
+      "processing_system7_0": ""
     },
     "interface_ports": {
       "DDR": {
@@ -202,9 +201,6 @@
       "led_neg_o_0": {
         "direction": "O"
       },
-      "sda_0": {
-        "direction": "IO"
-      },
       "led_zero_o_0": {
         "direction": "O"
       },
@@ -218,6 +214,15 @@
         "direction": "O"
       },
       "scl_0": {
+        "direction": "O"
+      },
+      "sda_out_en_0": {
+        "direction": "O"
+      },
+      "sda_in_0": {
+        "direction": "I"
+      },
+      "sda_out_0": {
         "direction": "O"
       }
     },
@@ -491,36 +496,6 @@
             "left": "5",
             "right": "0"
           },
-          "dsp_use_i": {
-            "direction": "I"
-          },
-          "btn_a_q_o": {
-            "direction": "O",
-            "left": "7",
-            "right": "0"
-          },
-          "btn_b_q_o": {
-            "direction": "O",
-            "left": "7",
-            "right": "0"
-          },
-          "result_i": {
-            "direction": "I",
-            "left": "15",
-            "right": "0",
-            "parameters": {
-              "LAYERED_METADATA": {
-                "value": [
-                  "xilinx.com:interface:datatypes:1.0 {",
-                  "DATA {datatype {name {attribs {resolve_type immediate dependency {} format string minimum {} maximum {}} value {}} bitwidth {attribs {resolve_type generated dependency width format long minimum {}",
-                  "maximum {}} value 16} bitoffset {attribs {resolve_type immediate dependency {} format long minimum {} maximum {}} value 0} real {fixed {fractwidth {attribs {resolve_type generated dependency",
-                  "fractwidth format long minimum {} maximum {}} value 16} signed {attribs {resolve_type immediate dependency {} format bool minimum {} maximum {}} value true}}}}} DATA_WIDTH 16",
-                  "}"
-                ],
-                "value_src": "ip_prop"
-              }
-            }
-          },
           "led_zero_o": {
             "direction": "O"
           },
@@ -542,8 +517,14 @@
           "pwm_b_o": {
             "direction": "O"
           },
-          "sda": {
-            "direction": "IO"
+          "sda_in": {
+            "direction": "I"
+          },
+          "sda_out_en": {
+            "direction": "O"
+          },
+          "sda_out": {
+            "direction": "O"
           },
           "scl": {
             "direction": "O"
@@ -691,84 +672,6 @@
             }
           }
         }
-      },
-      "dsp_macro_0": {
-        "vlnv": "xilinx.com:ip:dsp_macro:1.0",
-        "ip_revision": "7",
-        "xci_name": "design_1_dsp_macro_0_0",
-        "xci_path": "ip\\design_1_dsp_macro_0_0\\design_1_dsp_macro_0_0.xci",
-        "inst_hier_path": "dsp_macro_0",
-        "parameters": {
-          "a_width": {
-            "value": "8"
-          },
-          "areg_1": {
-            "value": "false"
-          },
-          "areg_2": {
-            "value": "false"
-          },
-          "areg_3": {
-            "value": "true"
-          },
-          "areg_4": {
-            "value": "false"
-          },
-          "breg_3": {
-            "value": "false"
-          },
-          "breg_4": {
-            "value": "false"
-          },
-          "creg_3": {
-            "value": "false"
-          },
-          "creg_4": {
-            "value": "false"
-          },
-          "creg_5": {
-            "value": "false"
-          },
-          "d_width": {
-            "value": "8"
-          },
-          "dreg_1": {
-            "value": "false"
-          },
-          "dreg_2": {
-            "value": "false"
-          },
-          "dreg_3": {
-            "value": "true"
-          },
-          "instruction1": {
-            "value": "(A+D)"
-          },
-          "mreg_5": {
-            "value": "false"
-          },
-          "output_properties": {
-            "value": "User_Defined"
-          },
-          "p_binarywidth": {
-            "value": "16"
-          },
-          "p_full_width": {
-            "value": "9"
-          },
-          "p_width": {
-            "value": "16"
-          },
-          "pipeline_options": {
-            "value": "Expert"
-          },
-          "preg_6": {
-            "value": "false"
-          },
-          "use_dsp48": {
-            "value": "true"
-          }
-        }
       }
     },
     "interface_nets": {
@@ -798,23 +701,10 @@
       }
     },
     "nets": {
-      "Net": {
-        "ports": [
-          "sda_0",
-          "top_alu_0/sda"
-        ]
-      },
       "axi_gpio_0_gpio_io_o": {
         "ports": [
           "axi_gpio_0/gpio_io_o",
-          "top_alu_0/btn_raw",
-          "top_alu_0/dsp_use_i"
-        ]
-      },
-      "dsp_macro_0_P": {
-        "ports": [
-          "dsp_macro_0/P",
-          "top_alu_0/result_i"
+          "top_alu_0/btn_raw"
         ]
       },
       "proc_sys_reset_0_peripheral_aresetn": {
@@ -836,7 +726,6 @@
           "axi_interconnect_0/M00_ACLK",
           "axi_interconnect_0/ACLK",
           "processing_system7_0/M_AXI_GP0_ACLK",
-          "dsp_macro_0/CLK",
           "top_alu_0/clk"
         ]
       },
@@ -846,16 +735,10 @@
           "proc_sys_reset_0/ext_reset_in"
         ]
       },
-      "top_alu_0_btn_a_q_o": {
+      "sda_in_0_1": {
         "ports": [
-          "top_alu_0/btn_a_q_o",
-          "dsp_macro_0/A"
-        ]
-      },
-      "top_alu_0_btn_b_q_o": {
-        "ports": [
-          "top_alu_0/btn_b_q_o",
-          "dsp_macro_0/D"
+          "sda_in_0",
+          "top_alu_0/sda_in"
         ]
       },
       "top_alu_0_led_carry_o": {
@@ -904,6 +787,18 @@
         "ports": [
           "top_alu_0/scl",
           "scl_0"
+        ]
+      },
+      "top_alu_0_sda_out": {
+        "ports": [
+          "top_alu_0/sda_out",
+          "sda_out_0"
+        ]
+      },
+      "top_alu_0_sda_out_en": {
+        "ports": [
+          "top_alu_0/sda_out_en",
+          "sda_out_en_0"
         ]
       }
     },

@@ -20,8 +20,10 @@ entity display is
 
     mode_step  : in  std_logic;  
 
-    sda        : inout std_logic;
-    scl        : out   std_logic
+    sda_in     : in  std_logic;
+    sda_out_en : out std_logic;
+    sda_out    : out std_logic;
+    scl        : out std_logic
 
   );
 end entity;
@@ -35,10 +37,6 @@ architecture rtl of display is
 
   signal disp_strobe : std_logic := '0';
   signal disp_busy   : std_logic;
-  signal i2c_sda_out : std_logic;
-  signal i2c_sda_oe  : std_logic;
-  signal i2c_scl     : std_logic;
-  signal i2c_sda_in  : std_logic;
 
   constant SEG_BLANK : std_logic_vector(7 downto 0) := (others => '0');
 
@@ -191,10 +189,10 @@ begin
       digits_flat => digits_flat,
       disp_strobe => disp_strobe,
       busy        => disp_busy,
-      sda_out     => i2c_sda_out,
-      sda_in      => i2c_sda_in,
-      sda_out_en  => i2c_sda_oe,
-      scl         => i2c_scl
+      sda_out     => sda_out,
+      sda_in      => sda_in,
+      sda_out_en  => sda_out_en,
+      scl         => scl
     );
 
   disp_fsm : process(clk, rst_n)
@@ -216,8 +214,8 @@ begin
     end if;
   end process;
 
-  i2c_sda_in <= sda;
-  sda <= 'Z' when (i2c_sda_oe = '0' or i2c_sda_out = '1') else '0';
-  scl <= i2c_scl;
+  -- i2c_sda_in <= sda;
+  -- sda <= 'Z' when (i2c_sda_oe = '0' or i2c_sda_out = '1') else '0';
+  -- scl <= i2c_scl;
 
 end architecture;

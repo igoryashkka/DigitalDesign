@@ -12,7 +12,7 @@
 #define BTN_MODE_STEP (1U << 5)
 #define BTN_MASK     (BTN_INC_A|BTN_DEC_A|BTN_INC_B|BTN_DEC_B|BTN_OP_STEP|BTN_MODE_STEP)
 
-#define CH 1  // AXI GPIO channel 1
+#define CH 1  
 
 static inline void gpio_write_masked(XGpio* g, u32 value)
 {
@@ -27,24 +27,13 @@ static inline void press_level(XGpio* g, u32 bitmask, uint32_t hold_us)
     usleep(hold_us);
 }
 
-static inline void pulse_one(XGpio* g, u32 bitmask, uint32_t pulse_us)
-{
-
-    gpio_write_masked(g, bitmask);
-    usleep(pulse_us);
-    gpio_write_masked(g, 0);
-    usleep(pulse_us);
-}
-
 int main(void)
 {
  
     XGpio Gpio;
     XGpio_Config* Cfg = XGpio_LookupConfig(0);
-   // if (!Cfg) { xil_printf("XGpio_LookupConfig failed\r\n"); return XST_FAILURE; }
-    if (XGpio_CfgInitialize(&Gpio, Cfg, Cfg->BaseAddress) != XST_SUCCESS) {
-        //xil_printf("XGpio_CfgInitialize failed\r\n"); return XST_FAILURE;
-    }
+  
+    if (XGpio_CfgInitialize(&Gpio, Cfg, Cfg->BaseAddress) != XST_SUCCESS){/*while(1);*/}
 
 
     XGpio_SetDataDirection(&Gpio, CH, 0x00000000U);
@@ -62,7 +51,7 @@ int main(void)
 
     while (1) {
         press_level(&Gpio, BTN_INC_A, T);
-        pulse_one(&Gpio, BTN_MODE_STEP, T);
-        usleep(50 * T);
+       // press_level(&Gpio, BTN_MODE_STEP, T);
+        usleep(500 * T);
     }
 }
