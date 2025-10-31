@@ -51,7 +51,7 @@ int main(void)
 
     while (1) {
         press_level(&Gpio, BTN_INC_A, T);
-        press_level(&Gpio, BTN_MODE_STEP, T);
-        usleep(50 * T);
+       // press_level(&Gpio, BTN_MODE_STEP, T);
+        usleep(500 * T);
     }
 }
