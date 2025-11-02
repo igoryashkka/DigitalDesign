@@ -1,7 +1,7 @@
 {
   "name": "app_component",
   "type": "HOST",
-  "platform": "platform",
+  "platform": "zync_dsp_04",
   "domain": "standalone_ps7_cortexa9_0",
   "cpuInstance": "ps7_cortexa9_0",
   "cpuType": "cortex-a9",

@@ -28,7 +28,7 @@
 					"psDevice": "Auto Detect"
 				},
 				"resetAPU": false,
-				"bitstreamFile": "${workspaceFolder}\\app_component\\_ide\\bitstream\\design_1_wrapper.bit",
+				"bitstreamFile": "C:\\Users\\igor4\\trash\\Documents\\DigitalDesign\\DF3\\Decoder\\project\\Task_6_DF3_Decoder.runs\\impl_1\\design_1_wrapper.bit",
 				"zynqInitialization": {
 					"isFsbl": false,
 					"usingFSBL": {

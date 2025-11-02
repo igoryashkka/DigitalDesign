@@ -17,8 +17,8 @@ entity top_alu is
     clk    : in  std_logic;
     rst_n  : in  std_logic;
 
-    btn_raw : in  std_logic_vector(5 downto 0);
-
+    btn_raw : in  std_logic_vector(5 downto 0); 
+    
     led_zero_o  : out std_logic;
     led_carry_o : out std_logic;
     led_over_o  : out std_logic;
@@ -27,11 +27,17 @@ entity top_alu is
     pwm_r_o     : out std_logic;
     pwm_g_o     : out std_logic;
     pwm_b_o     : out std_logic;
+    dsp_used_o  : out std_logic;
 
     sda_in     : in  std_logic;
     sda_out_en : out std_logic;
     sda_out    : out std_logic;
-    scl         : out   std_logic
+    scl        : out   std_logic;
+    
+    dsp_use_i     : in std_logic;
+    dsp_result_i  : in  std_logic_vector(N_PWM_BITS - 1 downto 0);
+    dsp_a_val     : out std_logic_vector(N_BITS - 1 downto 0);
+    dsp_b_val     : out std_logic_vector(N_BITS - 1 downto 0)
   );
 end entity;
 
@@ -46,6 +52,8 @@ architecture rtl of top_alu is
   signal reg_b_u    : unsigned(N_BITS-1 downto 0) := (others => '0');
 
   signal result          : std_logic_vector(N_PWM_BITS-1 downto 0);
+  signal result_alu          : std_logic_vector(N_PWM_BITS-1 downto 0);
+  
   signal carry, overflow, negative, zero : std_logic;
   signal op_sel     : op_t := OP_ADD;
   signal duty_r, duty_g, duty_b : std_logic_vector(N_BITS-1 downto 0);
@@ -91,6 +99,8 @@ begin
       reg_val => btn_b_q
     );
 
+  dsp_a_val <= btn_a_q;
+  dsp_b_val <= btn_b_q;
   reg_a_u <= unsigned(btn_a_q);
   reg_b_u <= unsigned(btn_b_q);
 
@@ -111,7 +121,7 @@ begin
       a      => reg_a_u,
       b      => reg_b_u,
       op_sel => op_sel,
-      Y      => result,
+      Y      => result_alu,
       C      => carry,
       V      => overflow,
       N      => negative,
@@ -150,7 +160,9 @@ begin
       duty  => duty_b,
       pwm   => pwm_b_o
     );
-
+    
+   result <= dsp_result_i when (dsp_use_i = '1') else result_alu;
+   dsp_used_o <= '1' when (dsp_use_i = '1') else '0';
 
   u_display : entity work.display
     generic map (

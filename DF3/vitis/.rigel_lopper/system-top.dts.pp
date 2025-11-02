@@ -1,10 +1,10 @@
-# 1 "C:\\Users\\igor4\\trash\\Documents\\DigitalDesign\\DF3\\vitis\\platform\\export\\platform\\hw\\sdt\\system-top.dts"
+# 1 "C:\\Users\\igor4\\trash\\Documents\\DigitalDesign\\DF3\\vitis\\zync_dsp_04\\hw\\sdt\\system-top.dts"
 # 1 "<built-in>"
 # 1 "<command-line>"
-# 1 "C:\\Users\\igor4\\trash\\Documents\\DigitalDesign\\DF3\\vitis\\platform\\export\\platform\\hw\\sdt\\system-top.dts"
+# 1 "C:\\Users\\igor4\\trash\\Documents\\DigitalDesign\\DF3\\vitis\\zync_dsp_04\\hw\\sdt\\system-top.dts"
 /dts-v1/;
-# 1 "C:\\Users\\igor4\\trash\\Documents\\DigitalDesign\\DF3\\vitis\\platform\\export\\platform\\hw\\sdt\\zynq-7000.dtsi" 1
-# 10 "C:\\Users\\igor4\\trash\\Documents\\DigitalDesign\\DF3\\vitis\\platform\\export\\platform\\hw\\sdt\\zynq-7000.dtsi"
+# 1 "C:\\Users\\igor4\\trash\\Documents\\DigitalDesign\\DF3\\vitis\\zync_dsp_04\\hw\\sdt\\zynq-7000.dtsi" 1
+# 10 "C:\\Users\\igor4\\trash\\Documents\\DigitalDesign\\DF3\\vitis\\zync_dsp_04\\hw\\sdt\\zynq-7000.dtsi"
 / {
  #address-cells = <1>;
  #size-cells = <1>;
@@ -585,15 +585,15 @@
   };
  };
 };
-# 3 "C:\\Users\\igor4\\trash\\Documents\\DigitalDesign\\DF3\\vitis\\platform\\export\\platform\\hw\\sdt\\system-top.dts" 2
-# 1 "C:\\Users\\igor4\\trash\\Documents\\DigitalDesign\\DF3\\vitis\\platform\\export\\platform\\hw\\sdt\\pl.dtsi" 1
+# 3 "C:\\Users\\igor4\\trash\\Documents\\DigitalDesign\\DF3\\vitis\\zync_dsp_04\\hw\\sdt\\system-top.dts" 2
+# 1 "C:\\Users\\igor4\\trash\\Documents\\DigitalDesign\\DF3\\vitis\\zync_dsp_04\\hw\\sdt\\pl.dtsi" 1
 / {
  amba_pl: amba_pl {
   ranges;
   compatible = "simple-bus";
   #address-cells = <1>;
   #size-cells = <1>;
-  firmware-name = "design_1_wrapper.bit.bin";
+  firmware-name = ".bin";
   clocking0: clocking0 {
    compatible = "xlnx,fclk";
    assigned-clocks = <&clkc 15>;
@@ -607,9 +607,9 @@
    compatible = "xlnx,axi-gpio-2.0" , "xlnx,xps-gpio-1.00.a";
    xlnx,all-outputs = <0>;
    #gpio-cells = <2>;
-   xlnx,gpio-width = <32>;
+   xlnx,gpio-width = <6>;
    xlnx,dout-default = <0x0>;
-   xlnx,is-dual = <0>;
+   xlnx,is-dual = <1>;
    xlnx,ip-name = "axi_gpio";
    xlnx,tri-default-2 = <0xffffffff>;
    reg = <0x41200000 0x10000>;
@@ -622,7 +622,7 @@
    xlnx,edk-iptype = "PERIPHERAL";
    xlnx,dout-default-2 = <0x0>;
    status = "okay";
-   xlnx,gpio2-width = <32>;
+   xlnx,gpio2-width = <2>;
    clock-names = "s_axi_aclk";
    xlnx,tri-default = <0xffffffff>;
    xlnx,name = "axi_gpio_0";
@@ -630,8 +630,8 @@
   };
  };
 };
-# 4 "C:\\Users\\igor4\\trash\\Documents\\DigitalDesign\\DF3\\vitis\\platform\\export\\platform\\hw\\sdt\\system-top.dts" 2
-# 1 "C:\\Users\\igor4\\trash\\Documents\\DigitalDesign\\DF3\\vitis\\platform\\export\\platform\\hw\\sdt\\pcw.dtsi" 1
+# 4 "C:\\Users\\igor4\\trash\\Documents\\DigitalDesign\\DF3\\vitis\\zync_dsp_04\\hw\\sdt\\system-top.dts" 2
+# 1 "C:\\Users\\igor4\\trash\\Documents\\DigitalDesign\\DF3\\vitis\\zync_dsp_04\\hw\\sdt\\pcw.dtsi" 1
  &ps7_cortexa9_0 {
   xlnx,i-cache-size = <0x8000>;
   xlnx,d-cache-line-size = <20>;
@@ -818,7 +818,7 @@
   fclk-enable = <0x1>;
   ps-clk-frequency = <33333333>;
  };
-# 5 "C:\\Users\\igor4\\trash\\Documents\\DigitalDesign\\DF3\\vitis\\platform\\export\\platform\\hw\\sdt\\system-top.dts" 2
+# 5 "C:\\Users\\igor4\\trash\\Documents\\DigitalDesign\\DF3\\vitis\\zync_dsp_04\\hw\\sdt\\system-top.dts" 2
 / {
  device_id = "7z010";
  slrcount = <1>;
