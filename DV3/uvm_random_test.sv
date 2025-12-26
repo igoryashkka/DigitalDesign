@@ -14,12 +14,12 @@ class random_uvm_test extends uvm_test;
 
   task run_phase(uvm_phase phase);
     dxi_master_seq#(72)  mseq;
-    dxi_ready_seq#(8)    rseq;
+    dxi_slave_seq#(8)    rseq;
 
     phase.raise_objection(this);
 
     mseq = dxi_master_seq#(72)::type_id::create("mseq");
-    rseq = dxi_ready_seq#(8)  ::type_id::create("rseq");
+    rseq = dxi_slave_seq#(8)  ::type_id::create("rseq");
 
     fork
       mseq.start(env.in_agent.seqr);

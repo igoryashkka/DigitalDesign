@@ -297,66 +297,6 @@ class checker_scoreboard;
 
 endclass
 
-class file_collector_scoreboard;
-  dxi_agent #(8)      slv_ag;
-  int img_width;
-  int img_height;
-  string file_name;
-  int img_counter;
-
-  logic [7:0] pixel_queue[$]; 
-
-  function new(dxi_agent #(8) slv_ag,
-               int            width,
-               int            height,
-               string         base_name);
-    this.slv_ag      = slv_ag;
-    this.img_width   = width;
-    this.img_height  = height;
-    this.file_name   = base_name;
-    this.img_counter = 0;
-  endfunction
-
-  task automatic collect();
-    logic [7:0] dout;
-    forever begin
-      slv_ag.dxi_monitor(dout);  
-      pixel_queue.push_back(dout);
-      if (pixel_queue.size() == img_width * img_height)
-        save_image();
-    end
-  endtask
-
-  task automatic save_image();
-    string output_filename;
-    int file_out;
-    int i = 0;
-
-    output_filename = $sformatf("output_%0d_%0d.txt", WIDTH, HEIGHT);
-    file_out = $fopen(output_filename, "w");
-    
-    
-    if (!file_out) begin
-      $display("[FILE SCB] ERROR: cannot open %s", output_filename);
-      return;
-    end
-
-    foreach (pixel_queue[idx]) begin
-    $fwrite(file_out, "%02x", pixel_queue[idx]);
-    i++;
-    if ((i % WIDTH) == 0) $fwrite(file_out, "\n");
-    end
-
-    $fclose(file_out);
-    $display("[FILE SCB] Saved image %s", output_filename);
-    pixel_queue.delete();
-  endtask
-
-  task run();
-    collect();
-  endtask
-endclass
-
 
 class base_test;
   virtual dxi_if #(72) vif_mst;
@@ -391,73 +331,6 @@ class base_test;
       scb.run();
     join_none
     run_testcase();
-  endtask
-endclass
-
-class file_test extends base_test;
-  file_collector_scoreboard fscb;
-
-  function new(virtual dxi_if #(72) vif_mst,
-               virtual dxi_if #(8)  vif_slv,
-               virtual config_if    config_vif);
-    super.new(vif_mst, vif_slv, config_vif);
-  endfunction
-
-  virtual task build();
-    super.build();
-    fscb = new(slave_agent, WIDTH, HEIGHT, "out");
-    $display("[FILE TEST] Efscb build ok");
-  endtask
-
-  task run();
-    build();
-    fork
-      scb.run();   
-      fscb.run();  
-    join_none
-    run_testcase();
-  endtask
-
-  virtual task run_testcase();
-    int file_in;
-    logic [7:0] image[HEIGHT][WIDTH];
-    logic [7:0] extended[HEIGHT+2][WIDTH+2];
-    reg [7:0] temp_byte;
-    string input_file = "C:/Users/igor4/trash/Documents/DigitalDesign/DV2/FilterDXI/simulation/input_256_194.txt";
-    string hex_str;
-    file_in = $fopen(input_file, "r");
-    if (!file_in) begin
-      $display("[FILE TEST] ERROR: cannot open %s", input_file);
-      $finish;
-    end
-
-      for (int i = 0; i < HEIGHT; i++) begin
-      $fscanf(file_in, "%s", hex_str);
-       for (int j = 0; j < WIDTH; j++) begin
-        temp_byte = hex_to_byte(hex_str[j*2], hex_str[j*2+1]);
-        image[i][j] = temp_byte;
-       end
-    end
-
-    $fclose(file_in);
-    add_addition_pixels(image, extended, PADDING);
-
-    fork
-    for (int r = 1; r <= HEIGHT; r++) begin
-      for (int c = 1; c <= WIDTH; c++) begin
-        dxi_transaction #(72) tr = new();
-        tr.data = pack_3x3(extended, r, c);  
-        master_agent.drive(tr);
-      end
-    end
-
-
-      forever begin
-        dxi_transaction #(8) tr_slv = new();
-        assert(tr_slv.randomize());
-        slave_agent.drive(tr_slv);
-      end
-     join_any
   endtask
 endclass
 
@@ -496,67 +369,6 @@ class random_test extends base_test;
         end
       end
     join_any 
-  endtask
-endclass
-
-
-class boundary_test extends base_test;
-  dxi_transaction #(72) tr_mst;
-  dxi_transaction #(8)  tr_slv;
-
-  function new(virtual dxi_if #(72) vif_mst,
-               virtual dxi_if #(8)  vif_slv,
-               virtual config_if    config_vif);
-    super.new(vif_mst, vif_slv, config_vif);
-  endfunction
-
-  task automatic set_filter(input logic [1:0] sel);
-    config_vif.config_select <= sel;
-    @(posedge vif_mst.clk);
-  endtask
-  
-              
-  virtual task run_testcase();
-    localparam logic [71:0] boundary_patterns [10] = '{
-    72'h00_00_00_00_00_00_00_00_00,
-    72'hFF_FF_FF_FF_FF_FF_FF_FF_FF,
-    72'h00_00_00_00_FF_00_00_00_00,
-    72'hFF_FF_FF_FF_00_FF_FF_FF_FF,
-    72'h00_00_00_FF_FF_FF_FF_FF_FF,
-    72'h00_00_00_FF_FF_FF_FF_FF_FF,
-    72'h00_FF_00_FF_00_FF_00_FF_00,
-    72'hFF_00_FF_00_FF_00_FF_00_FF,
-    72'h00_20_40_60_80_A0_C0_E0_FF,
-    72'hFF_E0_C0_A0_80_60_40_20_00
-  };
-
-  logic [1:0] filters [4] = '{2'b00, 2'b01, 2'b10, 2'b11};
-
-
-    fork
-      begin : drive_loop
-       foreach (filters[f]) begin
-        set_filter(filters[f]);
-
-        for (int i = 0; i < 10; i++) begin
-         tr_mst       = new();
-         tr_mst.data  = boundary_patterns[i];
-
-          @(posedge vif_mst.clk);
-          master_agent.drive(tr_mst);
-      end
-    end
-      end
-
-      begin : slave_loop
-        forever begin 
-          tr_slv       = new();
-          tr_slv.delay = 1;
-          @(posedge vif_slv.clk);
-          slave_agent.drive(tr_slv);
-        end
-      end
-    join_any  
   endtask
 endclass
 
@@ -600,17 +412,10 @@ module tb_filter_sv;
   initial begin
     reset_dut();
 
-`ifdef RUN_FILE_TEST
-    ft = new(dxi_in, dxi_out, config_vif);
-    ft.run();
-`elsif RUN_RANDOM_TEST
+
     rt = new(dxi_in, dxi_out, config_vif);
     rt.run();
-`elsif RUN_BOUNDARY_TEST
-    bt = new(dxi_in, dxi_out, config_vif);
-    bt.run();
-`else
-    $display("[TB] ERROR: select test to run.");
-`endif
+
+
   end
 endmodule

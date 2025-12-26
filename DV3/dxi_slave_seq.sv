@@ -1,9 +1,9 @@
-class dxi_slave_ready_seq #(int DW=8) extends uvm_sequence #(dxi_sequence#(DW));
-  `uvm_object_param_utils(dxi_slave_ready_seq#(DW))
+class dxi_slave_seq #(int DW=8) extends uvm_sequence #(dxi_sequence#(DW));
+  `uvm_object_param_utils(dxi_slave_seq#(DW))
 
 
 
-  function new(string name="dxi_slave_ready_seq");
+  function new(string name="dxi_slave_seq");
     super.new(name);
   endfunction
 

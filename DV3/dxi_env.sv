@@ -1,3 +1,7 @@
+import uvm_pkg::*;
+`include "uvm_macros.svh"
+
+
 class dxi_env extends uvm_env;
   `uvm_component_utils(dxi_env)
 

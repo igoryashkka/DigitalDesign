@@ -1,4 +1,3 @@
-
 class dxi_master_seq #(int DW=72) extends uvm_sequence #(dxi_sequence#(DW));
   `uvm_object_param_utils(dxi_master_seq#(DW))
 

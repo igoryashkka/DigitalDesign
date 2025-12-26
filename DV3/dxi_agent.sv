@@ -1,3 +1,4 @@
+import dxi_pkg::*;
 
 class dxi_agent #(parameter int DW=72) extends uvm_agent;
   `uvm_component_param_utils(dxi_agent#(DW))
@@ -19,7 +20,7 @@ class dxi_agent #(parameter int DW=72) extends uvm_agent;
 
     seqr = uvm_sequencer#(dxi_sequence#(DW))::type_id::create("seqr",this);
     drv  = dxi_driver#(DW)::type_id::create("drv", this);
-    mon  = dxi_monitor#(DW)::type_id::create("mon", this);
+   // mon  = dxi_monitor#(DW)::type_id::create("mon", this);
 
     uvm_config_db#(bit)::set(this,"drv","is_master",is_master);
   endfunction

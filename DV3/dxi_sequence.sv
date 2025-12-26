@@ -18,14 +18,14 @@ class dxi_sequence #(int DW=72) extends uvm_sequence_item;
     else return v;
   endfunction
 
-  constraint delay_prob {
+  constraint c_delay_prob {
     use_delay dist {
       1 :=      clamp(dist_delay, 0, 10),
       0 := 10 - clamp(dist_delay, 0, 10)
     };
   }
 
-  constraint delay {
+  constraint c_delay  {
     if (use_delay) delay inside {[1:delay_max]};
     else           delay == 1;
   }
