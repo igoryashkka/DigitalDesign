@@ -1,6 +1,10 @@
 class dxi_master_seq #(int DW=72) extends uvm_sequence #(dxi_sequence#(DW));
   `uvm_object_param_utils(dxi_master_seq#(DW))
 
+      rand int unsigned n_items;
+  constraint c_n_items { n_items inside {[50:200]}; } 
+
+
   function new(string name="dxi_master_seq");
     super.new(name);
   endfunction
@@ -11,7 +15,7 @@ class dxi_master_seq #(int DW=72) extends uvm_sequence #(dxi_sequence#(DW));
     if (starting_phase != null)
       starting_phase.raise_objection(this);
 
-    repeat (tr.delay) begin
+    repeat (n_items) begin
       tr = dxi_sequence#(DW)::type_id::create("tr");
 
       start_item(tr);

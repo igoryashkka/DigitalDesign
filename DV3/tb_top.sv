@@ -37,8 +37,9 @@ module tb_top;
 
   initial begin
 
-    uvm_config_db#(virtual dxi_if#(72))::set(null, "uvm_test_top.env.in_agent",  "vif", dxi_in);
-    uvm_config_db#(virtual dxi_if#(8)) ::set(null, "uvm_test_top.env.out_agent", "vif", dxi_out);
+    uvm_config_db#(virtual dxi_if#(72))::set(null,"uvm_test_top.env.in_agent.drv", "vif", dxi_in);
+    uvm_config_db#(virtual dxi_if#(8))::set(null,"uvm_test_top.env.out_agent.drv", "vif", dxi_out);
+
     uvm_config_db#(virtual config_if)  ::set(null, "uvm_test_top.env",           "cfg_vif", cfg_if);
 
     uvm_config_db#(bit)::set(null, "uvm_test_top.env.in_agent",  "is_master", 1);
