@@ -5,7 +5,7 @@ class dxi_agent #(parameter int DW=72) extends uvm_agent;
 
   uvm_sequencer #(dxi_sequence#(DW)) seqr;  
   dxi_driver    #(DW)                drv;
-  dxi_monitor   #(DW)                mon;
+  //dxi_monitor   #(DW)                mon;
 
   bit is_master;
 
