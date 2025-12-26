@@ -11,10 +11,7 @@ class dxi_driver #(parameter int DW=72) extends uvm_driver #(dxi_sequence#(DW));
 
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
-                                                // why here this args keyword 
-    if (!uvm_config_db#(virtual dxi_if#(DW))::get(this,"","vif",vif))
-      /// `uvm_fatal("NOVIF","dxi_if not set")
-                               // why here this args keyword 
+    uvm_config_db#(virtual dxi_if#(DW))::get(this,"","vif",vif)
     void'(uvm_config_db#(bit)::get(this,"","is_master",is_master));
   endfunction
 
