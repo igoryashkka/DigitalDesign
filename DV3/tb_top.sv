@@ -1,7 +1,8 @@
 module tb_top;
   import uvm_pkg::*;
   `include "uvm_macros.svh"
-
+  
+  import dxi_pkg::*; 
   logic clk = 0;
   always #5 clk = ~clk;
 

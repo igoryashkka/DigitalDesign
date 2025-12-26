@@ -1,0 +1,31 @@
+class random_uvm_test extends uvm_test;
+  `uvm_component_utils(random_uvm_test)
+
+  dxi_env env;
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    env = dxi_env::type_id::create("env", this);
+  endfunction
+
+  task run_phase(uvm_phase phase);
+    dxi_master_seq#(72)  mseq;
+    dxi_ready_seq#(8)    rseq;
+
+    phase.raise_objection(this);
+
+    mseq = dxi_master_seq#(72)::type_id::create("mseq");
+    rseq = dxi_ready_seq#(8)  ::type_id::create("rseq");
+
+    fork
+      mseq.start(env.in_agent.seqr);
+      rseq.start(env.out_agent.seqr);
+    join
+
+    phase.drop_objection(this);
+  endtask
+endclass
