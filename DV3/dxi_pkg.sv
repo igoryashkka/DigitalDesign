@@ -7,8 +7,9 @@ package dxi_pkg;
   `include "dxi_master_seq.sv"
   `include "dxi_slave_seq.sv"
   `include "dxi_driver.sv"
-  //`include "dxi_monitor.sv"      
+  `include "dxi_monitor.sv"      
   `include "dxi_agent.sv"
+  `include "dxi_scoreboard.sv"
   `include "dxi_env.sv"
 
   // --------- tests ----------
