@@ -4,6 +4,8 @@
 set script_dir [file normalize [file dirname [info script]]]
 set proj_name "dxi_uvm"
 set proj_root [file normalize [file join $script_dir ".."]]
+set repo_root [file normalize [file join $proj_root ".."]]
+set src_root  [file join $proj_root "sources"]
 set proj_dir  [file normalize [file join $proj_root "vivado_project"]]
 set part_name "xc7a35tcpg236-1"
 set action "sim"
@@ -33,10 +35,12 @@ proc clean_artifacts {proj_dir proj_root script_dir} {
     }
   }
 
-  foreach pattern [list "vivado.jou" "vivado.log" "*.jou" "*.jou.*" "*.log" "*.log.*"] {
-    foreach f [glob -nocomplain -directory $script_dir $pattern] {
-      puts "Removing $f"
-      file delete -force $f
+  foreach dir [list $script_dir $proj_root $repo_root] {
+    foreach pattern [list "vivado.jou" "vivado.log" "*.jou" "*.jou.*" "*.log" "*.log.*"] {
+      foreach f [glob -nocomplain -directory $dir $pattern] {
+        puts "Removing $f"
+        file delete -force $f
+      }
     }
   }
 }
@@ -56,24 +60,27 @@ set_property target_simulator XSim [current_project]
 
 # RTL interfaces and DUT
 set rtl_files [list \
-  [file join $proj_root rtl dxi_if.sv] \
-  [file join $proj_root rtl config_if.sv] \
-  [file join $proj_root rtl filter.vhd]
+  [file join $src_root rtl dxi_if.sv] \
+  [file join $src_root rtl config_if.sv] \
+  [file join $src_root rtl filter.vhd]
 ]
 
 # UVM environment + testbench (package includes all dxi_* sources)
 set tb_files [list \
-  [file join $proj_root dxi_pkg.sv] \
-  [file join $proj_root tb tb_top.sv]
+  [file join $src_root dxi_pkg.sv] \
+  [file join $src_root simulation tb tb_top.sv]
 ]
 
 # Ensure includes resolve for files pulled in by dxi_pkg.sv
-set_property include_dirs [list $proj_root] [get_filesets sim_1]
+set_property include_dirs [list \
+  $src_root \
+  [file join $src_root simulation] \
+] [get_filesets sim_1]
 
 # Add files to simulation set
 add_files -fileset sim_1 $rtl_files
 add_files -fileset sim_1 $tb_files
-set_property file_type {VHDL 2008} [get_files [file join $proj_root rtl filter.vhd]]
+set_property file_type {VHDL 2008} [get_files [file join $src_root rtl filter.vhd]]
 
 # Configure simulation top
 set_property top tb_top [get_filesets sim_1]
