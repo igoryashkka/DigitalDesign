@@ -51,12 +51,7 @@ class dxi_driver #(parameter int DW=72) extends uvm_driver #(dxi_sequence#(DW));
   endtask
 
   task drive_slv();
-    // Hold ready high until we actually see a valid beat so the handshake
-    // cannot be missed.
     vif.ready <= 1;
-    @(posedge vif.clk);
-    while (!vif.valid) @(posedge vif.clk);
-    // handshake happens on this edge with ready already high
     @(posedge vif.clk);
     vif.ready <= 0;
   endtask
