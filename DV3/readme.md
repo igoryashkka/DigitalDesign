@@ -19,6 +19,6 @@ Supported actions passed through `-tclargs`/batch argument:
 - `elab`: runs elaboration without starting the simulator GUI.
 - any other value: generates the project without running simulation.
 
-Simulation mode (`gui` by default) can be set to `tcl` for a non-GUI run. The Windows wrapper also supports an optional third argument `clean` to delete generated Vivado outputs (`vivado_project`, `.Xil`, `xsim.dir`, and log files) before launching.
+Simulation mode (`gui` by default) can be set to `tcl` for a non-GUI run. The Windows wrapper supports `clean` as the action (first argument) to delete generated Vivado outputs (`vivado_project`, `.Xil`, `xsim.dir`, and log files) before exiting. The Tcl script also accepts `clean` as the action if you invoke it directly.
 
 Projects are generated under `DV3/vivado_project`. Adjust the part number in `scripts/setup_vivado.tcl` if you need to target a different device.

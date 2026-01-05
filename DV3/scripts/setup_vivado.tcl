@@ -1,8 +1,9 @@
 # Vivado automation script for DXI UVM simulation
 # Creates/refreshes a project, adds RTL + UVM sources, and optionally launches simulation.
 
+set script_dir [file normalize [file dirname [info script]]]
 set proj_name "dxi_uvm"
-set proj_root [file normalize [file join [file dirname [info script]] ".."]]
+set proj_root [file normalize [file join $script_dir ".."]]
 set proj_dir  [file normalize [file join $proj_root "vivado_project"]]
 set part_name "xc7a35tcpg236-1"
 set action "sim"
@@ -19,6 +20,32 @@ puts "Project root: $proj_root"
 puts "Project dir : $proj_dir"
 puts "Action      : $action"
 puts "Sim mode    : $sim_mode"
+
+# Reusable clean helper
+proc clean_artifacts {proj_dir proj_root script_dir} {
+  foreach path [list \
+      $proj_dir \
+      [file join $proj_root "xsim.dir"] \
+      [file join $proj_root ".Xil"]] {
+    if {[file exists $path]} {
+      puts "Removing $path"
+      file delete -force -recursive $path
+    }
+  }
+
+  foreach pattern [list "vivado.jou" "vivado.log" "*.jou" "*.jou.*" "*.log" "*.log.*"] {
+    foreach f [glob -nocomplain -directory $script_dir $pattern] {
+      puts "Removing $f"
+      file delete -force $f
+    }
+  }
+}
+
+if { $action eq "clean" } {
+  clean_artifacts $proj_dir $proj_root $script_dir
+  puts "Clean completed. Exiting."
+  return
+}
 
 # Create project and set up simulator
 create_project -force $proj_name $proj_dir -part $part_name

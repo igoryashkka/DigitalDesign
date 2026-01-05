@@ -10,15 +10,19 @@ if "%ACTION%"=="" set ACTION=sim
 set SIM_MODE=%2
 if "%SIM_MODE%"=="" set SIM_MODE=gui
 
-set CLEAN=%3
-
-if /I "%CLEAN%"=="clean" (
+if /I "%ACTION%"=="clean" (
   echo Cleaning Vivado-generated outputs...
   if exist "%PROJ_DIR%" rmdir /s /q "%PROJ_DIR%"
   if exist "%PROJ_ROOT%\xsim.dir" rmdir /s /q "%PROJ_ROOT%\xsim.dir"
   if exist "%PROJ_ROOT%\.Xil" rmdir /s /q "%PROJ_ROOT%\.Xil"
-  if exist "%SCRIPT_DIR%vivado.jou" del /f /q "%SCRIPT_DIR%vivado.jou"
-  if exist "%SCRIPT_DIR%vivado.log" del /f /q "%SCRIPT_DIR%vivado.log"
+  for %%F in ("%SCRIPT_DIR%vivado.jou" "%SCRIPT_DIR%vivado.log") do (
+    if exist "%%~F" del /f /q "%%~F"
+  )
+  for %%F in ("%SCRIPT_DIR%*.jou" "%SCRIPT_DIR%*.jou.*" "%SCRIPT_DIR%*.log" "%SCRIPT_DIR%*.log.*") do (
+    for %%X in (%%F) do if exist "%%~X" del /f /q "%%~X"
+  )
+  echo Done.
+  exit /b 0
 )
 
 echo Running Vivado automation with action %ACTION% (mode=%SIM_MODE%)
