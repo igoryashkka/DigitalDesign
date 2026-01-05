@@ -1,1 +1,3 @@
 uwm info
+
+uwm tools
