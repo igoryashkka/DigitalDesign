@@ -1,4 +1,4 @@
-class dxi_driver #(parameter int DW=72) extends uvm_driver #(dxi_sequence#(DW));
+class dxi_driver #(parameter int DW=72) extends uvm_driver #(dxi_transation#(DW));
 
   `uvm_component_param_utils(dxi_driver#(DW))
 
@@ -30,7 +30,7 @@ class dxi_driver #(parameter int DW=72) extends uvm_driver #(dxi_sequence#(DW));
     end
 
     forever begin
-      dxi_sequence#(DW) tr;
+      dxi_transation#(DW) tr;
       seq_item_port.get_next_item(tr);
 
       repeat (tr.delay) @(posedge vif.clk);
