@@ -2,6 +2,8 @@ import uvm_pkg::*;
 `include "uvm_macros.svh"
 `uvm_analysis_imp_decl(_in)
 `uvm_analysis_imp_decl(_out)
+class dxi_sequence #(int DW=72);
+endclass
 
 class dxi_scoreboard extends uvm_component;
   `uvm_component_utils(dxi_scoreboard)
