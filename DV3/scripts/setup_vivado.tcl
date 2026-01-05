@@ -18,7 +18,8 @@ puts "Action      : $action"
 # Create project and set mixed-language simulation
 create_project -force $proj_name $proj_dir -part $part_name
 set_property target_language Mixed [current_project]
-set_property target_simulator xsim [current_project]
+# Vivado expects the target simulator name to use the canonical casing.
+set_property target_simulator XSim [current_project]
 
 # RTL interfaces and DUT
 set rtl_files [list \
