@@ -15,7 +15,7 @@ class dxi_master_seq #(int DW=72) extends uvm_sequence #(dxi_sequence#(DW));
     if (starting_phase != null)
       starting_phase.raise_objection(this);
 
-    repeat (n_items) begin
+    repeat (200) begin
       tr = dxi_sequence#(DW)::type_id::create("tr");
 
       start_item(tr);
