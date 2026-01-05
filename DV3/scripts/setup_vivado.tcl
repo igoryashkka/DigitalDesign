@@ -15,9 +15,10 @@ puts "Project root: $proj_root"
 puts "Project dir : $proj_dir"
 puts "Action      : $action"
 
-# Create project and set mixed-language simulation
+# Create project and set up simulator
 create_project -force $proj_name $proj_dir -part $part_name
-set_property target_language Mixed [current_project]
+# Vivado requires a concrete target language; mixed-language designs are still supported with this setting.
+set_property target_language VHDL [current_project]
 # Vivado expects the target simulator name to use the canonical casing.
 set_property target_simulator XSim [current_project]
 
