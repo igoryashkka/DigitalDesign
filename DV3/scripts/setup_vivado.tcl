@@ -61,20 +61,14 @@ set rtl_files [list \
   [file join $proj_root rtl filter.vhd]
 ]
 
-# UVM environment + testbench
+# UVM environment + testbench (package includes all dxi_* sources)
 set tb_files [list \
   [file join $proj_root dxi_pkg.sv] \
-  [file join $proj_root dxi_sequence.sv] \
-  [file join $proj_root dxi_master_seq.sv] \
-  [file join $proj_root dxi_slave_seq.sv] \
-  [file join $proj_root dxi_driver.sv] \
-  [file join $proj_root dxi_monitor.sv] \
-  [file join $proj_root dxi_agent.sv] \
-  [file join $proj_root dxi_scoreboard.sv] \
-  [file join $proj_root dxi_env.sv] \
-  [file join $proj_root uvm_random_test.sv] \
   [file join $proj_root tb_top.sv]
 ]
+
+# Ensure includes resolve for files pulled in by dxi_pkg.sv
+set_property include_dirs [list $proj_root] [get_filesets sim_1]
 
 # Add files to simulation set
 add_files -fileset sim_1 $rtl_files
