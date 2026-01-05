@@ -3,6 +3,7 @@ setlocal
 set SCRIPT_DIR=%~dp0
 set PROJ_ROOT=%SCRIPT_DIR%..
 set PROJ_DIR=%PROJ_ROOT%\vivado_project
+for %%I in ("%PROJ_ROOT%\\..") do set REPO_ROOT=%%~fI
 
 set ACTION=%1
 if "%ACTION%"=="" set ACTION=sim
@@ -15,11 +16,13 @@ if /I "%ACTION%"=="clean" (
   if exist "%PROJ_DIR%" rmdir /s /q "%PROJ_DIR%"
   if exist "%PROJ_ROOT%\xsim.dir" rmdir /s /q "%PROJ_ROOT%\xsim.dir"
   if exist "%PROJ_ROOT%\.Xil" rmdir /s /q "%PROJ_ROOT%\.Xil"
-  for %%F in ("%SCRIPT_DIR%vivado.jou" "%SCRIPT_DIR%vivado.log") do (
-    if exist "%%~F" del /f /q "%%~F"
-  )
-  for %%F in ("%SCRIPT_DIR%*.jou" "%SCRIPT_DIR%*.jou.*" "%SCRIPT_DIR%*.log" "%SCRIPT_DIR%*.log.*") do (
-    for %%X in (%%F) do if exist "%%~X" del /f /q "%%~X"
+  for %%D in ("%SCRIPT_DIR%" "%PROJ_ROOT%" "%REPO_ROOT%") do (
+    for %%F in ("%%~D\\vivado.jou" "%%~D\\vivado.log") do (
+      if exist "%%~F" del /f /q "%%~F"
+    )
+    for %%P in ("%%~D\\*.jou" "%%~D\\*.jou.*" "%%~D\\*.log" "%%~D\\*.log.*") do (
+      for %%X in (%%P) do if exist "%%~X" del /f /q "%%~X"
+    )
   )
   echo Done.
   exit /b 0
