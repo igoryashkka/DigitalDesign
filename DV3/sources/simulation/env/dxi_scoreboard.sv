@@ -1,11 +1,13 @@
+import uvm_pkg::*;
+`include "uvm_macros.svh"
 `uvm_analysis_imp_decl(_in)
 `uvm_analysis_imp_decl(_out)
 
 class dxi_scoreboard extends uvm_component;
   `uvm_component_utils(dxi_scoreboard)
 
-  uvm_analysis_imp_in  #(dxi_sequence#(72), dxi_scoreboard) in_imp;
-  uvm_analysis_imp_out #(dxi_sequence#(8),  dxi_scoreboard) out_imp;
+  uvm_analysis_imp_in  #(dxi_transation#(72), dxi_scoreboard) in_imp;
+  uvm_analysis_imp_out #(dxi_transation#(8),  dxi_scoreboard) out_imp;
 
   virtual config_if cfg_vif;
   virtual dxi_if #(72) rst_vif;
@@ -72,7 +74,7 @@ class dxi_scoreboard extends uvm_component;
     return result[7:0];
   endfunction
 
-  function void write_in(dxi_sequence#(72) tr);
+  function void write_in(dxi_transation#(72) tr);
     logic [7:0] expected;
     if (rst_vif != null && !rst_vif.rstn) begin
       `uvm_info("DXI_SCB", "Ignoring input during reset", UVM_LOW)
@@ -91,7 +93,7 @@ class dxi_scoreboard extends uvm_component;
              $time, expected, tr.data);
   endfunction
 
-  function void write_out(dxi_sequence#(8) tr);
+  function void write_out(dxi_transation#(8) tr);
     logic [7:0] expected;
 
     if (rst_vif != null && !rst_vif.rstn) begin

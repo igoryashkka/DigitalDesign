@@ -3,7 +3,7 @@ class dxi_monitor #(parameter int DW = 72) extends uvm_monitor;
   `uvm_component_param_utils(dxi_monitor#(DW))
 
   virtual dxi_if #(DW) vif;
-  uvm_analysis_port #(dxi_sequence#(DW)) ap;
+  uvm_analysis_port #(dxi_transation#(DW)) ap;
   bit is_master;
 
   function new(string name, uvm_component parent);
@@ -31,8 +31,8 @@ class dxi_monitor #(parameter int DW = 72) extends uvm_monitor;
     forever begin
       @(posedge vif.clk);
       if (vif.rstn && vif.valid && vif.ready && ^vif.data !== 1'bX) begin
-        dxi_sequence#(DW) tr;
-        tr = dxi_sequence#(DW)::type_id::create($sformatf("%s_tr", get_full_name()));
+        dxi_transation#(DW) tr;
+        tr = dxi_transation#(DW)::type_id::create($sformatf("%s_tr", get_full_name()));
         tr.data = vif.data;
         ap.write(tr);
         $display("[DXI_MON ][%0t][%s] data=0x%0h",
