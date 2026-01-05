@@ -34,10 +34,12 @@ proc clean_artifacts {proj_dir proj_root script_dir} {
     }
   }
 
-  foreach pattern [list "vivado.jou" "vivado.log" "*.jou" "*.jou.*" "*.log" "*.log.*"] {
-    foreach f [glob -nocomplain -directory $script_dir $pattern] {
-      puts "Removing $f"
-      file delete -force $f
+  foreach dir [list $script_dir $proj_root] {
+    foreach pattern [list "vivado.jou" "vivado.log" "*.jou" "*.jou.*" "*.log" "*.log.*"] {
+      foreach f [glob -nocomplain -directory $dir $pattern] {
+        puts "Removing $f"
+        file delete -force $f
+      }
     }
   }
 }
