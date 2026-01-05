@@ -6,14 +6,19 @@ set proj_root [file normalize [file join [file dirname [info script]] ".."]]
 set proj_dir  [file normalize [file join $proj_root "vivado_project"]]
 set part_name "xc7a35tcpg236-1"
 set action "sim"
+set sim_mode "gui"
 
 if { $argc > 0 } {
   set action [lindex $argv 0]
+}
+if { $argc > 1 } {
+  set sim_mode [lindex $argv 1]
 }
 
 puts "Project root: $proj_root"
 puts "Project dir : $proj_dir"
 puts "Action      : $action"
+puts "Sim mode    : $sim_mode"
 
 # Create project and set up simulator
 create_project -force $proj_name $proj_dir -part $part_name
@@ -56,10 +61,12 @@ update_compile_order -fileset sim_1
 
 if { $action eq "sim" } {
   puts "Launching behavioral simulation..."
-  launch_simulation
+  launch_simulation -mode $sim_mode
 } elseif { $action eq "elab" } {
   puts "Running elaboration only..."
-  launch_simulation -step elab
+  launch_simulation -step elab -mode $sim_mode
+} elseif { $action eq "clean" } {
+  puts "Clean option is handled by the wrapper script; no project created."
 } else {
   puts "Project generated at $proj_dir"
   puts "Use Vivado GUI or rerun this script with 'sim' to launch simulation."

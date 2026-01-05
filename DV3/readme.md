@@ -11,12 +11,14 @@ This directory hosts the UVM testbench for the DXI filter design. The DUT used f
 ## Vivado automation
 Use the provided Tcl and batch wrappers in `scripts/` to stand up a Vivado simulation project:
 
-- Windows: run `scripts\\run_vivado.bat sim` to create the project and launch xsim behavioral simulation.
-- Any platform with Vivado in PATH: run `vivado -mode batch -source scripts/setup_vivado.tcl -tclargs sim`.
+- Windows: run `scripts\\run_vivado.bat sim gui` to create the project and launch xsim behavioral simulation with the GUI (default).
+- Any platform with Vivado in PATH: run `vivado -mode batch -source scripts/setup_vivado.tcl -tclargs sim gui`.
 
 Supported actions passed through `-tclargs`/batch argument:
 - `sim` (default): creates the project, configures compile order, and launches behavioral simulation.
 - `elab`: runs elaboration without starting the simulator GUI.
 - any other value: generates the project without running simulation.
+
+Simulation mode (`gui` by default) can be set to `tcl` for a non-GUI run. The Windows wrapper also supports an optional third argument `clean` to delete generated Vivado outputs (`vivado_project`, `.Xil`, `xsim.dir`, and log files) before launching.
 
 Projects are generated under `DV3/vivado_project`. Adjust the part number in `scripts/setup_vivado.tcl` if you need to target a different device.
