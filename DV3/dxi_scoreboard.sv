@@ -8,7 +8,7 @@ class dxi_scoreboard extends uvm_component;
   uvm_analysis_imp_out #(dxi_sequence#(8),  dxi_scoreboard) out_imp;
 
   virtual config_if cfg_vif;
-  bit [7:0] expected_q[$];
+  logic [7:0] expected_q[$];
 
   function new(string name, uvm_component parent);
     super.new(name, parent);
@@ -23,7 +23,7 @@ class dxi_scoreboard extends uvm_component;
     end
   endfunction
 
-  function automatic bit [7:0] apply_filter(logic [71:0] data, logic [1:0] sel);
+  function automatic logic [7:0] apply_filter(logic [71:0] data, logic [1:0] sel);
     int kernel   [0:8];
     int acc      = 0;
     int norm     = 1;
@@ -60,18 +60,18 @@ class dxi_scoreboard extends uvm_component;
     if (result < 0)       result = 0;
     else if (result > 255) result = 255;
 
-    return bit'(result[7:0]);
+    return logic'(result[7:0]);
   endfunction
 
   function void write_in(dxi_sequence#(72) tr);
-    bit [7:0] expected;
+    logic [7:0] expected;
     expected = apply_filter(tr.data, cfg_vif.config_select);
     expected_q.push_back(expected);
     `uvm_info("DXI_SCB", $sformatf("Captured input 0x%0h -> expected 0x%0h", tr.data, expected), UVM_LOW)
   endfunction
 
   function void write_out(dxi_sequence#(8) tr);
-    bit [7:0] expected;
+    logic [7:0] expected;
 
     if (expected_q.size() == 0) begin
       `uvm_error("DXI_SCB", $sformatf("Unexpected output 0x%0h with no predicted data", tr.data[7:0]))
