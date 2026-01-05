@@ -9,3 +9,7 @@
 /DV3/scripts/*.log.*
 /DV3/scripts/vivado.jou
 /DV3/scripts/vivado.log
+/DV3/*.jou
+/DV3/*.jou.*
+/DV3/*.log
+/DV3/*.log.*
