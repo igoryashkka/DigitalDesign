@@ -35,49 +35,41 @@ class dxi_scoreboard extends uvm_component;
     end
   endtask
 
-  function automatic logic [7:0] apply_filter(logic [71:0] data, logic [1:0] sel);
-    int kernel   [0:8];
-    int pixels   [0:8];
-    int acc      = 0;
-    int norm     = 1;
+  // Mirror the reference SV function the user provided, which slices the
+  // pixel bus little-endian (i*8 +: 8).
+  function automatic logic [7:0] apply_filter(logic [71:0] pixels, logic [1:0] sel);
+    int acc = 0;
+    int norm;
     int result;
+    int kernel[0:8];
+    logic [7:0] px[0:8];
 
-    // unpack the pixel bus exactly like the DUT (bits 71:64 are pixel[0])
     for (int i = 0; i < 9; i++) begin
-      pixels[i] = int'($unsigned(data[71 - i*8 -: 8]));
+      px[i] = pixels[i*8 +: 8];
     end
 
     case (sel)
-      2'b00: kernel = '{ 0, -1,  0,
-                        -1,  4, -1,
-                         0, -1,  0};
-      2'b01: kernel = '{-1, -1, -1,
-                        -1,  8, -1,
-                        -1, -1, -1};
-      2'b10: begin
-        kernel = '{1, 2, 1,
-                   2, 4, 2,
-                   1, 2, 1};
-        norm = 16;
-      end
-      default: begin
-        kernel = '{1, 1, 1,
-                   1, 1, 1,
-                   1, 1, 1};
-        norm = 9;
-      end
+      2'b00: begin kernel = '{ 0, -1,  0,
+                              -1,  4, -1,
+                               0, -1,  0}; norm = 1;  end
+      2'b01: begin kernel = '{-1, -1, -1,
+                              -1,  8, -1,
+                              -1, -1, -1}; norm = 1;  end
+      2'b10: begin kernel = '{1, 2, 1,
+                              2, 4, 2,
+                              1, 2, 1};   norm = 16; end
+      default: begin kernel = '{1, 1, 1,
+                                1, 1, 1,
+                                1, 1, 1}; norm = 9;  end
     endcase
 
-    for (int i = 0; i < 9; i++) begin
-      acc += kernel[i] * pixels[i];
-    end
+    for (int i = 0; i < 9; i++)
+      acc += kernel[i] * int'($unsigned(px[i]));
 
     result = acc / norm;
-
     if (result < 0)        result = 0;
     else if (result > 255) result = 255;
-
-    return logic'(result[7:0]);
+    return result[7:0];
   endfunction
 
   function void write_in(dxi_sequence#(72) tr);
