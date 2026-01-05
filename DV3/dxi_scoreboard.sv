@@ -80,13 +80,13 @@ class dxi_scoreboard extends uvm_component;
     end
 
     if (^tr.data === 1'bX || ^cfg_vif.config_select === 1'bX) begin
-      `uvm_warning("DXI_SCB", $sformatf("Skipping input with unknowns: data=%0h sel=%b", tr.data, cfg_vif.config_select))
+      uvm_report_warning("DXI_SCB", $sformatf("Skipping input with unknowns: data=%0h sel=%b", tr.data, cfg_vif.config_select), UVM_NONE, "", 0);
       return;
     end
 
     expected = apply_filter(tr.data, cfg_vif.config_select);
     expected_q.push_back(expected);
-    `uvm_info("DXI_SCB", $sformatf("Captured input 0x%0h -> expected 0x%0h", tr.data, expected), UVM_LOW)
+    uvm_report_info("DXI_SCB", $sformatf("Captured input 0x%0h -> expected 0x%0h", tr.data, expected), UVM_LOW, "", 0);
   endfunction
 
   function void write_out(dxi_sequence#(8) tr);
@@ -98,16 +98,16 @@ class dxi_scoreboard extends uvm_component;
     end
 
     if (expected_q.size() == 0) begin
-      `uvm_error("DXI_SCB", $sformatf("Unexpected output 0x%0h with no predicted data", tr.data[7:0]))
+      uvm_report_error("DXI_SCB", $sformatf("Unexpected output 0x%0h with no predicted data", tr.data[7:0]), UVM_NONE, "", 0);
       return;
     end
 
     expected = expected_q.pop_front();
 
     if (expected !== tr.data[7:0]) begin
-      `uvm_error("DXI_SCB", $sformatf("Mismatch: expected 0x%0h, got 0x%0h", expected, tr.data[7:0]))
+      uvm_report_error("DXI_SCB", $sformatf("Mismatch: expected 0x%0h, got 0x%0h", expected, tr.data[7:0]), UVM_NONE, "", 0);
     end else begin
-      `uvm_info("DXI_SCB", $sformatf("Output matches expected 0x%0h", expected), UVM_LOW)
+      uvm_report_info("DXI_SCB", $sformatf("Output matches expected 0x%0h", expected), UVM_LOW, "", 0);
     end
   endfunction
 endclass

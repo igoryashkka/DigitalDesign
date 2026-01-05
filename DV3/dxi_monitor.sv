@@ -35,7 +35,7 @@ class dxi_monitor #(parameter int DW = 72) extends uvm_monitor;
         tr = dxi_sequence#(DW)::type_id::create($sformatf("%s_tr", get_full_name()));
         tr.data = vif.data;
         ap.write(tr);
-        `uvm_info("DXI_MON", $sformatf("%s monitor captured data 0x%0h", is_master ? "Input" : "Output", tr.data), UVM_LOW)
+        uvm_report_info("DXI_MON", $sformatf("%s monitor captured data 0x%0h", is_master ? "Input" : "Output", tr.data), UVM_LOW, "", 0);
       end
     end
   endtask
