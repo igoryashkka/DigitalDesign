@@ -26,7 +26,7 @@ class dxi_monitor #(parameter int DW = 72) extends uvm_monitor;
   task run_phase(uvm_phase phase);
     forever begin
       @(posedge vif.clk);
-      if (vif.valid && vif.ready) begin
+      if (vif.valid && vif.ready && ^vif.data !== 1'bX) begin
         dxi_sequence#(DW) tr;
         tr = dxi_sequence#(DW)::type_id::create($sformatf("%s_tr", get_full_name()));
         tr.data = vif.data;
