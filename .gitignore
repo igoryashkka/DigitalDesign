@@ -1,1 +1,11 @@
 /sim/
+# Vivado-generated project outputs
+/DV3/vivado_project/
+/DV3/.Xil/
+/DV3/xsim.dir/
+/DV3/scripts/*.jou
+/DV3/scripts/*.jou.*
+/DV3/scripts/*.log
+/DV3/scripts/*.log.*
+/DV3/scripts/vivado.jou
+/DV3/scripts/vivado.log

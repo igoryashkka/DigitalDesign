@@ -1,7 +1,7 @@
 class random_uvm_test extends uvm_test;
   `uvm_component_utils(random_uvm_test)
 
-  dxi_env env;
+  uvm_env env;
 
   function new(string name, uvm_component parent);
     super.new(name, parent);
@@ -9,7 +9,7 @@ class random_uvm_test extends uvm_test;
 
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
-    env = dxi_env::type_id::create("env", this);
+    env = uvm_env::type_id::create("env", this);
   endfunction
 
   task run_phase(uvm_phase phase);

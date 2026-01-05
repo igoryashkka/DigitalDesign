@@ -1,5 +1,5 @@
-class dxi_sequence #(int DW=72) extends uvm_sequence_item; 
-  `uvm_object_param_utils(dxi_sequence#(DW))
+class dxi_transation #(int DW=72) extends uvm_sequence_item; 
+  `uvm_object_param_utils(dxi_transation#(DW))
 
   rand logic [DW-1:0] data;
   rand int unsigned   delay;
@@ -8,7 +8,7 @@ class dxi_sequence #(int DW=72) extends uvm_sequence_item;
   int unsigned delay_max  = 2;
   int unsigned dist_delay = 3;
 
-  function new(string name="dxi_sequence");
+  function new(string name="dxi_transation");
     super.new(name);
   endfunction
 
