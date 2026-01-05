@@ -24,9 +24,13 @@ class dxi_monitor #(parameter int DW = 72) extends uvm_monitor;
   endfunction
 
   task run_phase(uvm_phase phase);
+    // Wait for reset deassertion before sampling the bus.
+    @(posedge vif.clk);
+    wait (vif.rstn === 1'b1);
+
     forever begin
       @(posedge vif.clk);
-      if (vif.valid && vif.ready && ^vif.data !== 1'bX) begin
+      if (vif.rstn && vif.valid && vif.ready && ^vif.data !== 1'bX) begin
         dxi_sequence#(DW) tr;
         tr = dxi_sequence#(DW)::type_id::create($sformatf("%s_tr", get_full_name()));
         tr.data = vif.data;

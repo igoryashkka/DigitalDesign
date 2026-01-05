@@ -8,6 +8,7 @@ class dxi_scoreboard extends uvm_component;
   uvm_analysis_imp_out #(dxi_sequence#(8),  dxi_scoreboard) out_imp;
 
   virtual config_if cfg_vif;
+  virtual dxi_if #(72) rst_vif;
   logic [7:0] expected_q[$];
 
   function new(string name, uvm_component parent);
@@ -21,7 +22,18 @@ class dxi_scoreboard extends uvm_component;
     if (!uvm_config_db#(virtual config_if)::get(this, "", "cfg_vif", cfg_vif)) begin
       `uvm_fatal("NO_CFG_VIF", $sformatf("No cfg_vif for %s", get_full_name()))
     end
+    void'(uvm_config_db#(virtual dxi_if#(72))::get(this, "", "rst_vif", rst_vif));
   endfunction
+
+  task run_phase(uvm_phase phase);
+    if (rst_vif == null) return;
+
+    forever begin
+      @(negedge rst_vif.rstn);
+      expected_q.delete();
+      `uvm_info("DXI_SCB", "Reset detected, clearing expected queue", UVM_LOW)
+    end
+  endtask
 
   function automatic logic [7:0] apply_filter(logic [71:0] data, logic [1:0] sel);
     int kernel   [0:8];
@@ -70,6 +82,11 @@ class dxi_scoreboard extends uvm_component;
 
   function void write_in(dxi_sequence#(72) tr);
     logic [7:0] expected;
+    if (rst_vif != null && !rst_vif.rstn) begin
+      `uvm_info("DXI_SCB", "Ignoring input during reset", UVM_LOW)
+      return;
+    end
+
     if (^tr.data === 1'bX || ^cfg_vif.config_select === 1'bX) begin
       `uvm_warning("DXI_SCB", $sformatf("Skipping input with unknowns: data=%0h sel=%b", tr.data, cfg_vif.config_select))
       return;
@@ -82,6 +99,11 @@ class dxi_scoreboard extends uvm_component;
 
   function void write_out(dxi_sequence#(8) tr);
     logic [7:0] expected;
+
+    if (rst_vif != null && !rst_vif.rstn) begin
+      `uvm_info("DXI_SCB", "Ignoring output during reset", UVM_LOW)
+      return;
+    end
 
     if (expected_q.size() == 0) begin
       `uvm_error("DXI_SCB", $sformatf("Unexpected output 0x%0h with no predicted data", tr.data[7:0]))

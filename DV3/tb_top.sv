@@ -27,18 +27,23 @@ module tb_top;
   // reset
   initial begin
     rstn = 0;
+    dxi_in.rstn  = 0;
+    dxi_out.rstn = 0;
     dxi_in.valid   = 0;
     dxi_in.data    = '0;
     dxi_out.ready  = 0;
     cfg_if.config_select = 2'b11; 
     repeat (3) @(posedge clk);
     rstn = 1;
+    dxi_in.rstn  = 1;
+    dxi_out.rstn = 1;
   end
 
   initial begin
 
     uvm_config_db#(virtual dxi_if#(72))::set(null,"uvm_test_top.env.in_agent",  "vif", dxi_in);
     uvm_config_db#(virtual dxi_if#(8)) ::set(null,"uvm_test_top.env.out_agent", "vif", dxi_out);
+    uvm_config_db#(virtual dxi_if#(72))::set(null,"uvm_test_top.env.scoreboard", "rst_vif", dxi_in);
 
     uvm_config_db#(virtual config_if)  ::set(null, "uvm_test_top.env", "cfg_vif", cfg_if);
 
