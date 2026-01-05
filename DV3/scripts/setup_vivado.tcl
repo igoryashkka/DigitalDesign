@@ -61,10 +61,24 @@ update_compile_order -fileset sim_1
 
 if { $action eq "sim" } {
   puts "Launching behavioral simulation..."
-  launch_simulation -mode $sim_mode
+  if { $sim_mode eq "tcl" } {
+    # Generate scripts only, then run xsim in batch (no GUI)
+    launch_simulation -mode behavioral -scripts_only
+    set sim_dir [file normalize [file join $proj_dir "${proj_name}.sim" "sim_1" "behav" "xsim"]]
+    set run_tcl [file join $sim_dir "run.tcl"]
+    set snapshot "tb_top_behav"
+    if {![file exists $run_tcl]} {
+      error "Expected xsim run script not found at $run_tcl"
+    }
+    puts "Running xsim in batch: snapshot=$snapshot script=$run_tcl"
+    exec xsim $snapshot -tclbatch $run_tcl
+  } else {
+    # Default: open the simulator GUI
+    launch_simulation -mode behavioral
+  }
 } elseif { $action eq "elab" } {
   puts "Running elaboration only..."
-  launch_simulation -step elab -mode $sim_mode
+  launch_simulation -step elab -mode behavioral
 } elseif { $action eq "clean" } {
   puts "Clean option is handled by the wrapper script; no project created."
 } else {
