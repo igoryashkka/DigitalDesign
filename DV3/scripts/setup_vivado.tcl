@@ -4,6 +4,7 @@
 set script_dir [file normalize [file dirname [info script]]]
 set proj_name "dxi_uvm"
 set proj_root [file normalize [file join $script_dir ".."]]
+set repo_root [file normalize [file join $proj_root ".."]]
 set src_root  [file join $proj_root "sources"]
 set proj_dir  [file normalize [file join $proj_root "vivado_project"]]
 set part_name "xc7a35tcpg236-1"
@@ -34,7 +35,7 @@ proc clean_artifacts {proj_dir proj_root script_dir} {
     }
   }
 
-  foreach dir [list $script_dir $proj_root] {
+  foreach dir [list $script_dir $proj_root $repo_root] {
     foreach pattern [list "vivado.jou" "vivado.log" "*.jou" "*.jou.*" "*.log" "*.log.*"] {
       foreach f [glob -nocomplain -directory $dir $pattern] {
         puts "Removing $f"
