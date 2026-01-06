@@ -126,7 +126,7 @@ if { $action eq "sim" } {
     # Normalize plusargs from wrapper (allow users to pass "+UVM_TESTNAME=foo" or "foo").
     set xsim_cmd [list xsim $snapshot -tclbatch $run_tcl]
     if {[info exists ::env(UVM_TESTNAME)]} {
-      set testname $::env(UVM_TESTNAME)
+      set testname [string trim $::env(UVM_TESTNAME)]
       if {[string match "+UVM_TESTNAME=*" $testname]} {
         set testname [string range $testname 14 end]
       } elseif {[string match "+*" $testname]} {
@@ -138,7 +138,7 @@ if { $action eq "sim" } {
       }
     }
     if {[info exists ::env(IMG_FILE)] && $::env(IMG_FILE) ne ""} {
-      set img_arg $::env(IMG_FILE)
+      set img_arg [string trim $::env(IMG_FILE)]
       if {[string match "+IMG_FILE=*" $img_arg]} {
         set img_arg [string range $img_arg 10 end]
       } elseif {[string match "+*" $img_arg]} {
@@ -147,8 +147,11 @@ if { $action eq "sim" } {
       puts "Applying IMG_FILE=$img_arg"
       lappend xsim_cmd --testplusarg "IMG_FILE=$img_arg"
     }
-    puts "Running xsim in batch: $xsim_cmd"
+    set orig_dir_xsim [pwd]
+    cd $sim_dir
+    puts "Running xsim in batch (cwd=$sim_dir): $xsim_cmd"
     exec {*}$xsim_cmd
+    cd $orig_dir_xsim
   } else {
     # Default: open the simulator GUI
     launch_simulation -mode behavioral
