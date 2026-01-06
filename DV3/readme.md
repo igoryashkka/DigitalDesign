@@ -4,7 +4,7 @@ UVM testbench for the DXI filter (DUT: `sources/rtl/filter.vhd` copied from DV2)
 
 ## Quick start
 - Windows: `scripts\\run_vivado.bat [sim|elab|clean] [gui|tcl]`
-- Linux/macOS: `chmod +x scripts/run_vivado.sh && scripts/run_vivado.sh [sim|elab|clean] [gui|tcl]`
+- Linux: `chmod +x scripts/run_vivado.sh && scripts/run_vivado.sh [sim|elab|clean] [gui|tcl]`
 - Direct Tcl: `vivado -mode batch -source scripts/setup_vivado.tcl -tclargs <action> <mode>`
   - action: `sim` (default) | `elab` | `clean`
   - mode: `gui` (default) | `tcl` (headless)
