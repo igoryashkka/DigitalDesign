@@ -28,6 +28,10 @@ scripts\run_vivado.bat sim gui file_uvm_test "..\DV2\FilterDXI\simulation\input_
 ```
 Args: `action` (sim|elab|clean), `mode` (gui|tcl), `testname` (defaults to `random_uvm_test`), optional `IMG_FILE` for the file test.
 
+Notes:
+- GUI runs now also execute the generated `run.tcl`, so the same console log you see in batch mode is printed in the terminal while the GUI remains interactive.
+- `IMG_FILE` may be given as an absolute path or a repo-relative path (e.g., `..\\DV2\\FilterDXI\\simulation\\input_256_194.txt`); the script normalizes it before launching xsim.
+
 ### Direct Vivado Tcl
 ```
 vivado -mode batch -source scripts/setup_vivado.tcl -tclargs sim tcl

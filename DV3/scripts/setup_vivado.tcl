@@ -92,6 +92,7 @@ set_property xsim.simulate.runtime {10 ms} [get_filesets sim_1]
 # Common helper for script-based simulation (batch + GUI)
 proc build_and_run_xsim {proj_dir proj_name sim_mode} {
   global tcl_platform
+  global repo_root
   set sim_dir [file normalize [file join $proj_dir "${proj_name}.sim" "sim_1" "behav" "xsim"]]
   set script_ext [expr {$tcl_platform(platform) eq "unix" ? "sh" : "bat"}]
   set compile_script [file join $sim_dir "compile.$script_ext"]
@@ -131,10 +132,11 @@ proc build_and_run_xsim {proj_dir proj_name sim_mode} {
   close $fh
 
   set xsim_cmd [list xsim $snapshot]
-  if {$sim_mode eq "tcl"} {
-    lappend xsim_cmd -tclbatch $run_tcl
+  if {$sim_mode eq "gui"} {
+    # Run the same batch script so logs also appear in the console while keeping the GUI interactive.
+    lappend xsim_cmd -gui -tclbatch $run_tcl
   } else {
-    lappend xsim_cmd -gui
+    lappend xsim_cmd -tclbatch $run_tcl
   }
 
   # Normalize plusargs from wrapper (allow users to pass "+UVM_TESTNAME=foo" or "foo").
@@ -151,12 +153,22 @@ proc build_and_run_xsim {proj_dir proj_name sim_mode} {
     }
   }
   if {[info exists ::env(IMG_FILE)] && $::env(IMG_FILE) ne ""} {
-    set img_arg [string trim $::env(IMG_FILE)]
-    if {[string match "+IMG_FILE=*" $img_arg]} {
-      set img_arg [string range $img_arg 10 end]
-    } elseif {[string match "+*" $img_arg]} {
-      set img_arg [string range $img_arg 1 end]
+    set img_arg_raw [string trim $::env(IMG_FILE)]
+    if {[string match "+IMG_FILE=*" $img_arg_raw]} {
+      set img_arg_raw [string range $img_arg_raw 10 end]
+    } elseif {[string match "+*" $img_arg_raw]} {
+      set img_arg_raw [string range $img_arg_raw 1 end]
     }
+
+    # Normalize/absolutize relative paths so xsim resolves the file regardless of cwd,
+    # and replace backslashes to avoid Tcl-escape issues in plusargs.
+    if {[file pathtype $img_arg_raw] eq "relative"} {
+      set img_arg [file normalize [file join $repo_root $img_arg_raw]]
+    } else {
+      set img_arg [file normalize $img_arg_raw]
+    }
+    set img_arg [string map {\\ /} $img_arg]
+
     puts "Applying IMG_FILE=$img_arg"
     lappend xsim_cmd --testplusarg "IMG_FILE=$img_arg"
   }
