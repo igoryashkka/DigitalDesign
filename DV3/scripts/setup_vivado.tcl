@@ -91,7 +91,7 @@ set_property xsim.simulate.runtime {10 ms} [get_filesets sim_1]
 
 # Normalize plusargs from environment (wrapper-compatible) and return a dict.
 proc parse_plusargs {} {
-  global repo_root
+  global proj_root
 
   set result [dict create testname "" img_file ""]
 
@@ -116,7 +116,8 @@ proc parse_plusargs {} {
     # Normalize/absolutize relative paths so xsim resolves the file regardless of cwd,
     # and replace backslashes to avoid Tcl-escape issues in plusargs.
     if {[file pathtype $img_arg_raw] eq "relative"} {
-      set img_arg [file normalize [file join $repo_root $img_arg_raw]]
+      # Resolve relative to the DV3 project root so "..\\DV2\\..." points to the sibling DV2 directory.
+      set img_arg [file normalize [file join $proj_root $img_arg_raw]]
     } else {
       set img_arg [file normalize $img_arg_raw]
     }
