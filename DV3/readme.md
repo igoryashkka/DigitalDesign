@@ -17,28 +17,16 @@ The default UVM test is `random_uvm_test`. You can override it with `+UVM_TESTNA
 
 ### Windows (batch wrapper)
 ```
-:: Basic random test in GUI
+:: Basic random test
 scripts\run_vivado.bat sim gui
 
-:: Boundary test headless
+:: Boundary test
 scripts\run_vivado.bat sim tcl boundary_uvm_test
 
-:: File-driven test headless with a custom image
+:: File-driven test
 scripts\run_vivado.bat sim tcl file_uvm_test "..\DV2\FilterDXI\simulation\input_256_194.txt"
 ```
 Args: `action` (sim|elab|clean), `mode` (gui|tcl), `testname` (defaults to `random_uvm_test`), optional `IMG_FILE` for the file test.
-
-### Linux/macOS (shell wrapper)
-```
-# Default random test
-./scripts/run_vivado.sh sim gui
-
-# Boundary test
-./scripts/run_vivado.sh sim tcl +UVM_TESTNAME=boundary_uvm_test
-
-# File-driven test
-./scripts/run_vivado.sh sim tcl +UVM_TESTNAME=file_uvm_test +IMG_FILE=../DV2/FilterDXI/simulation/input_256_194.txt
-```
 
 ### Direct Vivado Tcl
 ```
