@@ -7,7 +7,6 @@ class dxi_file_seq #(int DW=72) extends uvm_sequence #(dxi_transation#(DW));
   typedef byte unsigned image_t    [HEIGHT][WIDTH];
   typedef byte unsigned extended_t [HEIGHT+2][WIDTH+2];
 
-  // Optional handles/controls passed in by the test.
   virtual config_if cfg_vif;
   string input_file = "../DV2/FilterDXI/simulation/input_256_194.txt";
   logic [1:0] config_sel = 2'b11;
@@ -16,7 +15,7 @@ class dxi_file_seq #(int DW=72) extends uvm_sequence #(dxi_transation#(DW));
     super.new(name);
   endfunction
 
-  // Convert two ASCII hex characters into a byte.
+  // Convert ASCII 
   function automatic byte unsigned hex_to_byte(byte unsigned char1, byte unsigned char2);
     byte unsigned hi;
     byte unsigned lo;
@@ -27,7 +26,6 @@ class dxi_file_seq #(int DW=72) extends uvm_sequence #(dxi_transation#(DW));
     return (hi << 4) | lo;
   endfunction
 
-  // Pad the image by duplicating the border pixels.
   function automatic void add_padding(
       input  image_t    image,
       output extended_t extended);
@@ -53,7 +51,6 @@ class dxi_file_seq #(int DW=72) extends uvm_sequence #(dxi_transation#(DW));
     extended[HEIGHT+1][WIDTH+1]  = image[HEIGHT-1][WIDTH-1];
   endfunction
 
-  // Pack a 3x3 window into DW bits with little-endian pixel order.
   function automatic logic [DW-1:0] pack_3x3(
       input extended_t extended,
       input int row,
