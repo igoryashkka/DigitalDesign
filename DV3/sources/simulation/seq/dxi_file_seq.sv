@@ -58,14 +58,14 @@ class dxi_file_seq #(int DW=72) extends uvm_sequence #(dxi_transation#(DW));
       input extended_t extended,
       input int row,
       input int col);
-    logic [DW-1:0] packed;
-    packed = '0;
+    logic [DW-1:0] packed_w;
+    packed_w = '0;
     for (int r = -1; r <= 1; r++) begin
       for (int c = -1; c <= 1; c++) begin
-        packed = (packed << 8) | extended[row + r][col + c];
+        packed_w = (packed_w << 8) | extended[row + r][col + c];
       end
     end
-    return packed;
+    return packed_w;
   endfunction
 
   task body();
