@@ -9,21 +9,28 @@ rem Args: 1=action (sim|elab|clean), 2=mode (gui|tcl), 3=testname, 4=IMG_FILE pa
 set ACTION=%1
 if "%ACTION%"=="" set ACTION=sim
 
-set SIM_MODE=%2
-if "%SIM_MODE%"=="" set SIM_MODE=gui
+set ARG2=%2
+set ARG3=%3
+set ARG4=%4
 
-set TESTNAME=%3
-if "%TESTNAME%"=="" set TESTNAME=random_uvm_test
-
-set IMG_FILE_ARG=%4
-
-rem If the second argument is not a known mode, treat it as the test name and default mode to GUI.
-if /I not "%SIM_MODE%"=="gui" if /I not "%SIM_MODE%"=="tcl" (
-  if "%TESTNAME%"=="random_uvm_test" (
-    set "TESTNAME=%SIM_MODE%"
-    set "SIM_MODE=gui"
-  )
+rem Parse args:
+rem - If arg2 is gui/tcl: mode=arg2, test=arg3 (or default), img=arg4
+rem - Otherwise: mode=gui (default), test=arg2 (or default), img=arg3
+if /I "%ARG2%"=="gui" (
+  set "SIM_MODE=gui"
+  set "TESTNAME=%ARG3%"
+  set "IMG_FILE_ARG=%ARG4%"
+) else if /I "%ARG2%"=="tcl" (
+  set "SIM_MODE=tcl"
+  set "TESTNAME=%ARG3%"
+  set "IMG_FILE_ARG=%ARG4%"
+) else (
+  set "SIM_MODE=gui"
+  set "TESTNAME=%ARG2%"
+  set "IMG_FILE_ARG=%ARG3%"
 )
+
+if "%TESTNAME%"=="" set TESTNAME=random_uvm_test
 
 rem PowerShell may split +UVM_TESTNAME=foo into two args (+UVM_TESTNAME, foo). Rejoin and leave IMG unset.
 if /I "%TESTNAME%"=="+UVM_TESTNAME" if not "%IMG_FILE_ARG%"=="" (
@@ -31,6 +38,8 @@ if /I "%TESTNAME%"=="+UVM_TESTNAME" if not "%IMG_FILE_ARG%"=="" (
   set "IMG_FILE_ARG="
 )
 
+rem If the user passed an IMG_FILE path as the fourth arg in the 3-arg form (sim gui test img),
+rem keep it as IMG_FILE_ARG; otherwise leave empty.
 if /I "%ACTION%"=="clean" (
   echo Cleaning Vivado-generated outputs...
   if exist "%PROJ_DIR%" rmdir /s /q "%PROJ_DIR%"
