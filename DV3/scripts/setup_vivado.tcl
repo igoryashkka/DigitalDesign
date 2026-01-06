@@ -86,6 +86,8 @@ set_property file_type {VHDL 2008} [get_files [file join $src_root rtl filter.vh
 set_property top tb_top [get_filesets sim_1]
 set_property top_lib xil_defaultlib [get_filesets sim_1]
 update_compile_order -fileset sim_1
+# Ensure GUI and scripts-only runs execute long enough for large transaction counts.
+set_property xsim.simulate.runtime {10 ms} [get_filesets sim_1]
 
 if { $action eq "sim" } {
   puts "Launching behavioral simulation..."
