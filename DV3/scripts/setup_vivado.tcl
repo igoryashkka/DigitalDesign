@@ -108,7 +108,11 @@ if { $action eq "sim" } {
     cd $sim_dir
     foreach script [list $compile_script $elaborate_script] {
       puts "Running $script..."
-      exec {*}[list $script]
+      if {$tcl_platform(platform) eq "windows"} {
+        exec cmd /c $script
+      } else {
+        exec sh $script
+      }
     }
     cd $orig_dir
     # Vivado no longer produces run.tcl automatically in scripts-only mode; always create one
@@ -119,14 +123,29 @@ if { $action eq "sim" } {
     puts $fh "run $sim_duration"
     puts $fh {quit}
     close $fh
+    # Normalize plusargs from wrapper (allow users to pass "+UVM_TESTNAME=foo" or "foo").
     set xsim_cmd [list xsim $snapshot -tclbatch $run_tcl]
     if {[info exists ::env(UVM_TESTNAME)]} {
-      puts "Applying UVM_TESTNAME=$::env(UVM_TESTNAME)"
-      lappend xsim_cmd --testplusarg "UVM_TESTNAME=$::env(UVM_TESTNAME)"
+      set testname $::env(UVM_TESTNAME)
+      if {[string match "+UVM_TESTNAME=*" $testname]} {
+        set testname [string range $testname 14 end]
+      } elseif {[string match "+*" $testname]} {
+        set testname [string range $testname 1 end]
+      }
+      if {$testname ne ""} {
+        puts "Applying UVM_TESTNAME=$testname"
+        lappend xsim_cmd --testplusarg "UVM_TESTNAME=$testname"
+      }
     }
     if {[info exists ::env(IMG_FILE)] && $::env(IMG_FILE) ne ""} {
-      puts "Applying IMG_FILE=$::env(IMG_FILE)"
-      lappend xsim_cmd --testplusarg "IMG_FILE=$::env(IMG_FILE)"
+      set img_arg $::env(IMG_FILE)
+      if {[string match "+IMG_FILE=*" $img_arg]} {
+        set img_arg [string range $img_arg 10 end]
+      } elseif {[string match "+*" $img_arg]} {
+        set img_arg [string range $img_arg 1 end]
+      }
+      puts "Applying IMG_FILE=$img_arg"
+      lappend xsim_cmd --testplusarg "IMG_FILE=$img_arg"
     }
     puts "Running xsim in batch: $xsim_cmd"
     exec {*}$xsim_cmd
