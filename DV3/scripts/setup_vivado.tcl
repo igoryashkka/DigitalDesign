@@ -89,10 +89,48 @@ update_compile_order -fileset sim_1
 # Ensure GUI and scripts-only runs execute long enough for large transaction counts.
 set_property xsim.simulate.runtime {10 ms} [get_filesets sim_1]
 
-# Common helper for script-based simulation (batch + GUI)
-proc build_and_run_xsim {proj_dir proj_name sim_mode} {
-  global tcl_platform
+# Normalize plusargs from environment (wrapper-compatible) and return a dict.
+proc parse_plusargs {} {
   global repo_root
+
+  set result [dict create testname "" img_file ""]
+
+  if {[info exists ::env(UVM_TESTNAME)]} {
+    set testname [string trim $::env(UVM_TESTNAME)]
+    if {[string match "+UVM_TESTNAME=*" $testname]} {
+      set testname [string range $testname 14 end]
+    } elseif {[string match "+*" $testname]} {
+      set testname [string range $testname 1 end]
+    }
+    dict set result testname $testname
+  }
+
+  if {[info exists ::env(IMG_FILE)] && $::env(IMG_FILE) ne ""} {
+    set img_arg_raw [string trim $::env(IMG_FILE)]
+    if {[string match "+IMG_FILE=*" $img_arg_raw]} {
+      set img_arg_raw [string range $img_arg_raw 10 end]
+    } elseif {[string match "+*" $img_arg_raw]} {
+      set img_arg_raw [string range $img_arg_raw 1 end]
+    }
+
+    # Normalize/absolutize relative paths so xsim resolves the file regardless of cwd,
+    # and replace backslashes to avoid Tcl-escape issues in plusargs.
+    if {[file pathtype $img_arg_raw] eq "relative"} {
+      set img_arg [file normalize [file join $repo_root $img_arg_raw]]
+    } else {
+      set img_arg [file normalize $img_arg_raw]
+    }
+    set img_arg [string map {\\ /} $img_arg]
+
+    dict set result img_file $img_arg
+  }
+
+  return $result
+}
+
+# Common helper for script-based simulation (batch/CLI)
+proc build_and_run_xsim {proj_dir proj_name plusargs} {
+  global tcl_platform
   set sim_dir [file normalize [file join $proj_dir "${proj_name}.sim" "sim_1" "behav" "xsim"]]
   set script_ext [expr {$tcl_platform(platform) eq "unix" ? "sh" : "bat"}]
   set compile_script [file join $sim_dir "compile.$script_ext"]
@@ -125,52 +163,21 @@ proc build_and_run_xsim {proj_dir proj_name sim_mode} {
   puts "Writing run.tcl with simulation duration $sim_duration"
   set fh [open $run_tcl "w"]
   puts $fh "run $sim_duration"
-  # Leave the GUI open by only quitting in batch mode.
-  if {$sim_mode eq "tcl"} {
-    puts $fh {quit}
-  }
+  puts $fh {quit}
   close $fh
 
-  set xsim_cmd [list xsim $snapshot]
-  if {$sim_mode eq "gui"} {
-    # Run the same batch script so logs also appear in the console while keeping the GUI interactive.
-    lappend xsim_cmd -gui -tclbatch $run_tcl
-  } else {
-    lappend xsim_cmd -tclbatch $run_tcl
+  set xsim_cmd [list xsim $snapshot -tclbatch $run_tcl]
+
+  set testname [dict get $plusargs testname]
+  if {$testname ne ""} {
+    puts "Applying UVM_TESTNAME=$testname"
+    lappend xsim_cmd --testplusarg "UVM_TESTNAME=$testname"
   }
 
-  # Normalize plusargs from wrapper (allow users to pass "+UVM_TESTNAME=foo" or "foo").
-  if {[info exists ::env(UVM_TESTNAME)]} {
-    set testname [string trim $::env(UVM_TESTNAME)]
-    if {[string match "+UVM_TESTNAME=*" $testname]} {
-      set testname [string range $testname 14 end]
-    } elseif {[string match "+*" $testname]} {
-      set testname [string range $testname 1 end]
-    }
-    if {$testname ne ""} {
-      puts "Applying UVM_TESTNAME=$testname"
-      lappend xsim_cmd --testplusarg "UVM_TESTNAME=$testname"
-    }
-  }
-  if {[info exists ::env(IMG_FILE)] && $::env(IMG_FILE) ne ""} {
-    set img_arg_raw [string trim $::env(IMG_FILE)]
-    if {[string match "+IMG_FILE=*" $img_arg_raw]} {
-      set img_arg_raw [string range $img_arg_raw 10 end]
-    } elseif {[string match "+*" $img_arg_raw]} {
-      set img_arg_raw [string range $img_arg_raw 1 end]
-    }
-
-    # Normalize/absolutize relative paths so xsim resolves the file regardless of cwd,
-    # and replace backslashes to avoid Tcl-escape issues in plusargs.
-    if {[file pathtype $img_arg_raw] eq "relative"} {
-      set img_arg [file normalize [file join $repo_root $img_arg_raw]]
-    } else {
-      set img_arg [file normalize $img_arg_raw]
-    }
-    set img_arg [string map {\\ /} $img_arg]
-
-    puts "Applying IMG_FILE=$img_arg"
-    lappend xsim_cmd --testplusarg "IMG_FILE=$img_arg"
+  set img_file [dict get $plusargs img_file]
+  if {$img_file ne ""} {
+    puts "Applying IMG_FILE=$img_file"
+    lappend xsim_cmd --testplusarg "IMG_FILE=$img_file"
   }
 
   set orig_dir_xsim [pwd]
@@ -182,10 +189,28 @@ proc build_and_run_xsim {proj_dir proj_name sim_mode} {
 
 if { $action eq "sim" } {
   puts "Launching behavioral simulation..."
-  if { $sim_mode eq "tcl" || $sim_mode eq "gui" } {
-    # Generate scripts only, then run xsim manually so we can apply plusargs in all modes.
+  set plusargs [parse_plusargs]
+
+  if { $sim_mode eq "tcl" } {
+    # Headless: compile/elab scripts + xsim in batch; all logs stay in the console.
     launch_simulation -mode behavioral -scripts_only
-    build_and_run_xsim $proj_dir $proj_name $sim_mode
+    build_and_run_xsim $proj_dir $proj_name $plusargs
+  } elseif { $sim_mode eq "gui" } {
+    # GUI: let Vivado drive xsim so logs stay inside the GUI console; push plusargs via xsim more_options.
+    set more_opts {}
+    set testname [dict get $plusargs testname]
+    if {$testname ne ""} {
+      lappend more_opts --testplusarg "UVM_TESTNAME=$testname"
+    }
+    set img_file [dict get $plusargs img_file]
+    if {$img_file ne ""} {
+      lappend more_opts --testplusarg "IMG_FILE=$img_file"
+    }
+    if {[llength $more_opts]} {
+      puts "Applying xsim options for GUI: $more_opts"
+      set_property xsim.simulate.xsim.more_options $more_opts [get_filesets sim_1]
+    }
+    launch_simulation -mode behavioral
   } else {
     # Default: open the simulator GUI
     launch_simulation -mode behavioral
