@@ -1,13 +1,10 @@
 class file_collector_scb extends uvm_component;
   `uvm_component_utils(file_collector_scb)
 
-  // Analysis export to receive output transactions.
   uvm_analysis_imp #(dxi_transation#(8), file_collector_scb) out_imp;
 
-  // Optional reset VIF to clear queues on reset.
   virtual dxi_if #(72) rst_vif;
 
-  // Image characteristics.
   int img_width  = 256;
   int img_height = 194;
   string file_prefix = "output";
