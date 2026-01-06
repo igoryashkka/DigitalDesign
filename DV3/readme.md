@@ -30,13 +30,13 @@ Args: `action` (sim|elab|clean), `mode` (gui|tcl), `testname` (defaults to `rand
 
 ### Linux/macOS (shell wrapper)
 ```
-# Default random test in GUI
+# Default random test
 ./scripts/run_vivado.sh sim gui
 
-# Boundary test headless
+# Boundary test
 ./scripts/run_vivado.sh sim tcl +UVM_TESTNAME=boundary_uvm_test
 
-# File-driven test headless with a custom image
+# File-driven test
 ./scripts/run_vivado.sh sim tcl +UVM_TESTNAME=file_uvm_test +IMG_FILE=../DV2/FilterDXI/simulation/input_256_194.txt
 ```
 
