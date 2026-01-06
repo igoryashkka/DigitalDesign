@@ -46,8 +46,6 @@ class dxi_scoreboard extends uvm_component;
     end
   endtask
 
-  // Mirror the reference SV function the user provided, which slices the
-  // pixel bus little-endian (i*8 +: 8).
   function automatic logic [7:0] apply_filter(logic [71:0] pixels, logic [1:0] sel);
     int acc = 0;
     int norm;
