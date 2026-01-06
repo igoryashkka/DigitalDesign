@@ -1,10 +1,8 @@
 class dxi_boundary_seq #(int DW=72) extends uvm_sequence #(dxi_transation#(DW));
   `uvm_object_param_utils(dxi_boundary_seq#(DW))
 
-  // Handle used to program DUT filter selection before driving each pattern set.
   virtual config_if cfg_vif;
 
-  // Fixed boundary patterns and filter selections.
   localparam logic [71:0] BOUNDARY_PATTERNS [10] = '{
     72'h00_00_00_00_00_00_00_00_00,
     72'hFF_FF_FF_FF_FF_FF_FF_FF_FF,
