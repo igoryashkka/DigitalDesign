@@ -5,11 +5,17 @@ set PROJ_ROOT=%SCRIPT_DIR%..
 set PROJ_DIR=%PROJ_ROOT%\vivado_project
 for %%I in ("%PROJ_ROOT%\\..") do set REPO_ROOT=%%~fI
 
+rem Args: 1=action (sim|elab|clean), 2=mode (gui|tcl), 3=testname, 4=IMG_FILE path
 set ACTION=%1
 if "%ACTION%"=="" set ACTION=sim
 
 set SIM_MODE=%2
 if "%SIM_MODE%"=="" set SIM_MODE=gui
+
+set TESTNAME=%3
+if "%TESTNAME%"=="" set TESTNAME=random_uvm_test
+
+set IMG_FILE_ARG=%4
 
 if /I "%ACTION%"=="clean" (
   echo Cleaning Vivado-generated outputs...
@@ -26,6 +32,14 @@ if /I "%ACTION%"=="clean" (
   )
   echo Done.
   exit /b 0
+)
+
+echo Using test: %TESTNAME%
+set "UVM_TESTNAME=%TESTNAME%"
+
+if not "%IMG_FILE_ARG%"=="" (
+  echo Using IMG_FILE: %IMG_FILE_ARG%
+  set "IMG_FILE=%IMG_FILE_ARG%"
 )
 
 echo Running Vivado automation with action %ACTION% (mode=%SIM_MODE%)

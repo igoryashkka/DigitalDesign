@@ -50,6 +50,10 @@ module tb_top;
     uvm_config_db#(bit)::set(null, "uvm_test_top.env.in_agent",  "is_master", 1);
     uvm_config_db#(bit)::set(null, "uvm_test_top.env.out_agent", "is_master", 0);
 
-    run_test("random_uvm_test");
+    string testname;
+    if (!$value$plusargs("UVM_TESTNAME=%s", testname)) begin
+      testname = "random_uvm_test";
+    end
+    run_test(testname);
   end
 endmodule
