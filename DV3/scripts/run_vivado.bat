@@ -17,6 +17,12 @@ if "%TESTNAME%"=="" set TESTNAME=random_uvm_test
 
 set IMG_FILE_ARG=%4
 
+rem PowerShell may split +UVM_TESTNAME=foo into two args (+UVM_TESTNAME, foo). Rejoin and leave IMG unset.
+if /I "%TESTNAME%"=="+UVM_TESTNAME" if not "%IMG_FILE_ARG%"=="" (
+  set "TESTNAME=%TESTNAME%=%IMG_FILE_ARG%"
+  set "IMG_FILE_ARG="
+)
+
 if /I "%ACTION%"=="clean" (
   echo Cleaning Vivado-generated outputs...
   if exist "%PROJ_DIR%" rmdir /s /q "%PROJ_DIR%"

@@ -24,7 +24,7 @@ puts "Action      : $action"
 puts "Sim mode    : $sim_mode"
 
 # Reusable clean helper
-proc clean_artifacts {proj_dir proj_root script_dir} {
+proc clean_artifacts {proj_dir proj_root script_dir repo_root} {
   foreach path [list \
       $proj_dir \
       [file join $proj_root "xsim.dir"] \
@@ -46,7 +46,7 @@ proc clean_artifacts {proj_dir proj_root script_dir} {
 }
 
 if { $action eq "clean" } {
-  clean_artifacts $proj_dir $proj_root $script_dir
+  clean_artifacts $proj_dir $proj_root $script_dir $repo_root
   puts "Clean completed. Exiting."
   return
 }
@@ -86,6 +86,8 @@ set_property file_type {VHDL 2008} [get_files [file join $src_root rtl filter.vh
 set_property top tb_top [get_filesets sim_1]
 set_property top_lib xil_defaultlib [get_filesets sim_1]
 update_compile_order -fileset sim_1
+# Ensure GUI and scripts-only runs execute long enough for large transaction counts.
+set_property xsim.simulate.runtime {10 ms} [get_filesets sim_1]
 
 if { $action eq "sim" } {
   puts "Launching behavioral simulation..."
@@ -93,22 +95,65 @@ if { $action eq "sim" } {
     # Generate scripts only, then run xsim in batch (no GUI)
     launch_simulation -mode behavioral -scripts_only
     set sim_dir [file normalize [file join $proj_dir "${proj_name}.sim" "sim_1" "behav" "xsim"]]
+    set script_ext [expr {$tcl_platform(platform) eq "unix" ? "sh" : "bat"}]
+    set compile_script [file join $sim_dir "compile.$script_ext"]
+    set elaborate_script [file join $sim_dir "elaborate.$script_ext"]
     set run_tcl [file join $sim_dir "run.tcl"]
     set snapshot "tb_top_behav"
-    if {![file exists $run_tcl]} {
-      error "Expected xsim run script not found at $run_tcl"
+    foreach script [list $compile_script $elaborate_script] {
+      if {![file exists $script]} {
+        error "Expected generated script not found at $script"
+      }
     }
+    # Run the generated compile/elaborate scripts to build the snapshot
+    set orig_dir [pwd]
+    cd $sim_dir
+    foreach script [list $compile_script $elaborate_script] {
+      puts "Running $script..."
+      if {$tcl_platform(platform) eq "windows"} {
+        exec cmd /c $script
+      } else {
+        exec sh $script
+      }
+    }
+    cd $orig_dir
+    # Vivado no longer produces run.tcl automatically in scripts-only mode; always create one
+    # with a generous runtime so long tests can complete.
+    set sim_duration "10 ms"
+    puts "Writing run.tcl with simulation duration $sim_duration"
+    set fh [open $run_tcl "w"]
+    puts $fh "run $sim_duration"
+    puts $fh {quit}
+    close $fh
+    # Normalize plusargs from wrapper (allow users to pass "+UVM_TESTNAME=foo" or "foo").
     set xsim_cmd [list xsim $snapshot -tclbatch $run_tcl]
     if {[info exists ::env(UVM_TESTNAME)]} {
-      puts "Applying UVM_TESTNAME=$::env(UVM_TESTNAME)"
-      lappend xsim_cmd --testplusarg "UVM_TESTNAME=$::env(UVM_TESTNAME)"
+      set testname [string trim $::env(UVM_TESTNAME)]
+      if {[string match "+UVM_TESTNAME=*" $testname]} {
+        set testname [string range $testname 14 end]
+      } elseif {[string match "+*" $testname]} {
+        set testname [string range $testname 1 end]
+      }
+      if {$testname ne ""} {
+        puts "Applying UVM_TESTNAME=$testname"
+        lappend xsim_cmd --testplusarg "UVM_TESTNAME=$testname"
+      }
     }
     if {[info exists ::env(IMG_FILE)] && $::env(IMG_FILE) ne ""} {
-      puts "Applying IMG_FILE=$::env(IMG_FILE)"
-      lappend xsim_cmd --testplusarg "IMG_FILE=$::env(IMG_FILE)"
+      set img_arg [string trim $::env(IMG_FILE)]
+      if {[string match "+IMG_FILE=*" $img_arg]} {
+        set img_arg [string range $img_arg 10 end]
+      } elseif {[string match "+*" $img_arg]} {
+        set img_arg [string range $img_arg 1 end]
+      }
+      puts "Applying IMG_FILE=$img_arg"
+      lappend xsim_cmd --testplusarg "IMG_FILE=$img_arg"
     }
-    puts "Running xsim in batch: $xsim_cmd"
+    set orig_dir_xsim [pwd]
+    cd $sim_dir
+    puts "Running xsim in batch (cwd=$sim_dir): $xsim_cmd"
     exec {*}$xsim_cmd
+    cd $orig_dir_xsim
   } else {
     # Default: open the simulator GUI
     launch_simulation -mode behavioral
