@@ -24,7 +24,7 @@ puts "Action      : $action"
 puts "Sim mode    : $sim_mode"
 
 # Reusable clean helper
-proc clean_artifacts {proj_dir proj_root script_dir} {
+proc clean_artifacts {proj_dir proj_root script_dir repo_root} {
   foreach path [list \
       $proj_dir \
       [file join $proj_root "xsim.dir"] \
@@ -46,7 +46,7 @@ proc clean_artifacts {proj_dir proj_root script_dir} {
 }
 
 if { $action eq "clean" } {
-  clean_artifacts $proj_dir $proj_root $script_dir
+  clean_artifacts $proj_dir $proj_root $script_dir $repo_root
   puts "Clean completed. Exiting."
   return
 }
@@ -93,11 +93,32 @@ if { $action eq "sim" } {
     # Generate scripts only, then run xsim in batch (no GUI)
     launch_simulation -mode behavioral -scripts_only
     set sim_dir [file normalize [file join $proj_dir "${proj_name}.sim" "sim_1" "behav" "xsim"]]
+    set script_ext [expr {$tcl_platform(platform) eq "unix" ? "sh" : "bat"}]
+    set compile_script [file join $sim_dir "compile.$script_ext"]
+    set elaborate_script [file join $sim_dir "elaborate.$script_ext"]
     set run_tcl [file join $sim_dir "run.tcl"]
     set snapshot "tb_top_behav"
-    if {![file exists $run_tcl]} {
-      error "Expected xsim run script not found at $run_tcl"
+    foreach script [list $compile_script $elaborate_script] {
+      if {![file exists $script]} {
+        error "Expected generated script not found at $script"
+      }
     }
+    # Run the generated compile/elaborate scripts to build the snapshot
+    set orig_dir [pwd]
+    cd $sim_dir
+    foreach script [list $compile_script $elaborate_script] {
+      puts "Running $script..."
+      exec {*}[list $script]
+    }
+    cd $orig_dir
+    # Vivado no longer produces run.tcl automatically in scripts-only mode; always create one
+    # with a generous runtime so long tests can complete.
+    set sim_duration "10 ms"
+    puts "Writing run.tcl with simulation duration $sim_duration"
+    set fh [open $run_tcl "w"]
+    puts $fh "run $sim_duration"
+    puts $fh {quit}
+    close $fh
     set xsim_cmd [list xsim $snapshot -tclbatch $run_tcl]
     if {[info exists ::env(UVM_TESTNAME)]} {
       puts "Applying UVM_TESTNAME=$::env(UVM_TESTNAME)"
