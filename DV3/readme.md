@@ -13,7 +13,7 @@ Both wrappers clean the generated project (`vivado_project`, `.Xil`, `xsim.dir`,
 
 ## Selecting and running tests
 
-The default UVM test is `random_uvm_test`. You can override it with `+UVM_TESTNAME` (Linux/macOS) or by passing the test name to the Windows wrapper.
+The default UVM test is `random_uvm_test`. You can override it with `+UVM_TESTNAME`.
 
 ### Windows (batch wrapper)
 ```
