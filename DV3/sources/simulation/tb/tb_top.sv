@@ -7,6 +7,7 @@ module tb_top;
   always #5 clk = ~clk;
 
   logic rstn;
+  string testname;
 
   dxi_if #(72) dxi_in (clk);
   dxi_if #(8)  dxi_out(clk);
@@ -50,7 +51,6 @@ module tb_top;
     uvm_config_db#(bit)::set(null, "uvm_test_top.env.in_agent",  "is_master", 1);
     uvm_config_db#(bit)::set(null, "uvm_test_top.env.out_agent", "is_master", 0);
 
-    string testname;
     if (!$value$plusargs("UVM_TESTNAME=%s", testname)) begin
       testname = "random_uvm_test";
     end
