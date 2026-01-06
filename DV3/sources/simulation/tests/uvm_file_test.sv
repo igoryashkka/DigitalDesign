@@ -13,7 +13,6 @@ class file_uvm_test extends uvm_test;
     env = uvm_env::type_id::create("env", this);
     collector = file_collector_scb::type_id::create("collector", this);
 
-    // Configure collector dimensions and optional reset VIF.
     collector.img_width  = 256;
     collector.img_height = 194;
   endfunction
