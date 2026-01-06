@@ -29,7 +29,8 @@ scripts\run_vivado.bat sim gui file_uvm_test "..\DV2\FilterDXI\simulation\input_
 Args: `action` (sim|elab|clean), `mode` (gui|tcl), `testname` (defaults to `random_uvm_test`), optional `IMG_FILE` for the file test.
 
 Notes:
-- GUI runs keep logs in the Vivado GUI console; CLI (`tcl`) runs keep logs in the terminal only and do not open the GUI.
+- GUI runs still open the Vivado GUI but also run the generated `run.tcl`, so logs appear in the same console where you launched the script.
+- CLI (`tcl`) runs stay headless and keep all logs in the terminal.
 - `IMG_FILE` may be given as an absolute path or a repo-relative path (e.g., `..\\DV2\\FilterDXI\\simulation\\input_256_194.txt`); the script normalizes it before launching xsim.
 - If you call `scripts\run_vivado.bat sim boundary_uvm_test`, the second arg is treated as the test and the mode defaults to `gui`. Use `tcl` as the second arg when you want headless console-only logging.
 

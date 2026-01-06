@@ -128,8 +128,8 @@ proc parse_plusargs {} {
   return $result
 }
 
-# Common helper for script-based simulation (batch/CLI)
-proc build_and_run_xsim {proj_dir proj_name plusargs} {
+# Common helper for script-based simulation (headless + GUI-with-console-log)
+proc build_and_run_xsim {proj_dir proj_name sim_mode plusargs} {
   global tcl_platform
   set sim_dir [file normalize [file join $proj_dir "${proj_name}.sim" "sim_1" "behav" "xsim"]]
   set script_ext [expr {$tcl_platform(platform) eq "unix" ? "sh" : "bat"}]
@@ -163,10 +163,18 @@ proc build_and_run_xsim {proj_dir proj_name plusargs} {
   puts "Writing run.tcl with simulation duration $sim_duration"
   set fh [open $run_tcl "w"]
   puts $fh "run $sim_duration"
-  puts $fh {quit}
+  if {$sim_mode eq "tcl"} {
+    puts $fh {quit}
+  }
   close $fh
 
-  set xsim_cmd [list xsim $snapshot -tclbatch $run_tcl]
+  set xsim_cmd [list xsim $snapshot]
+  if {$sim_mode eq "gui"} {
+    # Show GUI but keep logs in the launch console by using the batch script.
+    lappend xsim_cmd -gui -tclbatch $run_tcl
+  } else {
+    lappend xsim_cmd -tclbatch $run_tcl
+  }
 
   set testname [dict get $plusargs testname]
   if {$testname ne ""} {
@@ -191,26 +199,10 @@ if { $action eq "sim" } {
   puts "Launching behavioral simulation..."
   set plusargs [parse_plusargs]
 
-  if { $sim_mode eq "tcl" } {
-    # Headless: compile/elab scripts + xsim in batch; all logs stay in the console.
+  if { $sim_mode eq "tcl" || $sim_mode eq "gui" } {
+    # Generate scripts only, then run xsim ourselves so logs stay in the launch console.
     launch_simulation -mode behavioral -scripts_only
-    build_and_run_xsim $proj_dir $proj_name $plusargs
-  } elseif { $sim_mode eq "gui" } {
-    # GUI: let Vivado drive xsim so logs stay inside the GUI console; push plusargs via xsim more_options.
-    set more_opts {}
-    set testname [dict get $plusargs testname]
-    if {$testname ne ""} {
-      lappend more_opts --testplusarg "UVM_TESTNAME=$testname"
-    }
-    set img_file [dict get $plusargs img_file]
-    if {$img_file ne ""} {
-      lappend more_opts --testplusarg "IMG_FILE=$img_file"
-    }
-    if {[llength $more_opts]} {
-      puts "Applying xsim options for GUI: $more_opts"
-      set_property xsim.simulate.xsim.more_options $more_opts [get_filesets sim_1]
-    }
-    launch_simulation -mode behavioral
+    build_and_run_xsim $proj_dir $proj_name $sim_mode $plusargs
   } else {
     # Default: open the simulator GUI
     launch_simulation -mode behavioral
