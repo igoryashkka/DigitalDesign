@@ -17,6 +17,14 @@ if "%TESTNAME%"=="" set TESTNAME=random_uvm_test
 
 set IMG_FILE_ARG=%4
 
+rem If the second argument is not a known mode, treat it as the test name and default mode to GUI.
+if /I not "%SIM_MODE%"=="gui" if /I not "%SIM_MODE%"=="tcl" (
+  if "%TESTNAME%"=="random_uvm_test" (
+    set "TESTNAME=%SIM_MODE%"
+    set "SIM_MODE=gui"
+  )
+)
+
 rem PowerShell may split +UVM_TESTNAME=foo into two args (+UVM_TESTNAME, foo). Rejoin and leave IMG unset.
 if /I "%TESTNAME%"=="+UVM_TESTNAME" if not "%IMG_FILE_ARG%"=="" (
   set "TESTNAME=%TESTNAME%=%IMG_FILE_ARG%"
