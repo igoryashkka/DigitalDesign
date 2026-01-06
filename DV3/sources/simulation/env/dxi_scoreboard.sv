@@ -11,7 +11,14 @@ class dxi_scoreboard extends uvm_component;
 
   virtual config_if cfg_vif;
   virtual dxi_if #(72) rst_vif;
-  logic [7:0] expected_q[$];
+  typedef struct {
+    logic [7:0] expected;
+    int unsigned in_tr_num;
+  } expected_t;
+
+  expected_t expected_q[$];
+  int unsigned in_count;
+  int unsigned out_count;
 
   function new(string name, uvm_component parent);
     super.new(name, parent);
@@ -33,6 +40,8 @@ class dxi_scoreboard extends uvm_component;
     forever begin
       @(negedge rst_vif.rstn);
       expected_q.delete();
+      in_count  = 0;
+      out_count = 0;
       `uvm_info("DXI_SCB", "Reset detected, clearing expected queue", UVM_LOW)
     end
   endtask
@@ -76,6 +85,7 @@ class dxi_scoreboard extends uvm_component;
 
   function void write_in(dxi_transation#(72) tr);
     logic [7:0] expected;
+    expected_t exp_entry;
     if (rst_vif != null && !rst_vif.rstn) begin
       `uvm_info("DXI_SCB", "Ignoring input during reset", UVM_LOW)
       return;
@@ -87,34 +97,37 @@ class dxi_scoreboard extends uvm_component;
       return;
     end
 
-    expected = apply_filter(tr.data, cfg_vif.config_select);
-    expected_q.push_back(expected);
-    $display("[DXI_SCB][%0t][IN ] expected=0x%0h data=0x%0h",
-             $time, expected, tr.data);
+    in_count++;
+    expected         = apply_filter(tr.data, cfg_vif.config_select);
+    exp_entry        = '{expected: expected, in_tr_num: in_count};
+    expected_q.push_back(exp_entry);
+    $display("[DXI_SCB][%0t][IN ] tr#%0d expected=0x%0h data=0x%0h",
+             $time, in_count, expected, tr.data);
   endfunction
 
   function void write_out(dxi_transation#(8) tr);
-    logic [7:0] expected;
+    expected_t exp_entry;
 
     if (rst_vif != null && !rst_vif.rstn) begin
       `uvm_info("DXI_SCB", "Ignoring output during reset", UVM_LOW)
       return;
     end
 
+    out_count++;
     if (expected_q.size() == 0) begin
-      $display("[DXI_SCB][%0t][OUT] FAIL expected=?       got=0x%0h (queue empty)",
-               $time, tr.data[7:0]);
+      $display("[DXI_SCB][%0t][OUT] tr#%0d FAIL expected=?       got=0x%0h (queue empty)",
+               $time, out_count, tr.data[7:0]);
       return;
     end
 
-    expected = expected_q.pop_front();
+    exp_entry = expected_q.pop_front();
 
-    if (expected !== tr.data[7:0]) begin
-      $display("[DXI_SCB][%0t][OUT] FAIL expected=0x%0h got=0x%0h",
-               $time, expected, tr.data[7:0]);
+    if (exp_entry.expected !== tr.data[7:0]) begin
+      $display("[DXI_SCB][%0t][OUT] tr#%0d (exp tr#%0d) FAIL expected=0x%0h got=0x%0h",
+               $time, out_count, exp_entry.in_tr_num, exp_entry.expected, tr.data[7:0]);
     end else begin
-      $display("[DXI_SCB][%0t][OUT] PASSED expected=0x%0h got=0x%0h",
-               $time, expected, tr.data[7:0]);
+      $display("[DXI_SCB][%0t][OUT] tr#%0d (exp tr#%0d) PASSED expected=0x%0h got=0x%0h",
+               $time, out_count, exp_entry.in_tr_num, exp_entry.expected, tr.data[7:0]);
     end
   endfunction
 endclass

@@ -10,3 +10,41 @@ UVM testbench for the DXI filter (DUT: `sources/rtl/filter.vhd` copied from DV2)
   - mode: `gui` (default) | `tcl` (headless)
 
 Both wrappers clean the generated project (`vivado_project`, `.Xil`, `xsim.dir`, log files) when run with the `clean` action. Simulation artifacts live under `DV3/vivado_project`. Adjust the part number in `scripts/setup_vivado.tcl` if you need to target another device.
+
+## Selecting and running tests
+
+The default UVM test is `random_uvm_test`. You can override it with `+UVM_TESTNAME` (Linux/macOS) or by passing the test name to the Windows wrapper.
+
+### Windows (batch wrapper)
+```
+:: Basic random test in GUI
+scripts\run_vivado.bat sim gui
+
+:: Boundary test headless
+scripts\run_vivado.bat sim tcl boundary_uvm_test
+
+:: File-driven test headless with a custom image
+scripts\run_vivado.bat sim tcl file_uvm_test "..\DV2\FilterDXI\simulation\input_256_194.txt"
+```
+Args: `action` (sim|elab|clean), `mode` (gui|tcl), `testname` (defaults to `random_uvm_test`), optional `IMG_FILE` for the file test.
+
+### Linux/macOS (shell wrapper)
+```
+# Default random test in GUI
+./scripts/run_vivado.sh sim gui
+
+# Boundary test headless
+./scripts/run_vivado.sh sim tcl +UVM_TESTNAME=boundary_uvm_test
+
+# File-driven test headless with a custom image
+./scripts/run_vivado.sh sim tcl +UVM_TESTNAME=file_uvm_test +IMG_FILE=../DV2/FilterDXI/simulation/input_256_194.txt
+```
+
+### Direct Vivado Tcl
+```
+vivado -mode batch -source scripts/setup_vivado.tcl -tclargs sim tcl
+```
+Then, from `vivado_project/dxi_uvm.sim/sim_1/behav/xsim`, re-run xsim with plusargs:
+```
+xsim tb_top_behav --testplusarg "UVM_TESTNAME=file_uvm_test" --testplusarg "IMG_FILE=../DV2/FilterDXI/simulation/input_256_194.txt" -tclbatch run.tcl
+```

@@ -98,8 +98,17 @@ if { $action eq "sim" } {
     if {![file exists $run_tcl]} {
       error "Expected xsim run script not found at $run_tcl"
     }
-    puts "Running xsim in batch: snapshot=$snapshot script=$run_tcl"
-    exec xsim $snapshot -tclbatch $run_tcl
+    set xsim_cmd [list xsim $snapshot -tclbatch $run_tcl]
+    if {[info exists ::env(UVM_TESTNAME)]} {
+      puts "Applying UVM_TESTNAME=$::env(UVM_TESTNAME)"
+      lappend xsim_cmd --testplusarg "UVM_TESTNAME=$::env(UVM_TESTNAME)"
+    }
+    if {[info exists ::env(IMG_FILE)] && $::env(IMG_FILE) ne ""} {
+      puts "Applying IMG_FILE=$::env(IMG_FILE)"
+      lappend xsim_cmd --testplusarg "IMG_FILE=$::env(IMG_FILE)"
+    }
+    puts "Running xsim in batch: $xsim_cmd"
+    exec {*}$xsim_cmd
   } else {
     # Default: open the simulator GUI
     launch_simulation -mode behavioral
