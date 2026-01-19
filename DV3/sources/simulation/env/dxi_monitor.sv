@@ -42,8 +42,7 @@ class dxi_monitor #(parameter int DW = 72) extends uvm_monitor;
         tr_count++;
         tr.data = vif.data;
         ap.write(tr);
-        $display("[DXI_MON ][%0t][%s] tr#%0d data=0x%0h",
-                 $time, is_master ? "IN " : "OUT", tr_count, tr.data);
+       `uvm_info("DXI_MON",$sformatf("[%0t][%s] tr#%0d data=0x%0h",$time, (is_master ? "IN " : "OUT"), tr_count, tr.data), UVM_MEDIUM)
       end
     end
   endtask

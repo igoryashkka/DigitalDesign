@@ -50,7 +50,7 @@ class file_collector_scb extends uvm_component;
     file_out = $fopen(output_filename, "w");
 
     if (!file_out) begin
-      $display("[FILE SCB] ERROR: cannot open %s", output_filename);
+      `uvm_error("FILE_SCB", $sformatf("Cannot open %s", output_filename))
       return;
     end
 
@@ -62,7 +62,7 @@ class file_collector_scb extends uvm_component;
     end
 
     $fclose(file_out);
-    $display("[FILE SCB] Saved image %s", output_filename);
+    `uvm_info("FILE_SCB",$sformatf("Saved image %s", output_filename),UVM_LOW)
     pixel_queue.delete();
   endfunction
 endclass
