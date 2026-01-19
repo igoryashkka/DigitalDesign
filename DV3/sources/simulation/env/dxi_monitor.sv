@@ -36,7 +36,7 @@ class dxi_monitor #(parameter int DW = 72) extends uvm_monitor;
         continue;
       end
 
-      if (vif.valid && vif.ready && ^vif.data !== 1'bX) begin
+      if ((vif.valid === 1'b1) && (vif.ready === 1'b1)) begin
         dxi_transation#(DW) tr;
         tr = dxi_transation#(DW)::type_id::create($sformatf("%s_tr", get_full_name()));
         tr_count++;
