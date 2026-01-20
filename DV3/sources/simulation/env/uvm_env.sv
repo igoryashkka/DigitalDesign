@@ -29,7 +29,7 @@ class uvm_env extends uvm_pkg::uvm_env;
     // config agent config setup
     cfg_agent_cfg = confg_agent_cfg::type_id::create("cfg_agent_cfg");
     cfg_agent_cfg.vif = cfg_vif;
-    cfg_agent_cfg.is_active = UVM_PASSIVE;
+    cfg_agent_cfg.is_active = UVM_ACTIVE;
     cfg_agent_cfg.is_master = 1'b1;
     uvm_config_db#(confg_agent_cfg)::set(this, "cfg_agent", "cfg", cfg_agent_cfg);
     // ============================================================================
