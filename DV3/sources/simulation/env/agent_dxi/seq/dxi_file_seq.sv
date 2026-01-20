@@ -7,9 +7,7 @@ class dxi_file_seq #(int DW=72) extends uvm_sequence #(dxi_transation#(DW));
   typedef byte unsigned image_t    [HEIGHT][WIDTH];
   typedef byte unsigned extended_t [HEIGHT+2][WIDTH+2];
 
-  virtual config_if cfg_vif;
   string input_file = "../DV2/FilterDXI/simulation/input_256_194.txt";
-  logic [1:0] config_sel = 2'b11;
 
   function new(string name="dxi_file_seq");
     super.new(name);
@@ -76,10 +74,6 @@ class dxi_file_seq #(int DW=72) extends uvm_sequence #(dxi_transation#(DW));
     if (starting_phase != null)
       starting_phase.raise_objection(this);
 
-    if (cfg_vif == null) begin
-      `uvm_fatal(get_type_name(), "cfg_vif is not set for file sequence")
-    end
-
     if (DW != 72) begin
       `uvm_fatal(get_type_name(), $sformatf("File sequence expects DW=72, got %0d", DW))
     end
@@ -107,8 +101,6 @@ class dxi_file_seq #(int DW=72) extends uvm_sequence #(dxi_transation#(DW));
     $fclose(file_in);
 
     add_padding(image, ext_img);
-    cfg_vif.config_select <= config_sel;
-    @(posedge cfg_vif.clk);
 
     foreach (image[r]) begin
       for (int c = 0; c < WIDTH; c++) begin
