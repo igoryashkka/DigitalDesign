@@ -22,12 +22,7 @@ class dxi_agent #(parameter int DW=72) extends uvm_agent;
     if (uvm_config_db#(dxi_agent_cfg#(DW))::get(this, "", "cfg", cfg)) begin
       is_master = cfg.is_master;
       is_active = cfg.is_active;
-      if (cfg.vif != null) begin
-        vif = cfg.vif;
-      end
-    end else begin
-      is_active = UVM_ACTIVE;
-      void'(uvm_config_db#(bit)::get(this,"","is_master",is_master));
+      vif = cfg.vif;
     end
 
     if (vif == null) begin
