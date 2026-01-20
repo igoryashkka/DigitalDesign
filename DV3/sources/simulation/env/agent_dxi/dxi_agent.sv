@@ -9,7 +9,7 @@ class dxi_agent #(parameter int DW=72) extends uvm_agent;
   virtual dxi_if #(DW)               vif;
 
   bit is_master;
-  dxi_agent_cfg #(int)               cfg;
+  dxi_agent_cfg #(DW)                cfg;
   uvm_active_passive_enum            is_active;
 
   function new(string name, uvm_component parent);
@@ -19,7 +19,7 @@ class dxi_agent #(parameter int DW=72) extends uvm_agent;
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
 
-    if (uvm_config_db#(dxi_agent_cfg#(int))::get(this, "", "cfg", cfg)) begin
+    if (uvm_config_db#(dxi_agent_cfg#(DW))::get(this, "", "cfg", cfg)) begin
       is_master = cfg.is_master;
       is_active = cfg.is_active;
       if (cfg.vif != null) begin

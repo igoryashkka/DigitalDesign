@@ -1,7 +1,7 @@
-class dxi_agent_cfg #(type data_t = int) extends uvm_object;
-  `uvm_object_param_utils(dxi_agent_cfg #(data_t))
+class dxi_agent_cfg #(int DW = 72) extends uvm_object;
+  `uvm_object_param_utils(dxi_agent_cfg #(DW))
 
-  virtual interface dxi_if #(data_t) vif;
+  virtual interface dxi_if #(DW) vif;
   uvm_active_passive_enum is_active = UVM_ACTIVE;
   bit is_master = 1; // 1 - master, 0 - slave
   
