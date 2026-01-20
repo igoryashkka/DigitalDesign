@@ -28,19 +28,23 @@ class file_uvm_test extends uvm_test;
   task run_phase(uvm_phase phase);
     dxi_file_seq   #(72) mseq;
     dxi_slave_seq  #(8)  sseq;
+    sel_base_seq         sel_seq;
 
     phase.raise_objection(this);
 
     mseq = dxi_file_seq#(72)::type_id::create("mseq");
     sseq = dxi_slave_seq #(8)::type_id::create("sseq");
 
-    mseq.cfg_vif = env.cfg_vif;
+  fork
+    sseq.start(env.out_agent.seqr);
+  join_none
 
-    fork
-      mseq.start(env.in_agent.seqr);
-      sseq.start(env.out_agent.seqr);
-    join
+    sel_seq = sel_base_seq::type_id::create("sel_seq");
+    sel_seq.filter_type = 2'b11;
+    sel_seq.start(env.cfg_agent.seqr);
 
+    mseq.start(env.in_agent.seqr);
+    
     phase.drop_objection(this);
   endtask
 endclass

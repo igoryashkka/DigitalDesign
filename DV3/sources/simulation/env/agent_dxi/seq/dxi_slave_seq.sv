@@ -15,7 +15,7 @@ class dxi_slave_seq #(int DW=8) extends uvm_sequence #(dxi_transation#(DW));
     if (starting_phase != null)
       starting_phase.raise_objection(this);
 
-    repeat (200) begin
+   forever begin
       tr = dxi_transation#(DW)::type_id::create("tr");
 
       start_item(tr);
@@ -23,9 +23,10 @@ class dxi_slave_seq #(int DW=8) extends uvm_sequence #(dxi_transation#(DW));
       if (!tr.randomize()) begin
         `uvm_fatal(get_type_name(), "Slave: tr.randomize() failed")
       end
-
       finish_item(tr);
-    end
+   end
+      
+
 
     if (starting_phase != null)
       starting_phase.drop_objection(this);

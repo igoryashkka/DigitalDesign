@@ -36,14 +36,13 @@ class dxi_monitor #(parameter int DW = 72) extends uvm_monitor;
         continue;
       end
 
-      if (vif.valid && vif.ready && ^vif.data !== 1'bX) begin
+      if ((vif.valid === 1'b1) && (vif.ready === 1'b1)) begin
         dxi_transation#(DW) tr;
         tr = dxi_transation#(DW)::type_id::create($sformatf("%s_tr", get_full_name()));
         tr_count++;
         tr.data = vif.data;
         ap.write(tr);
-        $display("[DXI_MON ][%0t][%s] tr#%0d data=0x%0h",
-                 $time, is_master ? "IN " : "OUT", tr_count, tr.data);
+       `uvm_info("DXI_MON",$sformatf("[%0t][%s] tr#%0d data=0x%0h",$time, (is_master ? "IN " : "OUT"), tr_count, tr.data), UVM_MEDIUM)
       end
     end
   endtask

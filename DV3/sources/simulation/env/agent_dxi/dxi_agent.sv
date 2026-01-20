@@ -9,6 +9,8 @@ class dxi_agent #(parameter int DW=72) extends uvm_agent;
   virtual dxi_if #(DW)               vif;
 
   bit is_master;
+  dxi_agent_cfg #(DW)                cfg;
+  uvm_active_passive_enum            is_active;
 
   function new(string name, uvm_component parent);
     super.new(name,parent);
@@ -17,14 +19,22 @@ class dxi_agent #(parameter int DW=72) extends uvm_agent;
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
 
-    if (!uvm_config_db#(virtual dxi_if#(DW))::get(this, "", "vif", vif)) begin
-      `uvm_fatal("NOVIF", $sformatf("No vif for %s", get_full_name()))
+    if (uvm_config_db#(dxi_agent_cfg#(DW))::get(this, "", "cfg", cfg)) begin
+      is_master = cfg.is_master;
+      is_active = cfg.is_active;
+      vif = cfg.vif;
     end
 
-    void'(uvm_config_db#(bit)::get(this,"","is_master",is_master));
+    if (vif == null) begin
+      if (!uvm_config_db#(virtual dxi_if#(DW))::get(this, "", "vif", vif)) begin
+        `uvm_fatal("NOVIF", $sformatf("No vif for %s", get_full_name()))
+      end
+    end
 
-    seqr = uvm_sequencer#(dxi_transation#(DW))::type_id::create("seqr",this);
-    drv  = dxi_driver#(DW)::type_id::create("drv", this);
+    if (is_active == UVM_ACTIVE) begin
+      seqr = uvm_sequencer#(dxi_transation#(DW))::type_id::create("seqr",this);
+      drv  = dxi_driver#(DW)::type_id::create("drv", this);
+    end
     mon  = dxi_monitor#(DW)::type_id::create("mon", this);
 
     uvm_config_db#(bit)::set(this,"drv","is_master",is_master);
@@ -34,6 +44,8 @@ class dxi_agent #(parameter int DW=72) extends uvm_agent;
   endfunction
 
   function void connect_phase(uvm_phase phase);
-    drv.seq_item_port.connect(seqr.seq_item_export);
+    if (is_active == UVM_ACTIVE) begin
+      drv.seq_item_port.connect(seqr.seq_item_export);
+    end
   endfunction
 endclass
