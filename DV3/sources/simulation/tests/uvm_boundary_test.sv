@@ -24,9 +24,10 @@ class boundary_uvm_test extends uvm_test;
     mseq.cfg_vif = env.cfg_vif;
 
     fork
-      mseq.start(env.in_agent.seqr);
       sseq.start(env.out_agent.seqr);
-    join
+    join_none
+
+    mseq.start(env.in_agent.seqr);
 
     phase.drop_objection(this);
   endtask

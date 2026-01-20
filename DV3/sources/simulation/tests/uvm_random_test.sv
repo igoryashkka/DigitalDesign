@@ -22,9 +22,10 @@ class random_uvm_test extends uvm_test;
     rseq = dxi_slave_seq#(8)  ::type_id::create("rseq");
 
     fork
-      mseq.start(env.in_agent.seqr);
       rseq.start(env.out_agent.seqr);
-    join
+    join_none
+
+    mseq.start(env.in_agent.seqr);
 
     phase.drop_objection(this);
   endtask

@@ -7,6 +7,8 @@ class uvm_env extends uvm_pkg::uvm_env;
 
   dxi_agent #(72) in_agent;
   dxi_agent #(8)  out_agent;
+  config_agent    cfg_agent;
+  confg_agent_cfg cfg_agent_cfg;
   dxi_scoreboard  scoreboard;
   virtual config_if cfg_vif;
 
@@ -21,8 +23,15 @@ class uvm_env extends uvm_pkg::uvm_env;
       `uvm_fatal("NO_CFG_VIF", $sformatf("No cfg_vif for %s", get_full_name()))
     end
 
+    cfg_agent_cfg = confg_agent_cfg::type_id::create("cfg_agent_cfg");
+    cfg_agent_cfg.vif = cfg_vif;
+    cfg_agent_cfg.is_active = UVM_PASSIVE;
+    cfg_agent_cfg.is_master = 1'b1;
+    uvm_config_db#(confg_agent_cfg)::set(this, "cfg_agent", "cfg", cfg_agent_cfg);
+
     in_agent  = dxi_agent#(72)::type_id::create("in_agent",this);
     out_agent = dxi_agent#(8) ::type_id::create("out_agent",this);
+    cfg_agent = config_agent::type_id::create("cfg_agent", this);
     scoreboard = dxi_scoreboard::type_id::create("scoreboard", this);
 
     uvm_config_db#(virtual config_if)::set(this, "scoreboard", "cfg_vif", cfg_vif);
