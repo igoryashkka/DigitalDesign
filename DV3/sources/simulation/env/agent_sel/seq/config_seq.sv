@@ -1,20 +1,4 @@
-class config_base_seq extends uvm_sequence #(config_transation);
-  `uvm_object_utils(config_base_seq)
-
-  function new(string name = "config_base_seq");
-    super.new(name);
-  endfunction
-
-  protected task drive_config(logic [1:0] value);
-    config_transation tr;
-    tr = config_transation::type_id::create("tr");
-    start_item(tr);
-    tr.config_select = value;
-    finish_item(tr);
-  endtask
-endclass
-
-class config_seq extends config_base_seq;
+class config_seq extends uvm_sequence #(config_transation);
   `uvm_object_utils(config_seq)
 
   rand int unsigned n_items;
@@ -44,22 +28,22 @@ class config_seq extends config_base_seq;
   endtask
 endclass
 
-class sel_base_seq extends config_base_seq;
+class sel_base_seq extends uvm_sequence #(config_transation);
   `uvm_object_utils(sel_base_seq)
 
-  logic [1:0] filter_type = 2'b11;
+  logic [1:0] filter_type = 2'b00;
 
-  function new(string name = "sel_base_seq");
+  function new(string name = "sel_spec_seq");
     super.new(name);
   endfunction
 
-  task body();
-    if (starting_phase != null)
-      starting_phase.raise_objection(this);
-
-    drive_config(filter_type);
-
-    if (starting_phase != null)
-      starting_phase.drop_objection(this);
+  virtual task body();
+    config_transation tr;
+    tr = config_transation::type_id::create("tr");
+    start_item(tr);
+    tr.config_select = filter_type;
+    `uvm_info(get_type_name(), $sformatf("Sending config_select=0x%0h", tr.config_select), UVM_MEDIUM)
+    finish_item(tr);
+    #30;
   endtask
 endclass
