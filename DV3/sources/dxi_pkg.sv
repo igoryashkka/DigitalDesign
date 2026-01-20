@@ -8,6 +8,7 @@ package dxi_pkg;
   `include "simulation/env/agent_dxi/seq/dxi_slave_seq.sv"
   `include "simulation/env/agent_dxi/seq/dxi_boundary_seq.sv"
   `include "simulation/env/agent_dxi/seq/dxi_file_seq.sv"
+  `include "simulation/env/agent_dxi/dxi_agent_cfg.sv"
   `include "simulation/env/agent_dxi/dxi_driver.sv"
   `include "simulation/env/agent_dxi/dxi_monitor.sv"      
   `include "simulation/env/agent_dxi/dxi_agent.sv"

@@ -7,6 +7,8 @@ class uvm_env extends uvm_pkg::uvm_env;
 
   dxi_agent #(72) in_agent;
   dxi_agent #(8)  out_agent;
+  dxi_agent_cfg #(int) in_agent_cfg;
+  dxi_agent_cfg #(int) out_agent_cfg;
   config_agent    cfg_agent;
   confg_agent_cfg cfg_agent_cfg;
   dxi_scoreboard  scoreboard;
@@ -28,6 +30,16 @@ class uvm_env extends uvm_pkg::uvm_env;
     cfg_agent_cfg.is_active = UVM_PASSIVE;
     cfg_agent_cfg.is_master = 1'b1;
     uvm_config_db#(confg_agent_cfg)::set(this, "cfg_agent", "cfg", cfg_agent_cfg);
+
+    in_agent_cfg = dxi_agent_cfg#(int)::type_id::create("in_agent_cfg");
+    in_agent_cfg.is_active = UVM_ACTIVE;
+    in_agent_cfg.is_master = 1'b1;
+    uvm_config_db#(dxi_agent_cfg#(int))::set(this, "in_agent", "cfg", in_agent_cfg);
+
+    out_agent_cfg = dxi_agent_cfg#(int)::type_id::create("out_agent_cfg");
+    out_agent_cfg.is_active = UVM_ACTIVE;
+    out_agent_cfg.is_master = 1'b0;
+    uvm_config_db#(dxi_agent_cfg#(int))::set(this, "out_agent", "cfg", out_agent_cfg);
 
     in_agent  = dxi_agent#(72)::type_id::create("in_agent",this);
     out_agent = dxi_agent#(8) ::type_id::create("out_agent",this);
