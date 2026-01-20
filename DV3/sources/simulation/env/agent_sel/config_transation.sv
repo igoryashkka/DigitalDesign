@@ -6,4 +6,8 @@ class config_transation extends uvm_sequence_item;
     super.new(name);
   endfunction
 
+  function string convert2str();
+    return $sformatf("config_select=0x%0h", config_select);
+  endfunction
+
 endclass
