@@ -71,9 +71,6 @@ class dxi_file_seq #(int DW=72) extends uvm_sequence #(dxi_transation#(DW));
     int file_in;
     string arg_file;
 
-    if (starting_phase != null)
-      starting_phase.raise_objection(this);
-
     if (DW != 72) begin
       `uvm_fatal(get_type_name(), $sformatf("File sequence expects DW=72, got %0d", DW))
     end
@@ -112,8 +109,5 @@ class dxi_file_seq #(int DW=72) extends uvm_sequence #(dxi_transation#(DW));
         finish_item(tr);
       end
     end
-
-    if (starting_phase != null)
-      starting_phase.drop_objection(this);
   endtask
 endclass

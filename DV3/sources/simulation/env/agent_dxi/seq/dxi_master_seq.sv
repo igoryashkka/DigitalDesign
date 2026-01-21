@@ -12,9 +12,6 @@ class dxi_master_seq #(int DW=72) extends uvm_sequence #(dxi_transation#(DW));
   task body();
     dxi_transation#(DW) tr;
 
-    if (starting_phase != null)
-      starting_phase.raise_objection(this);
-
     repeat (200) begin
       tr = dxi_transation#(DW)::type_id::create("tr");
 
@@ -26,8 +23,5 @@ class dxi_master_seq #(int DW=72) extends uvm_sequence #(dxi_transation#(DW));
 
       finish_item(tr);
     end
-
-    if (starting_phase != null)
-      starting_phase.drop_objection(this);
   endtask
 endclass

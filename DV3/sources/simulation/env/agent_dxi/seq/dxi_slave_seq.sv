@@ -12,9 +12,6 @@ class dxi_slave_seq #(int DW=8) extends uvm_sequence #(dxi_transation#(DW));
   task body();
     dxi_transation#(DW) tr;
 
-    if (starting_phase != null)
-      starting_phase.raise_objection(this);
-
    forever begin
       tr = dxi_transation#(DW)::type_id::create("tr");
 
@@ -25,10 +22,5 @@ class dxi_slave_seq #(int DW=8) extends uvm_sequence #(dxi_transation#(DW));
       end
       finish_item(tr);
    end
-      
-
-
-    if (starting_phase != null)
-      starting_phase.drop_objection(this);
   endtask
 endclass

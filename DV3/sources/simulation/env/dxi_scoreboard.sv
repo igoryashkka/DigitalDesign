@@ -34,18 +34,6 @@ class dxi_scoreboard extends uvm_component;
     void'(uvm_config_db#(virtual dxi_if#(72))::get(this, "", "rst_vif", rst_vif));
   endfunction
 
-  task run_phase(uvm_phase phase);
-    if (rst_vif == null) return;
-
-    forever begin
-      @(negedge rst_vif.rstn);
-      expected_q.delete();
-      in_count  = 0;
-      out_count = 0;
-      `uvm_info("DXI_SCB", "Reset detected, clearing expected queue", UVM_LOW)
-    end
-  endtask
-
   function automatic logic [7:0] apply_filter(logic [71:0] pixels, logic [1:0] sel);
     int acc = 0;
     int norm;

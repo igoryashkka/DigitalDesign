@@ -21,18 +21,6 @@ class file_collector_scb extends uvm_component;
     super.build_phase(phase);
   endfunction
 
-  task run_phase(uvm_phase phase);
-    if (rst_vif == null)
-      return;
-
-    forever begin
-      @(negedge rst_vif.rstn);
-      pixel_queue.delete();
-      img_counter = 0;
-      `uvm_info("FILE_SCB", "Reset detected, clearing pixel queue and counter", UVM_LOW)
-    end
-  endtask
-
   function void write(dxi_transation#(8) tr);
     pixel_queue.push_back(tr.data[7:0]);
     if (pixel_queue.size() >= img_width * img_height) begin
