@@ -1,4 +1,4 @@
-class dxi_slave_seq #(int DW=8) extends uvm_sequence #(dxi_sequence#(DW));
+class dxi_slave_seq #(int DW=8) extends uvm_sequence #(dxi_transation#(DW));
   `uvm_object_param_utils(dxi_slave_seq#(DW))
 
       rand int unsigned n_items;
@@ -10,24 +10,17 @@ class dxi_slave_seq #(int DW=8) extends uvm_sequence #(dxi_sequence#(DW));
   endfunction
 
   task body();
-    dxi_sequence#(DW) tr;
+    dxi_transation#(DW) tr;
 
-    if (starting_phase != null)
-      starting_phase.raise_objection(this);
-
-    repeat (n_items) begin
-      tr = dxi_sequence#(DW)::type_id::create("tr");
+   forever begin
+      tr = dxi_transation#(DW)::type_id::create("tr");
 
       start_item(tr);
 
       if (!tr.randomize()) begin
         `uvm_fatal(get_type_name(), "Slave: tr.randomize() failed")
       end
-
       finish_item(tr);
-    end
-
-    if (starting_phase != null)
-      starting_phase.drop_objection(this);
+   end
   endtask
 endclass

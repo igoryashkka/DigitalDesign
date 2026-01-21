@@ -1,4 +1,4 @@
-class dxi_master_seq #(int DW=72) extends uvm_sequence #(dxi_sequence#(DW));
+class dxi_master_seq #(int DW=72) extends uvm_sequence #(dxi_transation#(DW));
   `uvm_object_param_utils(dxi_master_seq#(DW))
 
       rand int unsigned n_items;
@@ -10,13 +10,10 @@ class dxi_master_seq #(int DW=72) extends uvm_sequence #(dxi_sequence#(DW));
   endfunction
 
   task body();
-    dxi_sequence#(DW) tr;
+    dxi_transation#(DW) tr;
 
-    if (starting_phase != null)
-      starting_phase.raise_objection(this);
-
-    repeat (n_items) begin
-      tr = dxi_sequence#(DW)::type_id::create("tr");
+    repeat (200) begin
+      tr = dxi_transation#(DW)::type_id::create("tr");
 
       start_item(tr);
 
@@ -26,8 +23,5 @@ class dxi_master_seq #(int DW=72) extends uvm_sequence #(dxi_sequence#(DW));
 
       finish_item(tr);
     end
-
-    if (starting_phase != null)
-      starting_phase.drop_objection(this);
   endtask
 endclass
