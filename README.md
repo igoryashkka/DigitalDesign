@@ -32,3 +32,10 @@ To test a different module, you need to modify the **Tcl script**:
    ```tcl
    vsim work.your_tb_file
    ```
+
+---
+
+## Documentation
+
+This repository now includes a `docs/` folder with per-module documentation and quick-start simulation instructions. See `docs/README.md` for an index of module pages and details.
+
