@@ -1,41 +1,16 @@
-todo as code crafters design 
+# Project Documentation
 
-### Simulation Run
+This documentation provides a concise overview of the modules in this repository and how to build / simulate them.
 
-1. **Execute the Batch Script**:
-   - Run the `sim.bat` file. This script will:
-     - Create a temporary folder (`sim`) for storing simulation files.
-     - Execute the `modelsim_script.tcl` file to compile and simulate the design.
-     - Return to the parent directory after the simulation is complete.
+Modules:
 
-2. **Tcl Script Description**:
-   - The Tcl script performs the following steps:
-     - Creates a working library for ModelSim (`vlib work`).
-     - Compiles the VHDL files for the design and testbench.
-     - Opens the testbench for simulation (`vsim`).
-     - Adds all signals to the wave window for visualization.
-     - Runs the simulation (`run -all`).
-     - Adjusts the wave window for a full view.
+- **DF1** - Basic VHDL components (gates, latch, full adder, FSM)
+- **DF2** - Collections of small designs and simulations (BasicLogicGates, FSM_Protocols, IntermediateBlocks)
+- **DF3** - FPGA-focused projects (Counter, Decoder)
+- **DF4** - AXI4-Lite slave and GPIO (in progress)
+- **DV1** - Not found in repository (placeholder)
+- **DV2** - FilterDXI demonstration (VHDL filter with test vectors)
+- **DV3** - Verification/UVM project
+- **CPU0** - RISC-V SystemVerilog CPU core (instruction memory, datapath, control)
 
----
-
-## Note for Testing Different Modules
-
-To test a different module, you need to modify the **Tcl script**:
-
-1. Replace the VHDL file paths in the `vcom` commands:
-   ```tcl
-   vcom ../your_tb_file.vhd ../../your_component_file.vhd
-   ```
-
-2. Update the `vsim` command to specify the testbench entity:
-   ```tcl
-   vsim work.your_tb_file
-   ```
-
----
-
-## Documentation
-
-This repository now includes a `docs/` folder with per-module documentation and quick-start simulation instructions. See `docs/README.md` for an index of module pages and details.
-
+Refer to the individual module pages for details, file lists, and instructions.
