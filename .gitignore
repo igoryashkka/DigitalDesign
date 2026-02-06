@@ -29,7 +29,7 @@
 DF4/project/
 DF4/sources/bd/ui
 DF4/sources/bd/ipshared/
-DF4/workspace_vitis/
+
 .Xil/
 *.cache/
 *.gen/
@@ -48,6 +48,7 @@ usage_statistics_webtalk.xml
 Thumbs.db
 .vscode/
 .idea/
+*.mmi
 
 
 *~
