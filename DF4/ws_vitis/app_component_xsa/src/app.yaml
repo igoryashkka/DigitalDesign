@@ -1,0 +1,4 @@
+domain_path: C:\Users\user\Documents\dd_ihor\DigitalDesign\DF4\ws_vitis\platform_xsa\export\platform_xsa\sw\standalone_microblaze_0
+app_src_dir: C:\AMDDesignTools\2025.2\Vitis\data\embeddedsw\lib\sw_apps\empty_application
+template: empty_application
+lang: c

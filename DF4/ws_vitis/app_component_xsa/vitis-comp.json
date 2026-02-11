@@ -1,0 +1,17 @@
+{
+  "name": "app_component_xsa",
+  "type": "HOST",
+  "platform": "platform_xsa",
+  "domain": "standalone_microblaze_0",
+  "cpuInstance": "microblaze_0",
+  "cpuType": "microblaze",
+  "os": "standalone",
+  "configuration": {
+    "componentType": "HOST",
+    "hostToolchainConfigurations": []
+  },
+  "domainRealName": "standalone_microblaze_0",
+  "useSysrootToolchain": false,
+  "applicationFlow": "EMBEDDED",
+  "templateFlow": "VITIS"
+}

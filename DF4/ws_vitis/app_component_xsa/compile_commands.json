@@ -1,0 +1,7 @@
+[
+{
+  "directory": "C:/Users/user/Documents/dd_ihor/DigitalDesign/DF4/ws_vitis/app_component_xsa/build",
+  "command": "C:\\AMDDesignTools\\2025.2\\Vitis\\gnu\\microblaze\\nt\\bin\\mb-gcc.exe -IC:/Users/user/Documents/dd_ihor/DigitalDesign/DF4/ws_vitis/app_component_xsa/src -isystem C:/Users/user/Documents/dd_ihor/DigitalDesign/DF4/ws_vitis/platform_xsa/export/platform_xsa/sw/standalone_microblaze_0/include -isystem C:/AMDDesignTools/2025.2/gnu/microblaze/nt/x86_64-oesdk-mingw32/usr/lib/microblaze-xilinx-elf/gcc/microblaze-xilinx-elf/13.3.0/include -isystem C:/AMDDesignTools/2025.2/gnu/microblaze/nt/x86_64-oesdk-mingw32/usr/lib/microblaze-xilinx-elf/gcc/microblaze-xilinx-elf/13.3.0/include-fixed -isystem C:/AMDDesignTools/2025.2/Vitis/gnu/microblaze/nt/microblazeeb-xilinx-elf/usr/include   -mlittle-endian -mxl-soft-mul -mcpu=v11.0 -DSDT  -MMD -MP -specs=C:/Users/user/Documents/dd_ihor/DigitalDesign/DF4/ws_vitis/platform_xsa/export/platform_xsa/sw/standalone_microblaze_0/Xilinx.spec -IC:/Users/user/Documents/dd_ihor/DigitalDesign/DF4/ws_vitis/platform_xsa/export/platform_xsa/sw/standalone_microblaze_0/include -Wall -Wextra      -O0  -g3     -U__clang__ -o CMakeFiles\\app_component_xsa.elf.dir\\main.c.obj -c C:\\Users\\user\\Documents\\dd_ihor\\DigitalDesign\\DF4\\ws_vitis\\app_component_xsa\\src\\main.c",
+  "file": "C:\\Users\\user\\Documents\\dd_ihor\\DigitalDesign\\DF4\\ws_vitis\\app_component_xsa\\src\\main.c"
+}
+]

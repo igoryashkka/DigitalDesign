@@ -7,14 +7,17 @@ set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]
 set_property BITSTREAM.CONFIG.SPI_FALL_EDGE Yes [current_design]
 
 # Підключення зовнішніх сигналів та клоку
-set_property -dict {PACKAGE_PIN R4 IOSTANDARD DIFF_SSTL15} [get_ports diff_clock_rtl_0_clk_p]
+set_property -dict {PACKAGE_PIN R4 IOSTANDARD DIFF_SSTL15} [get_ports diff_clock_rtl_0_clk_p ] 
 #set_property -dict {PACKAGE_PIN R4 IOSTANDARD DIFF_SSTL15} [get_ports sys_clk_200_p]
 
+#set_property -dict {PACKAGE_PIN R4 IOSTANDARD DIFF_SSTL15} [get_ports sys_clk_p]   
+#set_property -dict {PACKAGE_PIN R14 IOSTANDARD LVCMOS33}   [get_ports sys_rstn]    
 # Reset
-set_property -dict {PACKAGE_PIN G16 IOSTANDARD LVCMOS33 PULLUP TRUE} [get_ports reset_rtl_0]
+set_property -dict {PACKAGE_PIN W21 IOSTANDARD LVCMOS33 } [get_ports reset_rtl_0] 
+set_property -dict {PACKAGE_PIN R14 IOSTANDARD LVCMOS33} [get_ports rst_n_0]
 #set_property -dict {PACKAGE_PIN G16 IOSTANDARD LVCMOS33 PULLUP TRUE} [get_ports reset_sw_n]
 
-set_property -dict {PACKAGE_PIN G17 IOSTANDARD LVCMOS33} [get_ports {pwm_r_o_0}]
+set_property -dict {PACKAGE_PIN W22 IOSTANDARD LVCMOS33} [get_ports {pwm_r_o_0}]
 set_property -dict {PACKAGE_PIN G18 IOSTANDARD LVCMOS33} [get_ports {led_1_0}]
 
 #sycn_reset
