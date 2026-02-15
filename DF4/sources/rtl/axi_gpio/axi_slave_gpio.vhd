@@ -67,9 +67,9 @@ architecture rtl of axi_lite_regs_if is
 
   signal bresp_reg   : std_logic_vector(1 downto 0) := "00"; -- OKAY
 
-begin
-
+begin   
   s_axi_bresp <= bresp_reg;
+
   s_axi_awready <= '1' when (s_axi_bvalid='0' and aw_stored='0') else '0';
   s_axi_wready  <= '1' when (s_axi_bvalid='0' and w_stored='0')  else '0';
 
@@ -97,9 +97,10 @@ begin
 
         axi_write_fire  <= '0';
       else
-
+       -------------------------------------------------------------
+       -- Write transaction handling
+       -------------------------------------------------------------
         axi_write_fire <= '0';
-
         -- handshakes
         aw_hand_shake := (s_axi_awvalid='1' and s_axi_awready='1');
         w_hand_shake  := (s_axi_wvalid='1'  and s_axi_wready='1');
@@ -119,16 +120,18 @@ begin
 
       
         if (aw_stored='1' and w_stored='1' and s_axi_bvalid='0') then
-          axi_write_fire <= '1';   -- 1-cycle strobe to reg-file
+          axi_write_fire <= '1';   -- flag to reg-file
           s_axi_bvalid   <= '1';   -- response pending
-          bresp_reg      <= "00";  -- OKAY 
-          aw_stored      <= '0';
-          w_stored       <= '0';
+          bresp_reg      <= "00";  -- OKAY, 0x00 for OK
+          aw_stored      <= '0';   -- clear flag aw
+          w_stored       <= '0';   -- clear flag w
         end if;
 
         if (s_axi_bvalid='1' and s_axi_bready='1') then
           s_axi_bvalid <= '0';
         end if;
+        -------------------------------------------------------------
+
       end if;
     end if;
   end process;
