@@ -66,14 +66,22 @@ architecture rtl of axi_lite_regs_if is
 
   signal bresp_reg   : std_logic_vector(1 downto 0) := "00"; -- OKAY
 
-begin   
+
+  signal rd_addr_reg  : std_logic_vector(ADDR_WIDTH-1 downto 0) := (others=>'0');
+  signal rdata_reg    : std_logic_vector(DATA_WIDTH-1 downto 0) := (others=>'0');
+  signal rresp_reg    : std_logic_vector(1 downto 0) := "00";
+  signal read_pending : std_logic := '0';  
+
+begin
   ---------------------------------------------------------------
-  -- AXI4-Lite output assignments and cobinatioanl logic
+  -- AXI4-Lite output assignments and combinational logic
+  ---------------------------------------------------------------
   s_axi_bresp <= bresp_reg;
-  s_axi_rresp <= rresp_reg;
-  
-  rd_addr <= rd_addr_reg;
+
   s_axi_rdata <= rdata_reg;
+  s_axi_rresp <= rresp_reg;
+
+  rd_addr <= rd_addr_reg;
 
   s_axi_awready <= '1' when (s_axi_bvalid='0' and aw_stored='0') else '0';
   s_axi_wready  <= '1' when (s_axi_bvalid='0' and w_stored='0')  else '0';
@@ -109,13 +117,13 @@ begin
         s_axi_rvalid   <= '0';
         read_pending   <= '0';
         axi_read_fire  <= '0';
-        rd_en          <= '0';
+
       else
        -------------------------------------------------------------
        -- Write transaction handling
        -------------------------------------------------------------
         axi_write_fire <= '0';
-        -- handshakes
+        -- Handshakes detection
         aw_hand_shake := (s_axi_awvalid='1' and s_axi_awready='1');
         w_hand_shake  := (s_axi_wvalid='1'  and s_axi_wready='1');
 
@@ -131,7 +139,6 @@ begin
           wstrb_reg <= s_axi_wstrb;
           w_stored  <= '1';
         end if;
-
       
         if (aw_stored='1' and w_stored='1' and s_axi_bvalid='0') then
           axi_write_fire <= '1';   -- flag to reg-file
@@ -148,7 +155,7 @@ begin
         -- Read  transaction handling
         -------------------------------------------------------------
         axi_read_fire <= '0';
-
+          -- Handshakes detection
         ar_hand_shake := (s_axi_arvalid='1' and s_axi_arready='1');
         r_hand_shake  := (s_axi_rvalid='1'  and s_axi_rready='1');
 
@@ -161,7 +168,6 @@ begin
 
         if (read_pending='1' and s_axi_rvalid='0') then
           rdata_reg     <= rd_data; -- data from reg-file
-          axi_read_fire <= '1';     -- flag to reg-file
           s_axi_rvalid  <= '1';     -- response pending
           rresp_reg     <= "00";    -- OKAY, 0x00 for OK
           read_pending  <= '0';     -- clear flag ar
