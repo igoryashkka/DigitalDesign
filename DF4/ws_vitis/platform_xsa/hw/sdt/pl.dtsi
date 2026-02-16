@@ -246,7 +246,7 @@
 			xlnx,ecc-onoff-register = <0>;
 			xlnx,ecc-onoff-reset-value = <1>;
 			xlnx,s-axi-ctrl-protocol = "AXI4LITE";
-			xlnx,mask = <0x40000000>;
+			xlnx,mask = <0x40010000>;
 			xlnx,mask1 = <0x800000>;
 			xlnx,mask2 = <0x800000>;
 			xlnx,fault-inject = <0>;
@@ -329,6 +329,17 @@
 			xlnx,prot-cfg7 = <0xff>;
 			xlnx,lmb-awidth = <32>;
 			xlnx,name = "microblaze_0_local_memory_ilmb_bram_if_cntlr";
+		};
+		top_gpio_0: top_gpio@10000 {
+			xlnx,n-gpio = <8>;
+			compatible = "xlnx,top-gpio-1.0";
+			status = "okay";
+			xlnx,data-width = <32>;
+			xlnx,ip-name = "top_gpio";
+			xlnx,edk-iptype = "PERIPHERAL";
+			xlnx,addr-width = <6>;
+			reg = <0x00010000 0x1000>;
+			xlnx,name = "top_gpio_0";
 		};
 	};
 };

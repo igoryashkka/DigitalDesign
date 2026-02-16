@@ -18,7 +18,7 @@ set_property -dict {PACKAGE_PIN R14 IOSTANDARD LVCMOS33} [get_ports rst_n_0]
 #set_property -dict {PACKAGE_PIN G16 IOSTANDARD LVCMOS33 PULLUP TRUE} [get_ports reset_sw_n]
 
 set_property -dict {PACKAGE_PIN W22 IOSTANDARD LVCMOS33} [get_ports {pwm_r_o_0}]
-set_property -dict {PACKAGE_PIN G18 IOSTANDARD LVCMOS33} [get_ports {led_1_0}]
+set_property -dict {PACKAGE_PIN Y22 IOSTANDARD LVCMOS33} [get_ports {pwm_r_o_1}]
 
 #sycn_reset
 #set_property -dict {PACKAGE_PIN L18 IOSTANDARD LVCMOS33 PULLDOWN TRUE} [get_ports sync_reset_i]

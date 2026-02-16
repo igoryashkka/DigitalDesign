@@ -41,7 +41,8 @@ entity top_gpio is
     s_axi_rready  : in  std_logic;
 
     -- GPIO pins
-    gpio_io       : inout std_logic_vector(N_GPIO-1 downto 0)
+    gpio_io       : inout std_logic_vector(N_GPIO-1 downto 0);
+    gpio_out      : out   std_logic_vector(N_GPIO-1 downto 0) -- out only 
   );
 end entity;
 
@@ -124,7 +125,8 @@ begin
       rd_addr        => rd_addr_s,
       rd_data        => rd_data_s,
 
-      gpio_io        => gpio_io
+      gpio_io        => gpio_io,
+      gpio_out       => gpio_out
     );
 
 end architecture;

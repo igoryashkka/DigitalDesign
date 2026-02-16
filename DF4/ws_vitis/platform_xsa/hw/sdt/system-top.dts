@@ -24,6 +24,7 @@
 	cpus_microblaze_0: cpus_microblaze@0 {
 		address-map = <0x00000000 &microblaze_0_local_memory_dlmb_bram_if_cntlr_memory 0x00000000 0x4000>, 
 			      <0x00000000 &microblaze_0_local_memory_dlmb_bram_if_cntlr 0x00000000 0x4000>, 
+			      <0x00010000 &top_gpio_0 0x00010000 0x1000>, 
 			      <0x40000000 &axi_gpio_0 0x40000000 0x10000>, 
 			      <0x41400000 &mdm_1 0x41400000 0x1000>;
 		#ranges-address-cells = <0x1>;

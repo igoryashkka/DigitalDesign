@@ -23,7 +23,8 @@ entity gpio_regs is
     rd_data        : out std_logic_vector(DATA_WIDTH-1 downto 0);
 
     -- GPIO pins
-    gpio_io        : inout std_logic_vector(N_GPIO-1 downto 0)
+    gpio_io        : inout std_logic_vector(N_GPIO-1 downto 0);
+    gpio_out       : out   std_logic_vector(N_GPIO-1 downto 0) -- out only
   );
 end entity;
 
@@ -42,8 +43,9 @@ architecture rtl of gpio_regs is
 begin
 
   gen_gpio : for i in 0 to N_GPIO-1 generate
-    gpio_io(i) <= reg_data(i) when reg_tri(i)='0' else 'Z';
-    gpio_in(i) <= gpio_io(i);
+    gpio_io(i)  <= reg_data(i) when reg_tri(i)='0' else 'Z';
+    gpio_in(i)  <= gpio_io(i);
+    gpio_out(i) <= reg_data(i);
   end generate;
 
   -- Write logic 
@@ -56,18 +58,18 @@ begin
       else
         if axi_write_fire='1' then
           if wr_addr = REG_DATA_ADDR then
-            for _bit in 0 to STRB_WIDTH-1 loop
-              if wr_strb(_bit) = '1' then
-                reg_data((_bit+1)*BYTE_WIDTH-1 downto _bit*BYTE_WIDTH)
-                  <= wr_data((_bit+1)*BYTE_WIDTH-1 downto _bit*BYTE_WIDTH);
+            for i in 0 to STRB_WIDTH-1 loop
+              if wr_strb(i) = '1' then
+                reg_data((i+1)*BYTE_WIDTH-1 downto i*BYTE_WIDTH)
+                  <= wr_data((i+1)*BYTE_WIDTH-1 downto i*BYTE_WIDTH);
               end if;
             end loop;
           end if;
           if wr_addr = REG_TRI_ADDR then
-            for _bit in 0 to STRB_WIDTH-1 loop
-              if wr_strb(_bit) = '1' then
-                reg_tri((_bit+1)*BYTE_WIDTH-1 downto _bit*BYTE_WIDTH)
-                  <= wr_data((_bit+1)*BYTE_WIDTH-1 downto _bit*BYTE_WIDTH);
+            for i in 0 to STRB_WIDTH-1 loop
+              if wr_strb(i) = '1' then
+                reg_tri((i+1)*BYTE_WIDTH-1 downto i*BYTE_WIDTH)
+                  <= wr_data((i+1)*BYTE_WIDTH-1 downto i*BYTE_WIDTH);
               end if;
             end loop;
           end if;

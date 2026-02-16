@@ -10,20 +10,21 @@
         pruned-sdt = <0x1>;
 
         cpus_microblaze_0: cpus_microblaze@0 {
-                phandle = <0x7>;
+                phandle = <0x8>;
                 #cpu-mask-cells = <0x1>;
                 compatible = "cpus,cluster";
                 #address-cells = <0x1>;
                 #size-cells = <0x0>;
                 address-map = <0x0 &microblaze_0_local_memory_dlmb_bram_if_cntlr_memory 0x0 0x4000>,
                  <0x0 &microblaze_0_local_memory_dlmb_bram_if_cntlr 0x0 0x4000>,
+                 <0x10000 &top_gpio_0 0x10000 0x1000>,
                  <0x40000000 &axi_gpio_0 0x40000000 0x10000>,
                  <0x41400000 &mdm_1 0x41400000 0x1000>;
                 #ranges-address-cells = <0x1>;
                 #ranges-size-cells = <0x1>;
 
                 microblaze_0: cpu@0 {
-                        phandle = <0x8>;
+                        phandle = <0x9>;
                         xlnx,reset-msr-dce = <0x0>;
                         model = "microblaze,11.0";
                         xlnx,addr-tag-bits = <0x0>;
@@ -173,12 +174,12 @@
         };
 
         clock: clocks {
-                phandle = <0x9>;
+                phandle = <0xa>;
                 #address-cells = <0x1>;
                 #size-cells = <0x0>;
 
                 clk_cpu_0: clk_cpu@0 {
-                        phandle = <0xa>;
+                        phandle = <0xb>;
                         compatible = "fixed-clock";
                         reg = <0x0>;
                         clock-frequency = <0x989680>;
@@ -187,7 +188,7 @@
                 };
 
                 clk_bus_0: clk_bus_0@1 {
-                        phandle = <0x6>;
+                        phandle = <0x7>;
                         compatible = "fixed-clock";
                         reg = <0x1>;
                         clock-frequency = <0x989680>;
@@ -197,14 +198,14 @@
         };
 
         amba_pl: amba_pl {
-                phandle = <0x5>;
+                phandle = <0x6>;
                 ranges;
                 compatible = "simple-bus";
                 #address-cells = <0x1>;
                 #size-cells = <0x1>;
 
                 axi_gpio_0: gpio@40000000 {
-                        phandle = <0x3>;
+                        phandle = <0x4>;
                         xlnx,gpio-board-interface = "Custom";
                         compatible = "xlnx,axi-gpio-2.0", "xlnx,xps-gpio-1.00.a";
                         xlnx,all-outputs = <0x1>;
@@ -233,7 +234,7 @@
                 };
 
                 mdm_1: serial@41400000 {
-                        phandle = <0x4>;
+                        phandle = <0x5>;
                         xlnx,trace-async-reset = <0x0>;
                         compatible = "xlnx,mdm-3.2", "xlnx,xps-uartlite-1.00.a";
                         xlnx,data-size = <0x20>;
@@ -279,7 +280,7 @@
                         xlnx,ecc-onoff-register = <0x0>;
                         xlnx,ecc-onoff-reset-value = <0x1>;
                         xlnx,s-axi-ctrl-protocol = "AXI4LITE";
-                        xlnx,mask = <0x40000000>;
+                        xlnx,mask = <0x40010000>;
                         xlnx,mask1 = <0x800000>;
                         xlnx,mask2 = <0x800000>;
                         xlnx,fault-inject = <0x0>;
@@ -318,6 +319,19 @@
                         xlnx,lmb-awidth = <0x20>;
                         xlnx,name = "microblaze_0_local_memory_dlmb_bram_if_cntlr";
                 };
+
+                top_gpio_0: top_gpio@10000 {
+                        phandle = <0x3>;
+                        xlnx,n-gpio = <0x8>;
+                        compatible = "xlnx,top-gpio-1.0";
+                        status = "okay";
+                        xlnx,data-width = <0x20>;
+                        xlnx,ip-name = "top_gpio";
+                        xlnx,edk-iptype = "PERIPHERAL";
+                        xlnx,addr-width = <0x6>;
+                        reg = <0x10000 0x1000>;
+                        xlnx,name = "top_gpio_0";
+                };
         };
 
         microblaze_0_local_memory_dlmb_bram_if_cntlr_memory: memory@0 {
@@ -347,6 +361,7 @@
                 axi_gpio_0 = "/amba_pl/gpio@40000000";
                 mdm_1 = "/amba_pl/serial@41400000";
                 microblaze_0_local_memory_dlmb_bram_if_cntlr = "/amba_pl/lmb_bram_if_cntlr@0";
+                top_gpio_0 = "/amba_pl/top_gpio@10000";
                 microblaze_0_local_memory_dlmb_bram_if_cntlr_memory = "/memory@0";
         };
 };

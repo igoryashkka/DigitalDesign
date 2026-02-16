@@ -7,3 +7,6 @@ mdm_1:
 microblaze_0_local_memory_dlmb_bram_if_cntlr:
 - lmb_bram_if_cntlr
 - bram
+top_gpio_0:
+- top_gpio
+- None

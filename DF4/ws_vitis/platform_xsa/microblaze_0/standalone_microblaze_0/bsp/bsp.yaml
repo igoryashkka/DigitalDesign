@@ -162,6 +162,7 @@ drv_info:
     driver: bram
     ip_name: lmb_bram_if_cntlr
     path: C:\AMDDesignTools\2025.2\Vitis\data\embeddedsw\XilinxProcessorIPLib\drivers\bram_v4_13
+  top_gpio_0: None
 lib_info:
   xiltimer:
     path: C:\AMDDesignTools\2025.2\Vitis\data\embeddedsw\lib\sw_services\xiltimer_v2_3
