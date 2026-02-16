@@ -41,6 +41,11 @@ architecture rtl of gpio_regs is
 
 begin
 
+  gen_gpio : for i in 0 to N_GPIO-1 generate
+    gpio_io(i) <= reg_data(i) when reg_tri(i)='0' else 'Z';
+    gpio_in(i) <= gpio_io(i);
+  end generate;
+
   -- Write logic 
   process(clk)
   begin
@@ -68,6 +73,22 @@ begin
           end if;
         end if;
       end if;
+    end if;
+  end process;
+
+  -- Read logic
+  process(all)
+  begin
+    rd_data <= (others=>'0');
+
+    if rd_addr(ADDR_WIDTH-1 downto 0)=REG_DATA_ADDR then
+      rd_data(N_GPIO-1 downto 0) <= gpio_in;
+
+    elsif rd_addr(ADDR_WIDTH-1 downto 0)=REG_TRI_ADDR then
+      rd_data <= reg_tri;
+
+    else
+      rd_data <= (others=>'0');
     end if;
   end process;
 
