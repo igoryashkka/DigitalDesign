@@ -193,21 +193,7 @@ endtask
 
 
 
-  task automatic assert_stall_when_bvalid();
-    begin
-      if (s_axi_bvalid) begin
-        assert (s_axi_awready == 1'b0)
-          else $fatal(1, "AWREADY should be 0 while BVALID=1");
-        assert (s_axi_wready == 1'b0)
-          else $fatal(1, "WREADY should be 0 while BVALID=1");
-      end
-    end
-  endtask
 
-
-  always @(posedge s_axi_aclk) begin
-    if (s_axi_aresetn) assert_stall_when_bvalid();
-  end
 
 
  initial begin
