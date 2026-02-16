@@ -1,3 +1,6 @@
 [submodule "CPU0"]
 	path = CPU0
 	url = https://github.com/igoryashkka/CPU-core
+[submodule "tools/openlane-sk130"]
+	path = tools/openlane-sk130
+	url = https://github.com/igoryashkka/openlane-sk130.git
