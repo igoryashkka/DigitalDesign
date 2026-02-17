@@ -79,18 +79,15 @@ begin
   end process;
 
   -- Read logic
-  process(all)
+ process(all)
   begin
-    rd_data <= (others=>'0');
+    rd_data <= (others=>'0'); 
 
-    if rd_addr(ADDR_WIDTH-1 downto 0)=REG_DATA_ADDR then
+    if rd_addr = REG_DATA_ADDR then
       rd_data(N_GPIO-1 downto 0) <= gpio_in;
 
-    elsif rd_addr(ADDR_WIDTH-1 downto 0)=REG_TRI_ADDR then
+    elsif rd_addr = REG_TRI_ADDR then
       rd_data <= reg_tri;
-
-    else
-      rd_data <= (others=>'0');
     end if;
   end process;
 
