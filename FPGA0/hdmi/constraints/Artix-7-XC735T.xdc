@@ -7,15 +7,12 @@ set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]
 set_property BITSTREAM.CONFIG.SPI_FALL_EDGE Yes [current_design]
 
 # Підключення зовнішніх сигналів та клоку
-set_property -dict {PACKAGE_PIN R4 IOSTANDARD DIFF_SSTL15} [get_ports diff_clock_rtl_0_clk_p ] 
-#set_property -dict {PACKAGE_PIN R4 IOSTANDARD DIFF_SSTL15} [get_ports sys_clk_200_p]
-
-#set_property -dict {PACKAGE_PIN R4 IOSTANDARD DIFF_SSTL15} [get_ports sys_clk_p]   
-#set_property -dict {PACKAGE_PIN R14 IOSTANDARD LVCMOS33}   [get_ports sys_rstn]    
+# TODO: set PACKAGE_PIN for clk_200 based on your board schematics
+# set_property -dict {PACKAGE_PIN <PIN> IOSTANDARD LVCMOS33} [get_ports clk_200]
+create_clock -period 5.000 -name clk_200 [get_ports clk_200]
 # Reset
 set_property -dict {PACKAGE_PIN W21 IOSTANDARD LVCMOS33 } [get_ports reset_rtl_0] 
 set_property -dict {PACKAGE_PIN R14 IOSTANDARD LVCMOS33} [get_ports rst_n_0]
-#set_property -dict {PACKAGE_PIN G16 IOSTANDARD LVCMOS33 PULLUP TRUE} [get_ports reset_sw_n]
 
 set_property -dict {PACKAGE_PIN W22 IOSTANDARD LVCMOS33} [get_ports {pwm_r_o_0}]
 set_property -dict {PACKAGE_PIN Y22 IOSTANDARD LVCMOS33} [get_ports {pwm_r_o_1}]
@@ -23,27 +20,23 @@ set_property -dict {PACKAGE_PIN Y22 IOSTANDARD LVCMOS33} [get_ports {pwm_r_o_1}]
 #sycn_reset
 #set_property -dict {PACKAGE_PIN L18 IOSTANDARD LVCMOS33 PULLDOWN TRUE} [get_ports sync_reset_i]
 
-# I2C sda, scl
-# set_property -dict {PACKAGE_PIN K22 IOSTANDARD LVCMOS33} [get_ports seg_scl_o_0]
-# set_property -dict {PACKAGE_PIN J22 IOSTANDARD LVCMOS33} [get_ports sda_io_0]
-#set_property -dict {PACKAGE_PIN K22 IOSTANDARD LVCMOS33} [get_ports seg_scl_o]
-#set_property -dict {PACKAGE_PIN J22 IOSTANDARD LVCMOS33} [get_ports sda_io]
 
-#кнопки sw1 (GPIO)
-#set_property -dict {PACKAGE_PIN N22 IOSTANDARD LVCMOS33 PULLUP TRUE} [get_ports sw1_up]
-#set_property -dict {PACKAGE_PIN M22 IOSTANDARD LVCMOS33 PULLUP TRUE} [get_ports sw1_down]
+# TMDS Clock pair
+set_property -dict {PACKAGE_PIN Y18 IOSTANDARD TMDS_33} [get_ports {tmds_clk_p}]
+set_property -dict {PACKAGE_PIN Y19 IOSTANDARD TMDS_33} [get_ports {tmds_clk_n}]
 
-#кнопки sw2 (GPIO)
-#set_property -dict {PACKAGE_PIN J15 IOSTANDARD LVCMOS33 PULLUP TRUE} [get_ports sw2_up]
-#set_property -dict {PACKAGE_PIN H15 IOSTANDARD LVCMOS33 PULLUP TRUE} [get_ports sw2_down]
+# TMDS Data0 pair 
+set_property -dict {PACKAGE_PIN V19 IOSTANDARD TMDS_33} [get_ports {tmds_d0_p}]
+set_property -dict {PACKAGE_PIN V18 IOSTANDARD TMDS_33} [get_ports {tmds_d0_n}]
 
-#кнопки op_sw (GPIO)
-#set_property -dict {PACKAGE_PIN H20 IOSTANDARD LVCMOS33 PULLUP TRUE} [get_ports {op_sw[0]}]
-#set_property -dict {PACKAGE_PIN G20 IOSTANDARD LVCMOS33 PULLUP TRUE} [get_ports {op_sw[1]}]
-#set_property -dict {PACKAGE_PIN K21 IOSTANDARD LVCMOS33 PULLUP TRUE} [get_ports {op_sw[2]}]
+# TMDS Data1 pair 
+set_property -dict {PACKAGE_PIN AA19 IOSTANDARD TMDS_33} [get_ports {tmds_d1_p}]
+set_property -dict {PACKAGE_PIN AB20 IOSTANDARD TMDS_33} [get_ports {tmds_d1_n}]
 
-#кнопки num_select (GPIO)
-#set_property -dict {PACKAGE_PIN J19 IOSTANDARD LVCMOS33 PULLUP TRUE} [get_ports {num_select[0]}]
-#set_property -dict {PACKAGE_PIN H19 IOSTANDARD LVCMOS33 PULLUP TRUE} [get_ports {num_select[1]}]
-#set_property -dict {PACKAGE_PIN K18 IOSTANDARD LVCMOS33 PULLUP TRUE} [get_ports {num_select[2]}]
+# TMDS Data2 pair 
+set_property -dict {PACKAGE_PIN V17 IOSTANDARD TMDS_33} [get_ports {tmds_d2_p}]
+set_property -dict {PACKAGE_PIN W17 IOSTANDARD TMDS_33} [get_ports {tmds_d2_n}]
 
+# set_property DIFF_TERM FALSE [get_ports {tmds_*_p tmds_*_n}]
+
+set_property IOSTANDARD TMDS_33 [get_ports {tmds_clk_p tmds_clk_n tmds_d0_p tmds_d0_n tmds_d1_p tmds_d1_n tmds_d2_p tmds_d2_n}]

@@ -56,13 +56,16 @@ set_property -name "xpm_libraries" -value "XPM_CDC" -objects $obj
 # Set 'sources_1' fileset object
 set obj [get_filesets sources_1]
 
-# Add RTL files from rtl directory
-set rtl_dir "$_src_dir_/rtl"
-if {[file exists $rtl_dir]} {
-	set files [get_file_list [list $rtl_dir] "sv,svh,v,vh,vhd,mif"]
-	if {[llength $files]} {
-		add_files -norecurse -fileset $obj $files
+# Add RTL files from sources root and rtl directory
+set rtl_dirs {}
+foreach d [list $_src_dir_ "$_src_dir_/rtl"] {
+	if {[file exists $d]} {
+		lappend rtl_dirs $d
 	}
+}
+set files [get_file_list $rtl_dirs "sv,svh,v,vh,vhd,mif"]
+if {[llength $files]} {
+	add_files -norecurse -fileset $obj $files
 }
 
 # Add Block Design wrapper and sources
@@ -114,31 +117,26 @@ catch {
 
 # Set 'sources_1' fileset properties
 set_property -name "dataflow_viewer_settings" -value "min_width=16" -objects $obj
-set_property -name "top" -value "microblaze_wrapper" -objects $obj
+set_property -name "top" -value "top_hdmi" -objects $obj
 
 
-# Configure clk_wiz_0 IP and set 2 clocks: 100MHz with 50% dyty cycle and 30% DC
+# Configure clk_wiz_0 IP: 200 MHz input -> 25 MHz pixel + 125 MHz serial
 if {![llength [get_ips -quiet clk_wiz_0]]} {
 	create_ip -name clk_wiz -vendor xilinx.com -library ip -module_name clk_wiz_0
 }
 set_property -dict [list \
-  CONFIG.CLKIN1_JITTER_PS {50.0} \
-  CONFIG.CLKOUT1_JITTER {148.683} \
-  CONFIG.CLKOUT1_PHASE_ERROR {130.058} \
-  CONFIG.CLK_OUT1_PORT {sys_clk_100_out} \
-  CONFIG.JITTER_SEL {No_Jitter} \
-  CONFIG.MMCM_CLKFBOUT_MULT_F {6.125} \
-  CONFIG.MMCM_CLKIN1_PERIOD {5.000} \
-  CONFIG.MMCM_CLKIN2_PERIOD {10.0} \
-  CONFIG.MMCM_CLKOUT0_DIVIDE_F {6.125} \
-  CONFIG.MMCM_CLKOUT0_DUTY_CYCLE {0.5} \
-  CONFIG.MMCM_DIVCLK_DIVIDE {2} \
-  CONFIG.PRIM_IN_FREQ {200.000} \
-  CONFIG.PRIM_SOURCE {Differential_clock_capable_pin} \
-  CONFIG.RESET_PORT {resetn} \
-  CONFIG.RESET_TYPE {ACTIVE_LOW} \
-  CONFIG.USE_LOCKED {false} \
-  CONFIG.USE_MIN_POWER {true} \
+	CONFIG.PRIM_IN_FREQ {200.000} \
+	CONFIG.NUM_OUT_CLKS {2} \
+	CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {25.000} \
+	CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {125.000} \
+	CONFIG.CLKOUT1_REQUESTED_DUTY_CYCLE {0.5} \
+	CONFIG.CLKOUT2_REQUESTED_DUTY_CYCLE {0.5} \
+	CONFIG.CLKOUT1_REQUESTED_PHASE {0.0} \
+	CONFIG.CLKOUT2_REQUESTED_PHASE {0.0} \
+	CONFIG.RESET_PORT {resetn} \
+	CONFIG.RESET_TYPE {ACTIVE_LOW} \
+	CONFIG.USE_LOCKED {true} \
+	CONFIG.USE_MIN_POWER {true} \
 ] [get_ips clk_wiz_0]
 
 set ip_src_dir "$proj_dir/$_xil_proj_name_.srcs/sources_1/ip"
@@ -178,7 +176,9 @@ set obj [get_filesets constrs_1]
 set files [get_file_list [get_dir_list $_cnstr_dir_] "xdc,sdc"]
 
 # Add source files to design
-add_files -norecurse -fileset $obj $files
+if {[llength $files]} {
+	add_files -norecurse -fileset $obj $files
+}
 
 # Add/Import constrs file and set constrs file properties
 set file_obj [get_files -of_objects $obj [list [lsearch -all -inline $files *.xdc]]]

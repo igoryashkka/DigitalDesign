@@ -18,7 +18,7 @@ foreach scr_file [glob -type f -nocomplain "$scripts_dir/common/*.tcl"] {
 set _xil_proj_name_	"hdmi_project"
 
 # top instanse name
-set _inst_top_name_	"top"
+set _inst_top_name_	"top_hdmi"
 
 # part number
 set _part_number_	"xc7a35tfgg484-2"
