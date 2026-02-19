@@ -25,7 +25,11 @@ architecture rtl of tmds_encoder is
   end function;
 
   signal disparity : integer range -1024 to 1024 := 0;
+  signal flag_sync : std_logic_vector(1 downto 0);
 begin
+
+   flag_sync <= c1 & c0;
+
   process(clk)
     variable n1       : integer;
     variable q_m      : std_logic_vector(8 downto 0);
@@ -41,7 +45,7 @@ begin
 
       elsif de='0' then
         -- TMDS control codes
-        case (c1 & c0) is
+        case (flag_sync) is
           when "00"   => dout <= "1101010100";
           when "01"   => dout <= "0010101011";
           when "10"   => dout <= "0101010100";

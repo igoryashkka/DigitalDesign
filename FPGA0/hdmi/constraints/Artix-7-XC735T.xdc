@@ -11,8 +11,8 @@ set_property BITSTREAM.CONFIG.SPI_FALL_EDGE Yes [current_design]
 # set_property -dict {PACKAGE_PIN <PIN> IOSTANDARD LVCMOS33} [get_ports clk_200]
 create_clock -period 5.000 -name clk_200 [get_ports clk_200]
 # Reset
-set_property -dict {PACKAGE_PIN W21 IOSTANDARD LVCMOS33 } [get_ports reset_rtl_0] 
-set_property -dict {PACKAGE_PIN R14 IOSTANDARD LVCMOS33} [get_ports rst_n_0]
+#set_property -dict {PACKAGE_PIN W21 IOSTANDARD LVCMOS33 } [get_ports reset_rtl_0] 
+set_property -dict {PACKAGE_PIN R14 IOSTANDARD LVCMOS33} [get_ports rst]
 
 set_property -dict {PACKAGE_PIN W22 IOSTANDARD LVCMOS33} [get_ports {pwm_r_o_0}]
 set_property -dict {PACKAGE_PIN Y22 IOSTANDARD LVCMOS33} [get_ports {pwm_r_o_1}]
