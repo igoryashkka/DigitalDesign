@@ -34,7 +34,6 @@ architecture rtl of top_hdmi is
   signal pix_clk  : std_logic;
   signal ser_clk  : std_logic;
   signal resetn   : std_logic;
-  signal clk_lock : std_logic;
 
   -- timing signals
   signal hsync, vsync, de : std_logic;
@@ -58,8 +57,7 @@ begin
       clk_in1  => clk_200,
       resetn   => resetn,
       clk_out1 => pix_clk,
-      clk_out2 => ser_clk,
-      locked   => clk_lock
+      clk_out2 => ser_clk
     );
 
   -- (640x480)
