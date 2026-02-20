@@ -17,7 +17,7 @@ set_property IOSTANDARD LVCMOS33 [get_ports clk_200]
 #set_property -dict {PACKAGE_PIN W21 IOSTANDARD LVCMOS33 } [get_ports reset_rtl_0] 
 set_property -dict {PACKAGE_PIN R14 IOSTANDARD LVCMOS33} [get_ports rst]
 
-#set_property -dict {PACKAGE_PIN W22 IOSTANDARD LVCMOS33} [get_ports {pwm_r_o_0}]
+set_property -dict {PACKAGE_PIN W22 IOSTANDARD LVCMOS33} [get_ports {pwm_r_o}]
 #set_property -dict {PACKAGE_PIN Y22 IOSTANDARD LVCMOS33} [get_ports {pwm_r_o_1}]
 
 #sycn_reset

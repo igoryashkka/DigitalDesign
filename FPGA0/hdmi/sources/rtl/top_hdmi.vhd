@@ -25,11 +25,15 @@ entity top_hdmi is
     tmds_d1_n  : out std_logic;
 
     tmds_d2_p  : out std_logic;
-    tmds_d2_n  : out std_logic
+    tmds_d2_n  : out std_logic;
+
+    pwm_r_o     : out std_logic
   );
 end entity;
 
 architecture rtl of top_hdmi is
+
+  constant PWM_DUTY_C : std_logic_vector(7 downto 0) := x"80";
 
   signal pix_clk  : std_logic;
   signal ser_clk  : std_logic;
@@ -51,6 +55,16 @@ architecture rtl of top_hdmi is
 begin
 
   resetn <= not rst;
+--  for debug ----------------
+    u_pwm_r : entity work.pwm8
+    port map (
+      clk   => clk_200,
+      rst_n => resetn ,
+      duty  => PWM_DUTY_C,
+      pwm   => pwm_r_o
+    );
+
+------------------------------
 
   u_clk_wiz : entity work.clk_wiz_0
     port map(
