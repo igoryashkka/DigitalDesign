@@ -56,7 +56,7 @@ begin
       end if;
     end if;
   end process;
-
+ --- here can be diffrence from another realisation of tim_gen, also idk if 25mhz is ok, maybe 25.175 is needed
   hsync <= '0' when (h_cnt >= H_ACTIVE_PIXELS + H_FRONT_PORCH and
                      h_cnt <  H_ACTIVE_PIXELS + H_FRONT_PORCH + H_SYNC_PULSE) else '1';
 
