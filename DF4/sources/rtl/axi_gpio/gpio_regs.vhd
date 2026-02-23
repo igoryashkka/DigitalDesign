@@ -44,7 +44,7 @@ begin
 
   gen_gpio : for i in 0 to N_GPIO-1 generate
     gpio_io(i)  <= reg_data(i) when reg_tri(i)='0' else 'Z';
-    gpio_in(i)  <= gpio_io(i);
+    gpio_in(i)  <= reg_data(i);
     gpio_out(i) <= reg_data(i);
   end generate;
 
@@ -81,7 +81,6 @@ begin
   -- Read logic
  process(all)
   begin
-    rd_data <= (others=>'0'); 
 
     if rd_addr = REG_DATA_ADDR then
       rd_data(N_GPIO-1 downto 0) <= gpio_in;
@@ -91,4 +90,4 @@ begin
     end if;
   end process;
 
-end architecture;
+end architecture;  
