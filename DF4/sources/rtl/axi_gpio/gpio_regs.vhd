@@ -44,7 +44,7 @@ begin
 
   gen_gpio : for i in 0 to N_GPIO-1 generate
     gpio_io(i)  <= reg_data(i) when reg_tri(i)='0' else 'Z';
-    gpio_in(i)  <= reg_data(i);
+    gpio_in(i)  <= gpio_io(i);
     gpio_out(i) <= reg_data(i);
   end generate;
 
