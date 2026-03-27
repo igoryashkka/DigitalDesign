@@ -8,8 +8,8 @@ entity test_pattern is
     rst : in  std_logic;
 
     de  : in  std_logic;
-    x   : in  unsigned(9 downto 0);
-    y   : in  unsigned(9 downto 0);
+    x   : in  unsigned(11 downto 0);
+    y   : in  unsigned(11 downto 0);
 
     r   : out std_logic_vector(7 downto 0);
     g   : out std_logic_vector(7 downto 0);

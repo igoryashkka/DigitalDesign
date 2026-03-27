@@ -3,6 +3,10 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity video_timing is
+  generic(
+    -- 0: 640x480@60, 1: 1920x1080@60
+    G_TIMING_SEL : integer := 1
+  );
   port(
     clk     : in  std_logic; 
     rst     : in  std_logic;
@@ -10,27 +14,48 @@ entity video_timing is
     hsync   : out std_logic;
     vsync   : out std_logic;
     de      : out std_logic; 
-    x       : out unsigned(9 downto 0);
-    y       : out unsigned(9 downto 0)
+    x       : out unsigned(11 downto 0);
+    y       : out unsigned(11 downto 0)
   );
 end entity;
 
 architecture rtl of video_timing is
 
-  constant H_ACTIVE_PIXELS : integer := 640;
-  constant H_FRONT_PORCH   : integer := 16;
-  constant H_SYNC_PULSE    : integer := 96;
-  constant H_BACK_PORCH    : integer := 48;
-  constant H_TOTAL_PIXELS  : integer := 800;
+  function sel_int(sel, val_640, val_1080 : integer) return integer is
+  begin
+    if sel = 0 then
+      return val_640;
+    else
+      return val_1080;
+    end if;
+  end function;
 
-  constant V_ACTIVE_LINES : integer := 480;
-  constant V_FRONT_PORCH  : integer := 10;
-  constant V_SYNC_PULSE   : integer := 2;
-  constant V_BACK_PORCH   : integer := 33;
-  constant V_TOTAL_LINES  : integer := 525;
+  function sel_sl(sel : integer; val_640, val_1080 : std_logic) return std_logic is
+  begin
+    if sel = 0 then
+      return val_640;
+    else
+      return val_1080;
+    end if;
+  end function;
 
-  signal h_cnt : unsigned(9 downto 0) := (others=>'0');
-  signal v_cnt : unsigned(9 downto 0) := (others=>'0');
+  constant H_ACTIVE_PIXELS : integer := sel_int(G_TIMING_SEL, 640, 1920);
+  constant H_FRONT_PORCH   : integer := sel_int(G_TIMING_SEL, 16, 88);
+  constant H_SYNC_PULSE    : integer := sel_int(G_TIMING_SEL, 96, 44);
+  constant H_BACK_PORCH    : integer := sel_int(G_TIMING_SEL, 48, 148);
+  constant H_TOTAL_PIXELS  : integer := sel_int(G_TIMING_SEL, 800, 2200);
+
+  constant V_ACTIVE_LINES : integer := sel_int(G_TIMING_SEL, 480, 1080);
+  constant V_FRONT_PORCH  : integer := sel_int(G_TIMING_SEL, 10, 4);
+  constant V_SYNC_PULSE   : integer := sel_int(G_TIMING_SEL, 2, 5);
+  constant V_BACK_PORCH   : integer := sel_int(G_TIMING_SEL, 33, 36);
+  constant V_TOTAL_LINES  : integer := sel_int(G_TIMING_SEL, 525, 1125);
+
+  constant H_SYNC_ACTIVE : std_logic := sel_sl(G_TIMING_SEL, '0', '1');
+  constant V_SYNC_ACTIVE : std_logic := sel_sl(G_TIMING_SEL, '0', '1');
+
+  signal h_cnt : unsigned(11 downto 0) := (others=>'0');
+  signal v_cnt : unsigned(11 downto 0) := (others=>'0');
 
 begin
 
@@ -56,12 +81,14 @@ begin
       end if;
     end if;
   end process;
- --- here can be diffrence from another realisation of tim_gen, also idk if 25mhz is ok, maybe 25.175 is needed
-  hsync <= '0' when (h_cnt >= H_ACTIVE_PIXELS + H_FRONT_PORCH and
-                     h_cnt <  H_ACTIVE_PIXELS + H_FRONT_PORCH + H_SYNC_PULSE) else '1';
+   --- here can be diffrence from another realisation of tim_gen, also idk if 25mhz is ok, maybe 25.175 is needed
+  hsync <= H_SYNC_ACTIVE when (h_cnt >= H_ACTIVE_PIXELS + H_FRONT_PORCH and
+                               h_cnt <  H_ACTIVE_PIXELS + H_FRONT_PORCH + H_SYNC_PULSE)
+           else not H_SYNC_ACTIVE;
 
-  vsync <= '0' when (v_cnt >= V_ACTIVE_LINES + V_FRONT_PORCH and
-                     v_cnt <  V_ACTIVE_LINES + V_FRONT_PORCH + V_SYNC_PULSE) else '1';
+  vsync <= V_SYNC_ACTIVE when (v_cnt >= V_ACTIVE_LINES + V_FRONT_PORCH and
+                               v_cnt <  V_ACTIVE_LINES + V_FRONT_PORCH + V_SYNC_PULSE)
+           else not V_SYNC_ACTIVE;
 
   de <= '1' when (h_cnt < H_ACTIVE_PIXELS and v_cnt < V_ACTIVE_LINES) else '0';
 

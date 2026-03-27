@@ -33,6 +33,7 @@ set proj_dir [get_property directory [current_project]]
 # Set project properties
 set obj [current_project]
 set_property -name "default_lib" -value "xil_defaultlib" -objects $obj
+set_property -name "source_mgmt_mode" -value "All" -objects $obj
 set_property -name "enable_resource_estimation" -value "0" -objects $obj
 set_property -name "enable_vhdl_2008" -value "1" -objects $obj
 set_property -name "ip_cache_permissions" -value "read write" -objects $obj
@@ -59,7 +60,7 @@ set obj [get_filesets sources_1]
 # Add RTL files from rtl directory
 set rtl_dir "$_src_dir_/rtl"
 if {[file exists $rtl_dir]} {
-	set files [get_file_list [list $rtl_dir] "sv,svh,v,vh,vhd,mif"]
+	set files [get_file_list [get_dir_list $rtl_dir] "sv,svh,v,vh,vhd,mif"]
 	if {[llength $files]} {
 		add_files -norecurse -fileset $obj $files
 	}
@@ -115,10 +116,25 @@ catch {
 # Set 'sources_1' fileset properties
 set_property -name "dataflow_viewer_settings" -value "min_width=16" -objects $obj
 set_property -name "top" -value "microblaze_wrapper" -objects $obj
+update_compile_order -fileset sources_1
+
+# Rebind and regenerate Block Design output products for the active project part
+set microblaze_bd "$_src_dir_/bd/microblaze.bd"
+if {[file exists $microblaze_bd]} {
+	open_bd_design $microblaze_bd
+	validate_bd_design
+	save_bd_design
+	generate_target all [get_files $microblaze_bd]
+	catch { export_ip_user_files -of_objects [get_files $microblaze_bd] -no_script -sync -force -quiet }
+	catch { make_wrapper -files [get_files $microblaze_bd] -top -import }
+	update_compile_order -fileset sources_1
+}
 
 
 # Configure clk_wiz_0 IP and set 2 clocks: 100MHz with 50% dyty cycle and 30% DC
-create_ip -name clk_wiz -vendor xilinx.com -library ip -module_name clk_wiz_0
+if {[llength [get_ips -quiet clk_wiz_0]] == 0} {
+	create_ip -name clk_wiz -vendor xilinx.com -library ip -module_name clk_wiz_0
+}
 set_property -dict [list \
   CONFIG.CLKIN1_JITTER_PS {50.0} \
   CONFIG.CLKOUT1_JITTER {148.683} \

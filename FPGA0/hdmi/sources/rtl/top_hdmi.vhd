@@ -34,6 +34,7 @@ end entity;
 architecture rtl of top_hdmi is
 
   constant PWM_DUTY_C : std_logic_vector(7 downto 0) := x"80";
+  constant TIMING_SEL_C : integer := 1; -- 0: 640x480@60, 1: 1920x1080@60
 
   signal pix_clk  : std_logic;
   signal ser_clk  : std_logic;
@@ -41,7 +42,7 @@ architecture rtl of top_hdmi is
 
   -- timing signals
   signal hsync, vsync, de : std_logic;
-  signal x, y             : unsigned(9 downto 0);
+  signal x, y             : unsigned(11 downto 0);
 
   -- RGB from test pattern
   signal r, g, b : std_logic_vector(7 downto 0);
@@ -55,16 +56,7 @@ architecture rtl of top_hdmi is
 begin
 
   resetn <= not rst;
---  for debug ----------------
-    u_pwm_r : entity work.pwm8
-    port map (
-      clk   => clk_200,
-      rst_n => resetn ,
-      duty  => PWM_DUTY_C,
-      pwm   => pwm_r_o
-    );
-
-------------------------------
+--------------------------
 
   u_clk_wiz : entity work.clk_wiz_0
     port map(
@@ -74,8 +66,22 @@ begin
       clk_out2 => ser_clk
     );
 
-  -- (640x480)
+--  for debug ----------------
+    u_pwm_r : entity work.pwm8
+    port map (
+      clk   => ser_clk,
+      rst_n => resetn ,
+      duty  => PWM_DUTY_C,
+      pwm   => pwm_r_o
+    );
+
+----
+
+  -- Video timing select via TIMING_SEL_C
   u_timing : entity work.video_timing
+    generic map(
+      G_TIMING_SEL => TIMING_SEL_C
+    )
     port map(
       clk   => pix_clk,
       rst   => rst,
