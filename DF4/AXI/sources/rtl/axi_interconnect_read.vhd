@@ -8,6 +8,8 @@ entity axi_interconnect_read is
     M_COUNT    : positive := 2;
     ADDR_WIDTH : positive := 32;
     DATA_WIDTH : positive := 32;
+    BRESP_BITS_PER_PORT : positive := 2;
+    PROT_BITS_PER_PORT  : positive := 3;
     M_BASE_ADDR : std_logic_vector(M_COUNT*ADDR_WIDTH-1 downto 0) :=
       x"40001000" & x"40000000";
     M_ADDR_MASK : std_logic_vector(M_COUNT*ADDR_WIDTH-1 downto 0) :=
@@ -18,22 +20,22 @@ entity axi_interconnect_read is
     rst_n : in  std_logic;
 
     s_axi_araddr  : in  std_logic_vector(S_COUNT*ADDR_WIDTH-1 downto 0);
-    s_axi_arprot  : in  std_logic_vector(S_COUNT*3-1 downto 0);
+    s_axi_arprot  : in  std_logic_vector(S_COUNT*PROT_BITS_PER_PORT-1 downto 0);
     s_axi_arvalid : in  std_logic_vector(S_COUNT-1 downto 0);
     s_axi_arready : out std_logic_vector(S_COUNT-1 downto 0);
 
     s_axi_rdata   : out std_logic_vector(S_COUNT*DATA_WIDTH-1 downto 0);
-    s_axi_rresp   : out std_logic_vector(S_COUNT*2-1 downto 0);
+    s_axi_rresp   : out std_logic_vector(S_COUNT*BRESP_BITS_PER_PORT-1 downto 0);
     s_axi_rvalid  : out std_logic_vector(S_COUNT-1 downto 0);
     s_axi_rready  : in  std_logic_vector(S_COUNT-1 downto 0);
 
     m_axi_araddr  : out std_logic_vector(M_COUNT*ADDR_WIDTH-1 downto 0);
-    m_axi_arprot  : out std_logic_vector(M_COUNT*3-1 downto 0);
+    m_axi_arprot  : out std_logic_vector(M_COUNT*PROT_BITS_PER_PORT-1 downto 0);
     m_axi_arvalid : out std_logic_vector(M_COUNT-1 downto 0);
     m_axi_arready : in  std_logic_vector(M_COUNT-1 downto 0);
 
     m_axi_rdata   : in  std_logic_vector(M_COUNT*DATA_WIDTH-1 downto 0);
-    m_axi_rresp   : in  std_logic_vector(M_COUNT*2-1 downto 0);
+    m_axi_rresp   : in  std_logic_vector(M_COUNT*BRESP_BITS_PER_PORT-1 downto 0);
     m_axi_rvalid  : in  std_logic_vector(M_COUNT-1 downto 0);
     m_axi_rready  : out std_logic_vector(M_COUNT-1 downto 0);
 
@@ -63,8 +65,8 @@ architecture rtl of axi_interconnect_read is
 
   signal rd_araddr_reg      : std_logic_vector(ADDR_WIDTH-1 downto 0) := (others => '0');
   signal rd_araddr_reg_next : std_logic_vector(ADDR_WIDTH-1 downto 0) := (others => '0');
-  signal rd_arprot_reg      : std_logic_vector(2 downto 0) := (others => '0');
-  signal rd_arprot_reg_next : std_logic_vector(2 downto 0) := (others => '0');
+  signal rd_arprot_reg      : std_logic_vector(PROT_BITS_PER_PORT-1 downto 0) := (others => '0');
+  signal rd_arprot_reg_next : std_logic_vector(PROT_BITS_PER_PORT-1 downto 0) := (others => '0');
   signal rd_ar_seen         : std_logic := '0';
   signal rd_ar_seen_next    : std_logic := '0';
 
@@ -160,7 +162,7 @@ begin
         if rd_granted_ind /= -1 then
           if s_axi_arvalid(rd_granted_ind) = '1' and rd_ar_seen = '0' then
             rd_araddr_reg_next <= s_axi_araddr((rd_granted_ind+1)*ADDR_WIDTH-1 downto rd_granted_ind*ADDR_WIDTH);
-            rd_arprot_reg_next <= s_axi_arprot((rd_granted_ind+1)*3-1 downto rd_granted_ind*3);
+            rd_arprot_reg_next <= s_axi_arprot((rd_granted_ind+1)*PROT_BITS_PER_PORT-1 downto rd_granted_ind*PROT_BITS_PER_PORT);
             rd_ar_seen_next    <= '1';
             read_state_next    <= RD_DECODE;
           end if;
@@ -200,7 +202,7 @@ begin
         if rd_target_idx /= -1 then
           if m_axi_rvalid(rd_target_idx) = '1' then
             rd_rdata_reg_next <= m_axi_rdata((rd_target_idx+1)*DATA_WIDTH-1 downto rd_target_idx*DATA_WIDTH);
-            rd_rresp_reg_next <= m_axi_rresp((rd_target_idx+1)*2-1 downto rd_target_idx*2);
+            rd_rresp_reg_next <= m_axi_rresp((rd_target_idx+1)*BRESP_BITS_PER_PORT-1 downto rd_target_idx*BRESP_BITS_PER_PORT);
             read_state_next   <= RD_RESP;
           end if;
         else
@@ -236,7 +238,7 @@ begin
 
     if read_state = RD_ISSUE and rd_target_idx /= -1 then
       m_axi_araddr((rd_target_idx+1)*ADDR_WIDTH-1 downto rd_target_idx*ADDR_WIDTH) <= rd_araddr_reg;
-      m_axi_arprot((rd_target_idx+1)*3-1 downto rd_target_idx*3) <= rd_arprot_reg;
+      m_axi_arprot((rd_target_idx+1)*PROT_BITS_PER_PORT-1 downto rd_target_idx*PROT_BITS_PER_PORT) <= rd_arprot_reg;
       m_axi_arvalid(rd_target_idx) <= '1';
     end if;
 
@@ -247,7 +249,7 @@ begin
     if read_state = RD_RESP and rd_granted_ind /= -1 then
       s_axi_rvalid(rd_granted_ind) <= '1';
       s_axi_rdata((rd_granted_ind+1)*DATA_WIDTH-1 downto rd_granted_ind*DATA_WIDTH) <= rd_rdata_reg;
-      s_axi_rresp((rd_granted_ind+1)*2-1 downto rd_granted_ind*2) <= rd_rresp_reg;
+      s_axi_rresp((rd_granted_ind+1)*BRESP_BITS_PER_PORT-1 downto rd_granted_ind*BRESP_BITS_PER_PORT) <= rd_rresp_reg;
     end if;
   end process;
 

@@ -9,12 +9,16 @@ entity axi_lite_interconnect is
     ADDR_WIDTH : positive := 32;
     DATA_WIDTH : positive := 32;
 
-    S_BRESP_WIDTH  : positive := S_COUNT*2;
-    M_BRESP_WIDTH  : positive := M_COUNT*2;
-    S_PROT_WIDTH   : positive := S_COUNT*3;
-    M_PROT_WIDTH   : positive := M_COUNT*3;
-    S_WSTRB_WIDTH  : positive := S_COUNT*(DATA_WIDTH/8);
-    M_WSTRB_WIDTH  : positive := M_COUNT*(DATA_WIDTH/8);
+    BRESP_BITS_PER_PORT : positive := 2;
+    PROT_BITS_PER_PORT  : positive := 3;
+    BYTE_WIDTH_BITS     : positive := 8;
+
+    S_BRESP_WIDTH  : positive := S_COUNT*BRESP_BITS_PER_PORT;
+    M_BRESP_WIDTH  : positive := M_COUNT*BRESP_BITS_PER_PORT;
+    S_PROT_WIDTH   : positive := S_COUNT*PROT_BITS_PER_PORT;
+    M_PROT_WIDTH   : positive := M_COUNT*PROT_BITS_PER_PORT;
+    S_WSTRB_WIDTH  : positive := S_COUNT*(DATA_WIDTH/BYTE_WIDTH_BITS);
+    M_WSTRB_WIDTH  : positive := M_COUNT*(DATA_WIDTH/BYTE_WIDTH_BITS);
 
     GRANTED_INDEX_INVALID : integer := -1;
 
@@ -116,6 +120,9 @@ begin
       M_COUNT    => M_COUNT,
       ADDR_WIDTH => ADDR_WIDTH,
       DATA_WIDTH => DATA_WIDTH,
+      BRESP_BITS_PER_PORT => BRESP_BITS_PER_PORT,
+      PROT_BITS_PER_PORT  => PROT_BITS_PER_PORT,
+      BYTE_WIDTH_BITS     => BYTE_WIDTH_BITS,
       M_BASE_ADDR => M_BASE_ADDR,
       M_ADDR_MASK => M_ADDR_MASK
     )
@@ -163,6 +170,8 @@ begin
       M_COUNT    => M_COUNT,
       ADDR_WIDTH => ADDR_WIDTH,
       DATA_WIDTH => DATA_WIDTH,
+      BRESP_BITS_PER_PORT => BRESP_BITS_PER_PORT,
+      PROT_BITS_PER_PORT  => PROT_BITS_PER_PORT,
       M_BASE_ADDR => M_BASE_ADDR,
       M_ADDR_MASK => M_ADDR_MASK
     )

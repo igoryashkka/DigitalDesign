@@ -8,6 +8,9 @@ entity axi_interconnect_write is
     M_COUNT    : positive := 2;
     ADDR_WIDTH : positive := 32;
     DATA_WIDTH : positive := 32;
+    BRESP_BITS_PER_PORT : positive := 2;
+    PROT_BITS_PER_PORT  : positive := 3;
+    BYTE_WIDTH_BITS     : positive := 8;
     M_BASE_ADDR : std_logic_vector(M_COUNT*ADDR_WIDTH-1 downto 0) :=
       x"40001000" & x"40000000";
     M_ADDR_MASK : std_logic_vector(M_COUNT*ADDR_WIDTH-1 downto 0) :=
@@ -18,30 +21,30 @@ entity axi_interconnect_write is
     rst_n : in  std_logic;
 
     s_axi_awaddr  : in  std_logic_vector(S_COUNT*ADDR_WIDTH-1 downto 0);
-    s_axi_awprot  : in  std_logic_vector(S_COUNT*3-1 downto 0);
+    s_axi_awprot  : in  std_logic_vector(S_COUNT*PROT_BITS_PER_PORT-1 downto 0);
     s_axi_awvalid : in  std_logic_vector(S_COUNT-1 downto 0);
     s_axi_awready : out std_logic_vector(S_COUNT-1 downto 0);
 
     s_axi_wdata   : in  std_logic_vector(S_COUNT*DATA_WIDTH-1 downto 0);
-    s_axi_wstrb   : in  std_logic_vector(S_COUNT*(DATA_WIDTH/8)-1 downto 0);
+    s_axi_wstrb   : in  std_logic_vector(S_COUNT*(DATA_WIDTH/BYTE_WIDTH_BITS)-1 downto 0);
     s_axi_wvalid  : in  std_logic_vector(S_COUNT-1 downto 0);
     s_axi_wready  : out std_logic_vector(S_COUNT-1 downto 0);
 
-    s_axi_bresp   : out std_logic_vector(S_COUNT*2-1 downto 0);
+    s_axi_bresp   : out std_logic_vector(S_COUNT*BRESP_BITS_PER_PORT-1 downto 0);
     s_axi_bvalid  : out std_logic_vector(S_COUNT-1 downto 0);
     s_axi_bready  : in  std_logic_vector(S_COUNT-1 downto 0);
 
     m_axi_awaddr  : out std_logic_vector(M_COUNT*ADDR_WIDTH-1 downto 0);
-    m_axi_awprot  : out std_logic_vector(M_COUNT*3-1 downto 0);
+    m_axi_awprot  : out std_logic_vector(M_COUNT*PROT_BITS_PER_PORT-1 downto 0);
     m_axi_awvalid : out std_logic_vector(M_COUNT-1 downto 0);
     m_axi_awready : in  std_logic_vector(M_COUNT-1 downto 0);
 
     m_axi_wdata   : out std_logic_vector(M_COUNT*DATA_WIDTH-1 downto 0);
-    m_axi_wstrb   : out std_logic_vector(M_COUNT*(DATA_WIDTH/8)-1 downto 0);
+    m_axi_wstrb   : out std_logic_vector(M_COUNT*(DATA_WIDTH/BYTE_WIDTH_BITS)-1 downto 0);
     m_axi_wvalid  : out std_logic_vector(M_COUNT-1 downto 0);
     m_axi_wready  : in  std_logic_vector(M_COUNT-1 downto 0);
 
-    m_axi_bresp   : in  std_logic_vector(M_COUNT*2-1 downto 0);
+    m_axi_bresp   : in  std_logic_vector(M_COUNT*BRESP_BITS_PER_PORT-1 downto 0);
     m_axi_bvalid  : in  std_logic_vector(M_COUNT-1 downto 0);
     m_axi_bready  : out std_logic_vector(M_COUNT-1 downto 0);
 
@@ -71,12 +74,12 @@ architecture rtl of axi_interconnect_write is
 
   signal wr_awaddr_reg      : std_logic_vector(ADDR_WIDTH-1 downto 0) := (others => '0');
   signal wr_awaddr_reg_next : std_logic_vector(ADDR_WIDTH-1 downto 0) := (others => '0');
-  signal wr_awprot_reg      : std_logic_vector(2 downto 0) := (others => '0');
-  signal wr_awprot_reg_next : std_logic_vector(2 downto 0) := (others => '0');
+  signal wr_awprot_reg      : std_logic_vector(PROT_BITS_PER_PORT-1 downto 0) := (others => '0');
+  signal wr_awprot_reg_next : std_logic_vector(PROT_BITS_PER_PORT-1 downto 0) := (others => '0');
   signal wr_wdata_reg       : std_logic_vector(DATA_WIDTH-1 downto 0) := (others => '0');
   signal wr_wdata_reg_next  : std_logic_vector(DATA_WIDTH-1 downto 0) := (others => '0');
-  signal wr_wstrb_reg       : std_logic_vector((DATA_WIDTH/8)-1 downto 0) := (others => '0');
-  signal wr_wstrb_reg_next  : std_logic_vector((DATA_WIDTH/8)-1 downto 0) := (others => '0');
+  signal wr_wstrb_reg       : std_logic_vector((DATA_WIDTH/BYTE_WIDTH_BITS)-1 downto 0) := (others => '0');
+  signal wr_wstrb_reg_next  : std_logic_vector((DATA_WIDTH/BYTE_WIDTH_BITS)-1 downto 0) := (others => '0');
   signal wr_aw_seen         : std_logic := '0';
   signal wr_aw_seen_next    : std_logic := '0';
   signal wr_w_seen          : std_logic := '0';
@@ -189,14 +192,14 @@ begin
 
           if s_axi_awvalid(wr_granted_ind) = '1' and wr_aw_seen = '0' then
             wr_awaddr_reg_next <= s_axi_awaddr((wr_granted_ind+1)*ADDR_WIDTH-1 downto wr_granted_ind*ADDR_WIDTH);
-            wr_awprot_reg_next <= s_axi_awprot((wr_granted_ind+1)*3-1 downto wr_granted_ind*3);
+            wr_awprot_reg_next <= s_axi_awprot((wr_granted_ind+1)*PROT_BITS_PER_PORT-1 downto wr_granted_ind*PROT_BITS_PER_PORT);
             wr_aw_seen_next    <= '1';
             aw_seen_after      := '1';
           end if;
 
           if s_axi_wvalid(wr_granted_ind) = '1' and wr_w_seen = '0' then
             wr_wdata_reg_next <= s_axi_wdata((wr_granted_ind+1)*DATA_WIDTH-1 downto wr_granted_ind*DATA_WIDTH);
-            wr_wstrb_reg_next <= s_axi_wstrb((wr_granted_ind+1)*(DATA_WIDTH/8)-1 downto wr_granted_ind*(DATA_WIDTH/8));
+            wr_wstrb_reg_next <= s_axi_wstrb((wr_granted_ind+1)*(DATA_WIDTH/BYTE_WIDTH_BITS)-1 downto wr_granted_ind*(DATA_WIDTH/BYTE_WIDTH_BITS));
             wr_w_seen_next    <= '1';
             w_seen_after      := '1';
           end if;
@@ -238,7 +241,7 @@ begin
       when WR_WAIT_B =>
         if wr_target_idx /= -1 then
           if m_axi_bvalid(wr_target_idx) = '1' then
-            wr_bresp_reg_next <= m_axi_bresp((wr_target_idx+1)*2-1 downto wr_target_idx*2);
+            wr_bresp_reg_next <= m_axi_bresp((wr_target_idx+1)*BRESP_BITS_PER_PORT-1 downto wr_target_idx*BRESP_BITS_PER_PORT);
             write_state_next  <= WR_RESP;
           end if;
         else
@@ -282,11 +285,11 @@ begin
 
     if write_state = WR_ISSUE and wr_target_idx /= -1 then
       m_axi_awaddr((wr_target_idx+1)*ADDR_WIDTH-1 downto wr_target_idx*ADDR_WIDTH) <= wr_awaddr_reg;
-      m_axi_awprot((wr_target_idx+1)*3-1 downto wr_target_idx*3) <= wr_awprot_reg;
+      m_axi_awprot((wr_target_idx+1)*PROT_BITS_PER_PORT-1 downto wr_target_idx*PROT_BITS_PER_PORT) <= wr_awprot_reg;
       m_axi_awvalid(wr_target_idx) <= '1';
 
       m_axi_wdata((wr_target_idx+1)*DATA_WIDTH-1 downto wr_target_idx*DATA_WIDTH) <= wr_wdata_reg;
-      m_axi_wstrb((wr_target_idx+1)*(DATA_WIDTH/8)-1 downto wr_target_idx*(DATA_WIDTH/8)) <= wr_wstrb_reg;
+      m_axi_wstrb((wr_target_idx+1)*(DATA_WIDTH/BYTE_WIDTH_BITS)-1 downto wr_target_idx*(DATA_WIDTH/BYTE_WIDTH_BITS)) <= wr_wstrb_reg;
       m_axi_wvalid(wr_target_idx) <= '1';
     end if;
 
@@ -296,7 +299,7 @@ begin
 
     if write_state = WR_RESP and wr_granted_ind /= -1 then
       s_axi_bvalid(wr_granted_ind) <= '1';
-      s_axi_bresp((wr_granted_ind+1)*2-1 downto wr_granted_ind*2) <= wr_bresp_reg;
+      s_axi_bresp((wr_granted_ind+1)*BRESP_BITS_PER_PORT-1 downto wr_granted_ind*BRESP_BITS_PER_PORT) <= wr_bresp_reg;
     end if;
   end process;
 
