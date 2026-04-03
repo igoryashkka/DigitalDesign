@@ -191,31 +191,19 @@ begin
         end if;
 
       when RD_ISSUE =>
-        if rd_target_idx /= GRANTED_INDEX_INVALID then
-          if m_axi_arready(rd_target_idx) = '1' then
-            read_state_next <= RD_WAIT_R;
-          end if;
-        else
-          read_state_next <= RD_IDLE;
+        if m_axi_arready(rd_target_idx) = '1' then
+          read_state_next <= RD_WAIT_R;
         end if;
 
       when RD_WAIT_R =>
-        if rd_target_idx /= GRANTED_INDEX_INVALID then
-          if m_axi_rvalid(rd_target_idx) = '1' then
-            rd_rdata_reg_next <= m_axi_rdata((rd_target_idx+1)*DATA_WIDTH-1 downto rd_target_idx*DATA_WIDTH);
-            rd_rresp_reg_next <= m_axi_rresp((rd_target_idx+1)*BRESP_BITS_PER_PORT-1 downto rd_target_idx*BRESP_BITS_PER_PORT);
-            read_state_next   <= RD_RESP;
-          end if;
-        else
-          read_state_next <= RD_IDLE;
+        if m_axi_rvalid(rd_target_idx) = '1' then
+          rd_rdata_reg_next <= m_axi_rdata((rd_target_idx+1)*DATA_WIDTH-1 downto rd_target_idx*DATA_WIDTH);
+          rd_rresp_reg_next <= m_axi_rresp((rd_target_idx+1)*BRESP_BITS_PER_PORT-1 downto rd_target_idx*BRESP_BITS_PER_PORT);
+          read_state_next   <= RD_RESP;
         end if;
 
       when RD_RESP =>
-        if rd_granted_ind /= GRANTED_INDEX_INVALID then
-          if s_axi_rready(rd_granted_ind) = '1' then
-            read_state_next <= RD_IDLE;
-          end if;
-        else
+        if s_axi_rready(rd_granted_ind) = '1' then
           read_state_next <= RD_IDLE;
         end if;
     end case;
@@ -237,17 +225,17 @@ begin
       s_axi_arready(rd_granted_ind) <= '1';
     end if;
 
-    if read_state = RD_ISSUE and rd_target_idx /= GRANTED_INDEX_INVALID then
+    if read_state = RD_ISSUE then
       m_axi_araddr((rd_target_idx+1)*ADDR_WIDTH-1 downto rd_target_idx*ADDR_WIDTH) <= rd_araddr_reg;
       m_axi_arprot((rd_target_idx+1)*PROT_BITS_PER_PORT-1 downto rd_target_idx*PROT_BITS_PER_PORT) <= rd_arprot_reg;
       m_axi_arvalid(rd_target_idx) <= '1';
     end if;
 
-    if read_state = RD_WAIT_R and rd_target_idx /= GRANTED_INDEX_INVALID then
+    if read_state = RD_WAIT_R then
       m_axi_rready(rd_target_idx) <= '1';
     end if;
 
-    if read_state = RD_RESP and rd_granted_ind /= GRANTED_INDEX_INVALID then
+    if read_state = RD_RESP then
       s_axi_rvalid(rd_granted_ind) <= '1';
       s_axi_rdata((rd_granted_ind+1)*DATA_WIDTH-1 downto rd_granted_ind*DATA_WIDTH) <= rd_rdata_reg;
       s_axi_rresp((rd_granted_ind+1)*BRESP_BITS_PER_PORT-1 downto rd_granted_ind*BRESP_BITS_PER_PORT) <= rd_rresp_reg;

@@ -230,33 +230,22 @@ begin
           write_state_next <= WR_WRITE;
         end if;
 
-      when WR_ISSUE =>
-        if wr_target_idx /= GRANTED_INDEX_INVALID then
-          if m_axi_awready(wr_target_idx) = '1' and m_axi_wready(wr_target_idx) = '1' then
-            write_state_next <= WR_WAIT_B;
-          end if;
-        else
-          write_state_next <= WR_IDLE;
+      when WR_WRITE =>
+        if m_axi_awready(wr_target_idx) = '1' and m_axi_wready(wr_target_idx) = '1' then
+          write_state_next <= WR_WAIT_B;
         end if;
 
       when WR_WAIT_B =>
-        if wr_target_idx /= GRANTED_INDEX_INVALID then
           if m_axi_bvalid(wr_target_idx) = '1' then
             wr_bresp_reg_next <= m_axi_bresp((wr_target_idx+1)*BRESP_BITS_PER_PORT-1 downto wr_target_idx*BRESP_BITS_PER_PORT);
             write_state_next  <= WR_RESP;
           end if;
-        else
-          write_state_next <= WR_IDLE;
-        end if;
 
       when WR_RESP =>
-        if wr_granted_ind /= GRANTED_INDEX_INVALID then
           if s_axi_bready(wr_granted_ind) = '1' then
             write_state_next <= WR_IDLE;
           end if;
-        else
-          write_state_next <= WR_IDLE;
-        end if;
+
     end case;
   end process;
 
@@ -284,7 +273,7 @@ begin
       end if;
     end if;
 
-    if write_state = WR_ISSUE and wr_target_idx /= GRANTED_INDEX_INVALID then
+    if write_state = WR_WRITE then
       m_axi_awaddr((wr_target_idx+1)*ADDR_WIDTH-1 downto wr_target_idx*ADDR_WIDTH) <= wr_awaddr_reg;
       m_axi_awprot((wr_target_idx+1)*PROT_BITS_PER_PORT-1 downto wr_target_idx*PROT_BITS_PER_PORT) <= wr_awprot_reg;
       m_axi_awvalid(wr_target_idx) <= '1';
@@ -294,11 +283,11 @@ begin
       m_axi_wvalid(wr_target_idx) <= '1';
     end if;
 
-    if write_state = WR_WAIT_B and wr_target_idx /= GRANTED_INDEX_INVALID then
+    if write_state = WR_WAIT_B then
       m_axi_bready(wr_target_idx) <= '1';
     end if;
 
-    if write_state = WR_RESP and wr_granted_ind /= GRANTED_INDEX_INVALID then
+    if write_state = WR_RESP then
       s_axi_bvalid(wr_granted_ind) <= '1';
       s_axi_bresp((wr_granted_ind+1)*BRESP_BITS_PER_PORT-1 downto wr_granted_ind*BRESP_BITS_PER_PORT) <= wr_bresp_reg;
     end if;
