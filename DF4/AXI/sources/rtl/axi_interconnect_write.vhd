@@ -8,6 +8,7 @@ entity axi_interconnect_write is
     M_COUNT    : positive := 2;
     ADDR_WIDTH : positive := 32;
     DATA_WIDTH : positive := 32;
+    GRANTED_INDEX_INVALID : integer := -1;
     BRESP_BITS_PER_PORT : positive := 2;
     PROT_BITS_PER_PORT  : positive := 3;
     BYTE_WIDTH_BITS     : positive := 8;
@@ -50,7 +51,7 @@ entity axi_interconnect_write is
 
     wr_arb_req           : out std_logic_vector(S_COUNT-1 downto 0);
     wr_arb_start_ptr     : out integer range 0 to S_COUNT-1;
-    wr_arb_granted_index : in  integer range -1 to S_COUNT-1;
+    wr_arb_granted_index : in  integer range GRANTED_INDEX_INVALID to S_COUNT-1;
     wr_arb_grant_valid   : in  std_logic
   );
 end entity;
@@ -64,10 +65,10 @@ architecture rtl of axi_interconnect_write is
   signal write_state      : t_write_state := WR_IDLE;
   signal write_state_next : t_write_state := WR_IDLE;
 
-  signal wr_granted_ind      : integer range -1 to S_COUNT-1 := -1;
-  signal wr_granted_ind_next : integer range -1 to S_COUNT-1 := -1;
-  signal wr_target_idx       : integer range -1 to M_COUNT-1 := -1;
-  signal wr_target_idx_next  : integer range -1 to M_COUNT-1 := -1;
+  signal wr_granted_ind      : integer range GRANTED_INDEX_INVALID to S_COUNT-1 := GRANTED_INDEX_INVALID;
+  signal wr_granted_ind_next : integer range GRANTED_INDEX_INVALID to S_COUNT-1 := GRANTED_INDEX_INVALID;
+  signal wr_target_idx       : integer range GRANTED_INDEX_INVALID to M_COUNT-1 := GRANTED_INDEX_INVALID;
+  signal wr_target_idx_next  : integer range GRANTED_INDEX_INVALID to M_COUNT-1 := GRANTED_INDEX_INVALID;
 
   signal wr_round_robin_start_ptr      : integer range 0 to S_COUNT-1 := 0;
   signal wr_round_robin_start_ptr_next : integer range 0 to S_COUNT-1 := 0;
@@ -95,7 +96,7 @@ architecture rtl of axi_interconnect_write is
     m_count   : integer;
     addr_width: integer
   ) return integer is
-    variable idx    : integer := -1;
+    variable idx    : integer := GRANTED_INDEX_INVALID;
     variable addr_u : std_logic_vector(addr_width-1 downto 0);
     variable base_u : std_logic_vector(addr_width-1 downto 0);
     variable mask_u : std_logic_vector(addr_width-1 downto 0);
@@ -126,8 +127,8 @@ begin
     if rising_edge(clk) then
       if rst_n = '0' then
         write_state                <= WR_IDLE;
-        wr_granted_ind             <= -1;
-        wr_target_idx              <= -1;
+        wr_granted_ind             <= GRANTED_INDEX_INVALID;
+        wr_target_idx              <= GRANTED_INDEX_INVALID;
         wr_round_robin_start_ptr   <= 0;
         wr_awaddr_reg              <= (others => '0');
         wr_awprot_reg              <= (others => '0');
@@ -173,8 +174,8 @@ begin
       when WR_IDLE =>
         wr_aw_seen_next     <= '0';
         wr_w_seen_next      <= '0';
-        wr_granted_ind_next <= -1;
-        wr_target_idx_next  <= -1;
+        wr_granted_ind_next <= GRANTED_INDEX_INVALID;
+        wr_target_idx_next  <= GRANTED_INDEX_INVALID;
         wr_bresp_reg_next   <= AXI_RESP_OKAY;
         write_state_next    <= WR_ARB;
 
@@ -186,7 +187,7 @@ begin
         end if;
 
       when WR_CAPTURE =>
-        if wr_granted_ind /= -1 then
+        if wr_granted_ind /= GRANTED_INDEX_INVALID then
           aw_seen_after := wr_aw_seen;
           w_seen_after  := wr_w_seen;
 
@@ -222,15 +223,15 @@ begin
 
         wr_target_idx_next <= decoded_slave_idx;
 
-        if decoded_slave_idx = -1 then
+        if decoded_slave_idx = GRANTED_INDEX_INVALID then
           wr_bresp_reg_next <= AXI_RESP_DECERR;
           write_state_next  <= WR_RESP;
         else
-          write_state_next <= WR_ISSUE;
+          write_state_next <= WR_WRITE;
         end if;
 
       when WR_ISSUE =>
-        if wr_target_idx /= -1 then
+        if wr_target_idx /= GRANTED_INDEX_INVALID then
           if m_axi_awready(wr_target_idx) = '1' and m_axi_wready(wr_target_idx) = '1' then
             write_state_next <= WR_WAIT_B;
           end if;
@@ -239,7 +240,7 @@ begin
         end if;
 
       when WR_WAIT_B =>
-        if wr_target_idx /= -1 then
+        if wr_target_idx /= GRANTED_INDEX_INVALID then
           if m_axi_bvalid(wr_target_idx) = '1' then
             wr_bresp_reg_next <= m_axi_bresp((wr_target_idx+1)*BRESP_BITS_PER_PORT-1 downto wr_target_idx*BRESP_BITS_PER_PORT);
             write_state_next  <= WR_RESP;
@@ -249,7 +250,7 @@ begin
         end if;
 
       when WR_RESP =>
-        if wr_granted_ind /= -1 then
+        if wr_granted_ind /= GRANTED_INDEX_INVALID then
           if s_axi_bready(wr_granted_ind) = '1' then
             write_state_next <= WR_IDLE;
           end if;
@@ -274,7 +275,7 @@ begin
     m_axi_wvalid  <= (others => '0');
     m_axi_bready  <= (others => '0');
 
-    if write_state = WR_CAPTURE and wr_granted_ind /= -1 then
+    if write_state = WR_CAPTURE and wr_granted_ind /= GRANTED_INDEX_INVALID then
       if wr_aw_seen = '0' then
         s_axi_awready(wr_granted_ind) <= '1';
       end if;
@@ -283,7 +284,7 @@ begin
       end if;
     end if;
 
-    if write_state = WR_ISSUE and wr_target_idx /= -1 then
+    if write_state = WR_ISSUE and wr_target_idx /= GRANTED_INDEX_INVALID then
       m_axi_awaddr((wr_target_idx+1)*ADDR_WIDTH-1 downto wr_target_idx*ADDR_WIDTH) <= wr_awaddr_reg;
       m_axi_awprot((wr_target_idx+1)*PROT_BITS_PER_PORT-1 downto wr_target_idx*PROT_BITS_PER_PORT) <= wr_awprot_reg;
       m_axi_awvalid(wr_target_idx) <= '1';
@@ -293,11 +294,11 @@ begin
       m_axi_wvalid(wr_target_idx) <= '1';
     end if;
 
-    if write_state = WR_WAIT_B and wr_target_idx /= -1 then
+    if write_state = WR_WAIT_B and wr_target_idx /= GRANTED_INDEX_INVALID then
       m_axi_bready(wr_target_idx) <= '1';
     end if;
 
-    if write_state = WR_RESP and wr_granted_ind /= -1 then
+    if write_state = WR_RESP and wr_granted_ind /= GRANTED_INDEX_INVALID then
       s_axi_bvalid(wr_granted_ind) <= '1';
       s_axi_bresp((wr_granted_ind+1)*BRESP_BITS_PER_PORT-1 downto wr_granted_ind*BRESP_BITS_PER_PORT) <= wr_bresp_reg;
     end if;

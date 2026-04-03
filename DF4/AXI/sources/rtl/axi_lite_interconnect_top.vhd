@@ -94,7 +94,8 @@ architecture rtl of axi_lite_interconnect is
 begin
   wr_arb_inst : entity work.axi_rr_arbiter(rtl)
     generic map (
-      N => S_COUNT
+      N => S_COUNT,
+      GRANTED_INDEX_INVALID => GRANTED_INDEX_INVALID
     )
     port map (
       req       => wr_req,
@@ -105,7 +106,8 @@ begin
 
   rd_arb_inst : entity work.axi_rr_arbiter(rtl)
     generic map (
-      N => S_COUNT
+      N => S_COUNT,
+      GRANTED_INDEX_INVALID => GRANTED_INDEX_INVALID
     )
     port map (
       req       => rd_req,
@@ -120,6 +122,7 @@ begin
       M_COUNT    => M_COUNT,
       ADDR_WIDTH => ADDR_WIDTH,
       DATA_WIDTH => DATA_WIDTH,
+      GRANTED_INDEX_INVALID => GRANTED_INDEX_INVALID,
       BRESP_BITS_PER_PORT => BRESP_BITS_PER_PORT,
       PROT_BITS_PER_PORT  => PROT_BITS_PER_PORT,
       BYTE_WIDTH_BITS     => BYTE_WIDTH_BITS,
@@ -170,6 +173,7 @@ begin
       M_COUNT    => M_COUNT,
       ADDR_WIDTH => ADDR_WIDTH,
       DATA_WIDTH => DATA_WIDTH,
+      GRANTED_INDEX_INVALID => GRANTED_INDEX_INVALID,
       BRESP_BITS_PER_PORT => BRESP_BITS_PER_PORT,
       PROT_BITS_PER_PORT  => PROT_BITS_PER_PORT,
       M_BASE_ADDR => M_BASE_ADDR,
