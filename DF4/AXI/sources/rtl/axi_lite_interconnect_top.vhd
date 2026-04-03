@@ -9,6 +9,15 @@ entity axi_lite_interconnect is
     ADDR_WIDTH : positive := 32;
     DATA_WIDTH : positive := 32;
 
+    S_BRESP_WIDTH  : positive := S_COUNT*2;
+    M_BRESP_WIDTH  : positive := M_COUNT*2;
+    S_PROT_WIDTH   : positive := S_COUNT*3;
+    M_PROT_WIDTH   : positive := M_COUNT*3;
+    S_WSTRB_WIDTH  : positive := S_COUNT*(DATA_WIDTH/8);
+    M_WSTRB_WIDTH  : positive := M_COUNT*(DATA_WIDTH/8);
+
+    GRANTED_INDEX_INVALID : integer := -1;
+
     M_BASE_ADDR : std_logic_vector(M_COUNT*ADDR_WIDTH-1 downto 0) :=
       x"40001000" & x"40000000";
 
@@ -20,50 +29,50 @@ entity axi_lite_interconnect is
     rst_n : in  std_logic;
 
     s_axi_awaddr  : in  std_logic_vector(S_COUNT*ADDR_WIDTH-1 downto 0);
-    s_axi_awprot  : in  std_logic_vector(S_COUNT*3-1 downto 0);
+    s_axi_awprot  : in  std_logic_vector(S_PROT_WIDTH-1 downto 0);
     s_axi_awvalid : in  std_logic_vector(S_COUNT-1 downto 0);
     s_axi_awready : out std_logic_vector(S_COUNT-1 downto 0);
 
     s_axi_wdata   : in  std_logic_vector(S_COUNT*DATA_WIDTH-1 downto 0);
-    s_axi_wstrb   : in  std_logic_vector(S_COUNT*(DATA_WIDTH/8)-1 downto 0);
+    s_axi_wstrb   : in  std_logic_vector(S_WSTRB_WIDTH-1 downto 0);
     s_axi_wvalid  : in  std_logic_vector(S_COUNT-1 downto 0);
     s_axi_wready  : out std_logic_vector(S_COUNT-1 downto 0);
 
-    s_axi_bresp   : out std_logic_vector(S_COUNT*2-1 downto 0);
+    s_axi_bresp   : out std_logic_vector(S_BRESP_WIDTH-1 downto 0);
     s_axi_bvalid  : out std_logic_vector(S_COUNT-1 downto 0);
     s_axi_bready  : in  std_logic_vector(S_COUNT-1 downto 0);
 
     s_axi_araddr  : in  std_logic_vector(S_COUNT*ADDR_WIDTH-1 downto 0);
-    s_axi_arprot  : in  std_logic_vector(S_COUNT*3-1 downto 0);
+    s_axi_arprot  : in  std_logic_vector(S_PROT_WIDTH-1 downto 0);
     s_axi_arvalid : in  std_logic_vector(S_COUNT-1 downto 0);
     s_axi_arready : out std_logic_vector(S_COUNT-1 downto 0);
 
     s_axi_rdata   : out std_logic_vector(S_COUNT*DATA_WIDTH-1 downto 0);
-    s_axi_rresp   : out std_logic_vector(S_COUNT*2-1 downto 0);
+    s_axi_rresp   : out std_logic_vector(S_BRESP_WIDTH-1 downto 0);
     s_axi_rvalid  : out std_logic_vector(S_COUNT-1 downto 0);
     s_axi_rready  : in  std_logic_vector(S_COUNT-1 downto 0);
 
     m_axi_awaddr  : out std_logic_vector(M_COUNT*ADDR_WIDTH-1 downto 0);
-    m_axi_awprot  : out std_logic_vector(M_COUNT*3-1 downto 0);
+    m_axi_awprot  : out std_logic_vector(M_PROT_WIDTH-1 downto 0);
     m_axi_awvalid : out std_logic_vector(M_COUNT-1 downto 0);
     m_axi_awready : in  std_logic_vector(M_COUNT-1 downto 0);
 
     m_axi_wdata   : out std_logic_vector(M_COUNT*DATA_WIDTH-1 downto 0);
-    m_axi_wstrb   : out std_logic_vector(M_COUNT*(DATA_WIDTH/8)-1 downto 0);
+    m_axi_wstrb   : out std_logic_vector(M_WSTRB_WIDTH-1 downto 0);
     m_axi_wvalid  : out std_logic_vector(M_COUNT-1 downto 0);
     m_axi_wready  : in  std_logic_vector(M_COUNT-1 downto 0);
 
-    m_axi_bresp   : in  std_logic_vector(M_COUNT*2-1 downto 0);
+    m_axi_bresp   : in  std_logic_vector(M_BRESP_WIDTH-1 downto 0);
     m_axi_bvalid  : in  std_logic_vector(M_COUNT-1 downto 0);
     m_axi_bready  : out std_logic_vector(M_COUNT-1 downto 0);
 
     m_axi_araddr  : out std_logic_vector(M_COUNT*ADDR_WIDTH-1 downto 0);
-    m_axi_arprot  : out std_logic_vector(M_COUNT*3-1 downto 0);
+    m_axi_arprot  : out std_logic_vector(M_PROT_WIDTH-1 downto 0);
     m_axi_arvalid : out std_logic_vector(M_COUNT-1 downto 0);
     m_axi_arready : in  std_logic_vector(M_COUNT-1 downto 0);
 
     m_axi_rdata   : in  std_logic_vector(M_COUNT*DATA_WIDTH-1 downto 0);
-    m_axi_rresp   : in  std_logic_vector(M_COUNT*2-1 downto 0);
+    m_axi_rresp   : in  std_logic_vector(M_BRESP_WIDTH-1 downto 0);
     m_axi_rvalid  : in  std_logic_vector(M_COUNT-1 downto 0);
     m_axi_rready  : out std_logic_vector(M_COUNT-1 downto 0)
   );
@@ -74,8 +83,8 @@ architecture rtl of axi_lite_interconnect is
   signal rd_req       : std_logic_vector(S_COUNT-1 downto 0);
   signal wr_start_ptr : integer range 0 to S_COUNT-1;
   signal rd_start_ptr : integer range 0 to S_COUNT-1;
-  signal wr_granted_index : integer range -1 to S_COUNT-1;
-  signal rd_granted_index : integer range -1 to S_COUNT-1;
+  signal wr_granted_index : integer range GRANTED_INDEX_INVALID to S_COUNT-1;
+  signal rd_granted_index : integer range GRANTED_INDEX_INVALID to S_COUNT-1;
   signal wr_grant_valid   : std_logic;
   signal rd_grant_valid   : std_logic;
 begin
