@@ -1,4 +1,4 @@
-class axi_driver #(parameter int DW=32) extends uvm_driver;
+class axi_driver #(parameter int DW=32) extends uvm_driver#(axi_transaction#(DW));
 
   `uvm_component_param_utils(axi_driver#(DW))
 
@@ -22,7 +22,9 @@ class axi_driver #(parameter int DW=32) extends uvm_driver;
   endfunction
 
   task run_phase(uvm_phase phase);
-    uvm_sequence_item req;
+    axi_transaction#(DW) req;
+    axi_write_transaction#(DW) wr_req;
+    axi_read_transaction#(DW)  rd_req;
     logic [DW-1:0] rd_data;
     logic [1:0]    rd_resp;
 
@@ -32,9 +34,19 @@ class axi_driver #(parameter int DW=32) extends uvm_driver;
     forever begin
       seq_item_port.get_next_item(req);
 
+      repeat (req.delay) @(posedge vif.aclk);
+
       if (is_master) begin
-        drive_default_write('h0000_0000, 32'hA5A5_0001, 3'b000);
-        drive_default_read('h0000_0000, rd_data, rd_resp, 3'b000);
+        if ($cast(wr_req, req)) begin
+          drive_default_write(wr_req.aw.addr, wr_req.w.data, wr_req.aw.prot);
+        end else if ($cast(rd_req, req)) begin
+          drive_default_read(rd_req.ar.addr, rd_data, rd_resp, rd_req.ar.prot);
+          rd_req.r.data = rd_data;
+          rd_req.r.resp = rd_resp;
+        end else begin
+          drive_default_write('h0000_0000, 32'hA5A5_0001, 3'b000);
+          drive_default_read('h0000_0000, rd_data, rd_resp, 3'b000);
+        end
       end
 
       seq_item_port.item_done();

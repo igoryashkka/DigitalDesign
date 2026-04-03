@@ -1,13 +1,10 @@
-import tb_pkg::*;
-
-
 class axi_agent #(parameter int DW=32) extends uvm_agent;
   `uvm_component_param_utils(axi_agent#(DW))
 
-    uvm_sequencer #(axi_transation#(DW)) seqr;  
+    uvm_sequencer #(axi_transaction#(DW)) seqr;
     axi_driver    #(DW)                drv;
     axi_monitor   #(DW)                mon;
-    virtual axi_if #(DW)               vif;
+    virtual axi_lite_if #(DW)          vif;
 
     bit is_master;
     axi_agent_cfg #(DW)                cfg;
@@ -27,7 +24,7 @@ class axi_agent #(parameter int DW=32) extends uvm_agent;
     end
 
     if (is_active == UVM_ACTIVE) begin
-      seqr = uvm_sequencer#(axi_transation#(DW))::type_id::create("seqr",this);
+      seqr = uvm_sequencer#(axi_transaction#(DW))::type_id::create("seqr",this);
       drv  = axi_driver#(DW)::type_id::create("drv", this);
     end
 
@@ -35,8 +32,8 @@ class axi_agent #(parameter int DW=32) extends uvm_agent;
 
     uvm_config_db#(bit)::set(this,"drv","is_master",is_master);
     uvm_config_db#(bit)::set(this,"mon","is_master",is_master);
-    uvm_config_db#(virtual axi_if#(DW))::set(this,"drv","vif",vif);
-    uvm_config_db#(virtual axi_if#(DW))::set(this,"mon","vif",vif);
+    uvm_config_db#(virtual axi_lite_if#(DW))::set(this,"drv","vif",vif);
+    uvm_config_db#(virtual axi_lite_if#(DW))::set(this,"mon","vif",vif);
 
     endfunction
 

@@ -12,6 +12,12 @@ package tb_pkg;
   `include "simulation/env/agent_dxi/dxi_driver.sv"
   `include "simulation/env/agent_dxi/dxi_monitor.sv"      
   `include "simulation/env/agent_dxi/dxi_agent.sv"
+  // ---------------- axi agent --------------
+  `include "simulation/env/agent_axi/seq/axi_transaction.sv"
+  `include "simulation/env/agent_axi/axi_agent_cfg.sv"
+  `include "simulation/env/agent_axi/axi_driver.sv"
+  `include "simulation/env/agent_axi/axi_monitor.sv"
+  `include "simulation/env/agent_axi/axi_agent.sv"
  // ---------------- config agent --------------
   `include "simulation/env/agent_sel/config_transation.sv"
   `include "simulation/env/agent_sel/seq/config_seq.sv"
