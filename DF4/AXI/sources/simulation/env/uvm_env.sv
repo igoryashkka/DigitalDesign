@@ -32,7 +32,7 @@ class axi_env extends uvm_env;
 
     mst_cfg.vif = mst_vif;
     mst_cfg.is_master = 1'b1;
-    mst_cfg.is_active = UVM_PASSIVE;
+    mst_cfg.is_active = UVM_ACTIVE;
 
     slv_cfg.vif = slv_vif;
     slv_cfg.is_master = 1'b0;

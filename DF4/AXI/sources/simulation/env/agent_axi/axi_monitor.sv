@@ -43,6 +43,7 @@ class axi_monitor #(parameter int DW = 32) extends uvm_monitor;
         tr.aw.addr = vif.awaddr;
         tr.aw.prot = vif.awprot;
         tr.w.data = vif.wdata;
+            tr.w.strb = vif.wstrb;
         ap.write(tr);
        `uvm_info("AXI_MON",$sformatf("[%0t][%s] tr#%0d awaddr=0x%0h awprot=0x%0h wdata=0x%0h",$time, (is_master ? "IN " : "OUT"), tr_count, tr.aw.addr, tr.aw.prot, tr.w.data), UVM_MEDIUM)
       end

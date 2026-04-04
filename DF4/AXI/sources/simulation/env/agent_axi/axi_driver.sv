@@ -27,6 +27,7 @@ class axi_driver #(parameter int DW=32) extends uvm_driver#(axi_transaction#(DW)
     axi_read_transaction#(DW)  rd_req;
     logic [DW-1:0] rd_data;
     logic [1:0]    rd_resp;
+    logic [1:0]    wr_resp;
 
     reset_master_outputs();
     wait_reset_release();
@@ -38,14 +39,14 @@ class axi_driver #(parameter int DW=32) extends uvm_driver#(axi_transaction#(DW)
 
       if (is_master) begin
         if ($cast(wr_req, req)) begin
-          drive_default_write(wr_req.aw.addr, wr_req.w.data, wr_req.aw.prot);
+          drive_default_write(wr_req.aw.addr, wr_req.w.data, wr_req.w.strb, wr_req.aw.prot, wr_resp);
+          wr_req.b.resp = wr_resp;
         end else if ($cast(rd_req, req)) begin
           drive_default_read(rd_req.ar.addr, rd_data, rd_resp, rd_req.ar.prot);
           rd_req.r.data = rd_data;
           rd_req.r.resp = rd_resp;
         end else begin
-          drive_default_write('h0000_0000, 32'hA5A5_0001, 3'b000);
-          drive_default_read('h0000_0000, rd_data, rd_resp, 3'b000);
+          `uvm_error("AXI_DRV", $sformatf("Unsupported transaction type: %s", req.get_type_name()))
         end
       end
 
@@ -66,6 +67,7 @@ class axi_driver #(parameter int DW=32) extends uvm_driver#(axi_transaction#(DW)
     vif.awprot  <= '0;
     vif.awvalid <= 1'b0;
     vif.wdata   <= '0;
+    vif.wstrb   <= '0;
     vif.wvalid  <= 1'b0;
     vif.bready  <= 1'b0;
     vif.araddr  <= '0;
@@ -77,11 +79,14 @@ class axi_driver #(parameter int DW=32) extends uvm_driver#(axi_transaction#(DW)
   task automatic drive_default_write(
     input logic [DW-1:0] addr,
     input logic [DW-1:0] data,
-    input logic [2:0]    prot
+    input logic [(DW/8)-1:0] strb,
+    input logic [2:0]    prot,
+    output logic [1:0]   resp
   );
     vif.awaddr  <= addr;
     vif.awprot  <= prot;
     vif.wdata   <= data;
+    vif.wstrb   <= strb;
     vif.awvalid <= 1'b1;
     vif.wvalid  <= 1'b1;
 
@@ -90,9 +95,11 @@ class axi_driver #(parameter int DW=32) extends uvm_driver#(axi_transaction#(DW)
 
     do @(posedge vif.aclk); while (!(vif.wvalid && vif.wready));
     vif.wvalid <= 1'b0;
+    vif.wstrb  <= '0;
 
     vif.bready <= 1'b1;
     do @(posedge vif.aclk); while (!vif.bvalid);
+    resp = vif.bresp;
     vif.bready <= 1'b0;
   endtask
 

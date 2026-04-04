@@ -18,6 +18,7 @@ class axi_w_chan_tr #(int DW=32) extends uvm_object;
   `uvm_object_param_utils(axi_w_chan_tr#(DW))
 
   rand logic [DW-1:0] data;
+  rand logic [(DW/8)-1:0] strb;
 
   function new(string name="axi_w_chan_tr");
     super.new(name);
