@@ -131,6 +131,7 @@ proc build_and_run_xsim {proj_dir proj_name sim_mode plusargs} {
   set elaborate_script [file join $sim_dir "elaborate.$script_ext"]
   set run_tcl [file join $sim_dir "run.tcl"]
   set snapshot "tb_top_behav"
+  set autoload_wcfg [file join $sim_dir "tb_top_behav.wcfg"]
 
   foreach script [list $compile_script $elaborate_script] {
     if {![file exists $script]} {
@@ -180,6 +181,14 @@ proc build_and_run_xsim {proj_dir proj_name sim_mode plusargs} {
 
   set orig_dir_xsim [pwd]
   cd $sim_dir
+
+  # In non-interactive TCL runs, remove auto-loaded waveform config to avoid
+  # inherited GUI breakpoints that pause simulation after the first transaction.
+  if {$sim_mode eq "tcl" && [file exists $autoload_wcfg]} {
+    file delete -force $autoload_wcfg
+    puts "Removed $autoload_wcfg to disable auto-loaded GUI breakpoints."
+  }
+
   puts "Running xsim (cwd=$sim_dir): $xsim_cmd"
   if {[catch {set xsim_out [exec {*}$xsim_cmd]} xsim_err]} {
     if {[info exists xsim_out] && $xsim_out ne ""} {
