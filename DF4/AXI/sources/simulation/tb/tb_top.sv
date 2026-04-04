@@ -146,6 +146,12 @@ module tb_top;
 
   initial begin
 
+
+    uvm_config_db#(virtual axi_lite_if#(DATA_WIDTH))::set(null, "uvm_test_top.env", "mst_vif", mst_if);
+    uvm_config_db#(virtual axi_lite_if#(DATA_WIDTH))::set(null, "uvm_test_top.env", "slv_vif", slv_if);
+    uvm_config_db#(virtual axi_lite_if#(DATA_WIDTH))::set(null, "uvm_test_top.env.mst_agent", "vif", mst_if);
+    uvm_config_db#(virtual axi_lite_if#(DATA_WIDTH))::set(null, "uvm_test_top.env.slv_agent", "vif", slv_if);
+
     if (!$value$plusargs("UVM_TESTNAME=%s", testname)) begin
       testname = "direct_uvm_test";
     end

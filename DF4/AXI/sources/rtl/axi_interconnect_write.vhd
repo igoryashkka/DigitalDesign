@@ -60,7 +60,7 @@ architecture rtl of axi_interconnect_write is
   constant AXI_RESP_OKAY   : std_logic_vector(1 downto 0) := "00";
   constant AXI_RESP_DECERR : std_logic_vector(1 downto 0) := "11";
 
-  type t_write_state is (WR_IDLE, WR_ARB, WR_CAPTURE, WR_DECODE, WR_ISSUE, WR_WAIT_B, WR_RESP);
+  type t_write_state is (WR_IDLE, WR_ARB, WR_CAPTURE, WR_DECODE, WR_WRITE, WR_WAIT_B, WR_RESP);
 
   signal write_state      : t_write_state := WR_IDLE;
   signal write_state_next : t_write_state := WR_IDLE;

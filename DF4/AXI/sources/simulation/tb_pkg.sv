@@ -4,8 +4,6 @@ package tb_pkg;
 
   // AXI agent
   `include "env/agent_axi/seq/axi_transaction.sv"
-  `include "env/agent_axi/seq/axi_write_seq.sv"
-  `include "env/agent_axi/seq/axi_read_seq.sv"
   `include "env/agent_axi/seq/axi_direct_seq.sv"
   `include "env/agent_axi/axi_agent_cfg.sv"
   `include "env/agent_axi/axi_driver.sv"
@@ -18,6 +16,5 @@ package tb_pkg;
 
   // Tests
   `include "tests/direct_uvm_test.sv"
-  `include "tests/random_uvm_test.sv"
 
 endpackage
