@@ -1,37 +1,20 @@
 package tb_pkg;
-  // ---------------- common includes --------------
   import uvm_pkg::*;
   `include "uvm_macros.svh"
-  // ---------------- dxi agent --------------
-  `include "simulation/env/agent_dxi/seq/dxi_transation.sv"
-  `include "simulation/env/agent_dxi/seq/dxi_master_seq.sv"
-  `include "simulation/env/agent_dxi/seq/dxi_slave_seq.sv"
-  `include "simulation/env/agent_dxi/seq/dxi_boundary_seq.sv"
-  `include "simulation/env/agent_dxi/seq/dxi_file_seq.sv"
-  `include "simulation/env/agent_dxi/dxi_agent_cfg.sv"
-  `include "simulation/env/agent_dxi/dxi_driver.sv"
-  `include "simulation/env/agent_dxi/dxi_monitor.sv"      
-  `include "simulation/env/agent_dxi/dxi_agent.sv"
-  // ---------------- axi agent --------------
+
+  // AXI agent
   `include "simulation/env/agent_axi/seq/axi_transaction.sv"
   `include "simulation/env/agent_axi/axi_agent_cfg.sv"
   `include "simulation/env/agent_axi/axi_driver.sv"
   `include "simulation/env/agent_axi/axi_monitor.sv"
   `include "simulation/env/agent_axi/axi_agent.sv"
- // ---------------- config agent --------------
-  `include "simulation/env/agent_sel/config_transation.sv"
-  `include "simulation/env/agent_sel/seq/config_seq.sv"
-  `include "simulation/env/agent_sel/config_driver.sv"
-  `include "simulation/env/agent_sel/config_monitor.sv"
-  `include "simulation/env/agent_sel/config_agent_cfg.sv"
-  `include "simulation/env/agent_sel/config_agent.sv"
-  // ---------------- scoreboard and env --------------
-  `include "simulation/env/dxi_scoreboard.sv"
-  `include "simulation/env/file_collector_scb.sv"
+
+  // AXI environment
+  `include "simulation/env/axi_scoreboard.sv"
   `include "simulation/env/uvm_env.sv"
-  // --------- tests ----------
-  `include "tests/uvm_random_test.sv"
-  `include "tests/uvm_boundary_test.sv"
-  `include "tests/uvm_file_test.sv"
+
+  // Tests
+  `include "simulation/tests/direct_uvm_test.sv"
+  `include "simulation/tests/random_uvm_test.sv"
 
 endpackage

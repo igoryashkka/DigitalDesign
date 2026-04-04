@@ -10,6 +10,7 @@ interface axi_lite_if #(parameter int DW=32);
 
   // Write Data Channel
   logic [DW-1:0] wdata;
+  logic [(DW/8)-1:0] wstrb;
   logic          wvalid;
   logic          wready;
 

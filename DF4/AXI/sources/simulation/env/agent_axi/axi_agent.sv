@@ -21,6 +21,10 @@ class axi_agent #(parameter int DW=32) extends uvm_agent;
       is_master = cfg.is_master;
       is_active = cfg.is_active;
       vif = cfg.vif;
+    end else begin
+      is_master = 1'b0;
+      is_active = UVM_PASSIVE;
+      void'(uvm_config_db#(virtual axi_lite_if#(DW))::get(this, "", "vif", vif));
     end
 
     if (is_active == UVM_ACTIVE) begin
