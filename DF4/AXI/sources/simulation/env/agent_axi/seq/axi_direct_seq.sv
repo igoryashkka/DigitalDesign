@@ -18,7 +18,7 @@ class axi_direct_seq #(int DW=32) extends uvm_sequence #(axi_transaction#(DW));
     logic [DW-1:0] gpio_data_addr;
 
     cur_data = wr_data;
-    gpio_data_addr = 32'h4000_0004;
+    gpio_data_addr = 32'h4000_0000;
 
     for (int i = 0; i < 10; i++) begin
       wtr = axi_write_transaction#(DW)::type_id::create("wtr");

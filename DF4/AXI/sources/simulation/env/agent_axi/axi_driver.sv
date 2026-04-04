@@ -90,12 +90,17 @@ class axi_driver #(parameter int DW=32) extends uvm_driver#(axi_transaction#(DW)
     vif.awvalid <= 1'b1;
     vif.wvalid  <= 1'b1;
 
-    do @(posedge vif.aclk); while (!(vif.awvalid && vif.awready));
-    vif.awvalid <= 1'b0;
-
-    do @(posedge vif.aclk); while (!(vif.wvalid && vif.wready));
-    vif.wvalid <= 1'b0;
-    vif.wstrb  <= '0;
+    fork
+      begin
+        do @(posedge vif.aclk); while (!(vif.awvalid && vif.awready));
+        vif.awvalid <= 1'b0;
+      end
+      begin
+        do @(posedge vif.aclk); while (!(vif.wvalid && vif.wready));
+        vif.wvalid <= 1'b0;
+        vif.wstrb  <= '0;
+      end
+    join
 
     vif.bready <= 1'b1;
     do @(posedge vif.aclk); while (!vif.bvalid);
