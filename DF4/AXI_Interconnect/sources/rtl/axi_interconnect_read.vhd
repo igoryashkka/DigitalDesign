@@ -51,7 +51,7 @@ architecture rtl of axi_interconnect_read is
   constant AXI_RESP_OKAY   : std_logic_vector(1 downto 0) := "00";
   constant AXI_RESP_DECERR : std_logic_vector(1 downto 0) := "11";
 
-  type t_read_state is (RD_IDLE, RD_ARB, RD_CAPTURE, RD_DECODE, RD_ISSUE, RD_WAIT_R, RD_RESP);
+  type t_read_state is (RD_IDLE, RD_ARB, RD_CAPTURE, RD_DECODE, RD_READ, RD_RESP);
 
   signal read_state      : t_read_state := RD_IDLE;
   signal read_state_next : t_read_state := RD_IDLE;
@@ -187,15 +187,10 @@ begin
           rd_rresp_reg_next <= AXI_RESP_DECERR;
           read_state_next   <= RD_RESP;
         else
-          read_state_next <= RD_ISSUE;
+          read_state_next <= RD_READ;
         end if;
 
-      when RD_ISSUE =>
-        if m_axi_arready(rd_target_idx) = '1' then
-          read_state_next <= RD_WAIT_R;
-        end if;
-
-      when RD_WAIT_R =>
+      when RD_READ =>
         if m_axi_rvalid(rd_target_idx) = '1' then
           rd_rdata_reg_next <= m_axi_rdata((rd_target_idx+1)*DATA_WIDTH-1 downto rd_target_idx*DATA_WIDTH);
           rd_rresp_reg_next <= m_axi_rresp((rd_target_idx+1)*BRESP_BITS_PER_PORT-1 downto rd_target_idx*BRESP_BITS_PER_PORT);
@@ -225,13 +220,10 @@ begin
       s_axi_arready(rd_granted_ind) <= '1';
     end if;
 
-    if read_state = RD_ISSUE then
+    if read_state = RD_READ then
       m_axi_araddr((rd_target_idx+1)*ADDR_WIDTH-1 downto rd_target_idx*ADDR_WIDTH) <= rd_araddr_reg;
       m_axi_arprot((rd_target_idx+1)*PROT_BITS_PER_PORT-1 downto rd_target_idx*PROT_BITS_PER_PORT) <= rd_arprot_reg;
       m_axi_arvalid(rd_target_idx) <= '1';
-    end if;
-
-    if read_state = RD_WAIT_R then
       m_axi_rready(rd_target_idx) <= '1';
     end if;
 
