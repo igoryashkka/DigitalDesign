@@ -85,6 +85,10 @@ architecture rtl of axi_interconnect_write is
   signal wr_aw_seen_next    : std_logic := '0';
   signal wr_w_seen          : std_logic := '0';
   signal wr_w_seen_next     : std_logic := '0';
+  signal wr_aw_sent         : std_logic := '0';
+  signal wr_aw_sent_next    : std_logic := '0';
+  signal wr_w_sent          : std_logic := '0';
+  signal wr_w_sent_next     : std_logic := '0';
 
   signal wr_bresp_reg      : std_logic_vector(1 downto 0) := AXI_RESP_OKAY;
   signal wr_bresp_reg_next : std_logic_vector(1 downto 0) := AXI_RESP_OKAY;
@@ -136,6 +140,8 @@ begin
         wr_wstrb_reg               <= (others => '0');
         wr_aw_seen                 <= '0';
         wr_w_seen                  <= '0';
+        wr_aw_sent                 <= '0';
+        wr_w_sent                  <= '0';
         wr_bresp_reg               <= AXI_RESP_OKAY;
       else
         write_state                <= write_state_next;
@@ -148,6 +154,8 @@ begin
         wr_wstrb_reg               <= wr_wstrb_reg_next;
         wr_aw_seen                 <= wr_aw_seen_next;
         wr_w_seen                  <= wr_w_seen_next;
+        wr_aw_sent                 <= wr_aw_sent_next;
+        wr_w_sent                  <= wr_w_sent_next;
         wr_bresp_reg               <= wr_bresp_reg_next;
       end if;
     end if;
@@ -157,6 +165,8 @@ begin
     variable decoded_slave_idx : integer;
     variable aw_seen_after     : std_logic;
     variable w_seen_after      : std_logic;
+    variable aw_sent_after      : std_logic;
+    variable w_sent_after      : std_logic;
   begin
     write_state_next              <= write_state;
     wr_granted_ind_next           <= wr_granted_ind;
@@ -168,12 +178,16 @@ begin
     wr_wstrb_reg_next             <= wr_wstrb_reg;
     wr_aw_seen_next               <= wr_aw_seen;
     wr_w_seen_next                <= wr_w_seen;
+    wr_aw_sent_next               <= wr_aw_sent;
+    wr_w_sent_next                <= wr_w_sent;
     wr_bresp_reg_next             <= wr_bresp_reg;
 
     case write_state is
       when WR_IDLE =>
         wr_aw_seen_next     <= '0';
         wr_w_seen_next      <= '0';
+        wr_aw_sent_next      <= '0';
+        wr_w_sent_next      <= '0';
         wr_granted_ind_next <= GRANTED_INDEX_INVALID;
         wr_target_idx_next  <= GRANTED_INDEX_INVALID;
         wr_bresp_reg_next   <= AXI_RESP_OKAY;
@@ -231,7 +245,20 @@ begin
         end if;
 
       when WR_WRITE =>
-        if m_axi_awready(wr_target_idx) = '1' and m_axi_wready(wr_target_idx) = '1' then
+        aw_sent_after := wr_aw_sent;
+        w_sent_after  := wr_w_sent; 
+          
+        if m_axi_awready(wr_target_idx) = '1' and wr_aw_sent = '0' then
+          aw_sent_after := '1';
+          wr_aw_sent_next <= '1';
+        end if;
+
+        if m_axi_wready(wr_target_idx) = '1' and wr_w_sent = '0' then
+          w_sent_after := '1';
+          wr_w_sent_next <= '1';
+        end if;
+
+        if aw_sent_after = '1' and w_sent_after = '1' then
           write_state_next <= WR_WAIT_B;
         end if;
 
@@ -274,13 +301,19 @@ begin
     end if;
 
     if write_state = WR_WRITE then
+
+    if wr_aw_sent = '0' then
       m_axi_awaddr((wr_target_idx+1)*ADDR_WIDTH-1 downto wr_target_idx*ADDR_WIDTH) <= wr_awaddr_reg;
       m_axi_awprot((wr_target_idx+1)*PROT_BITS_PER_PORT-1 downto wr_target_idx*PROT_BITS_PER_PORT) <= wr_awprot_reg;
       m_axi_awvalid(wr_target_idx) <= '1';
+    end if;
 
+    if wr_w_sent = '0' then 
       m_axi_wdata((wr_target_idx+1)*DATA_WIDTH-1 downto wr_target_idx*DATA_WIDTH) <= wr_wdata_reg;
       m_axi_wstrb((wr_target_idx+1)*(DATA_WIDTH/BYTE_WIDTH_BITS)-1 downto wr_target_idx*(DATA_WIDTH/BYTE_WIDTH_BITS)) <= wr_wstrb_reg;
       m_axi_wvalid(wr_target_idx) <= '1';
+    end if;
+
     end if;
 
     if write_state = WR_WAIT_B then
