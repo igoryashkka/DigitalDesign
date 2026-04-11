@@ -3,9 +3,10 @@ typedef enum int {
   AXI_OP_READ  = 1
 } axi_op_kind_e;
 
-class axi_aw_chan_tr #(int DW=32) extends uvm_object;
-  `uvm_object_param_utils(axi_aw_chan_tr#(DW))
+class axi_aw_chan_tr #(int DW=32, int IW=4) extends uvm_object;
+  `uvm_object_param_utils(axi_aw_chan_tr#(DW,IW))
 
+  rand logic [IW-1:0] id;
   rand logic [DW-1:0] addr;
   rand logic [2:0]    prot;
 
@@ -19,15 +20,17 @@ class axi_w_chan_tr #(int DW=32) extends uvm_object;
 
   rand logic [DW-1:0] data;
   rand logic [(DW/8)-1:0] strb;
+  rand logic              last;
 
   function new(string name="axi_w_chan_tr");
     super.new(name);
   endfunction
 endclass
 
-class axi_b_chan_tr extends uvm_object;
-  `uvm_object_utils(axi_b_chan_tr)
+class axi_b_chan_tr #(int IW=4) extends uvm_object;
+  `uvm_object_param_utils(axi_b_chan_tr#(IW))
 
+  rand logic [IW-1:0] id;
   rand logic [1:0] resp;
 
   function new(string name="axi_b_chan_tr");
@@ -35,9 +38,10 @@ class axi_b_chan_tr extends uvm_object;
   endfunction
 endclass
 
-class axi_ar_chan_tr #(int DW=32) extends uvm_object;
-  `uvm_object_param_utils(axi_ar_chan_tr#(DW))
+class axi_ar_chan_tr #(int DW=32, int IW=4) extends uvm_object;
+  `uvm_object_param_utils(axi_ar_chan_tr#(DW,IW))
 
+  rand logic [IW-1:0] id;
   rand logic [DW-1:0] addr;
   rand logic [2:0]    prot;
 
@@ -46,19 +50,21 @@ class axi_ar_chan_tr #(int DW=32) extends uvm_object;
   endfunction
 endclass
 
-class axi_r_chan_tr #(int DW=32) extends uvm_object;
-  `uvm_object_param_utils(axi_r_chan_tr#(DW))
+class axi_r_chan_tr #(int DW=32, int IW=4) extends uvm_object;
+  `uvm_object_param_utils(axi_r_chan_tr#(DW,IW))
 
+  rand logic [IW-1:0] id;
   rand logic [DW-1:0] data;
   rand logic [1:0]    resp;
+  rand logic          last;
 
   function new(string name="axi_r_chan_tr");
     super.new(name);
   endfunction
 endclass
 
-class axi_transaction #(int DW=32) extends uvm_sequence_item;
-  `uvm_object_param_utils(axi_transaction#(DW))
+class axi_transaction #(int DW=32, int IW=4) extends uvm_sequence_item;
+  `uvm_object_param_utils(axi_transaction#(DW,IW))
 
   rand axi_op_kind_e  kind;
   rand int unsigned   delay;
@@ -90,32 +96,32 @@ class axi_transaction #(int DW=32) extends uvm_sequence_item;
   }
 endclass
 
-class axi_write_transaction #(int DW=32) extends axi_transaction#(DW);
-  `uvm_object_param_utils(axi_write_transaction#(DW))
+class axi_write_transaction #(int DW=32, int IW=4) extends axi_transaction#(DW,IW);
+  `uvm_object_param_utils(axi_write_transaction#(DW,IW))
 
-  rand axi_aw_chan_tr#(DW) aw;
+  rand axi_aw_chan_tr#(DW,IW) aw;
   rand axi_w_chan_tr#(DW)  w;
-       axi_b_chan_tr       b;
+       axi_b_chan_tr#(IW)  b;
 
   function new(string name="axi_write_transaction");
     super.new(name);
     kind = AXI_OP_WRITE;
-    aw = axi_aw_chan_tr#(DW)::type_id::create("aw");
+    aw = axi_aw_chan_tr#(DW,IW)::type_id::create("aw");
     w  = axi_w_chan_tr#(DW)::type_id::create("w");
-    b  = axi_b_chan_tr::type_id::create("b");
+    b  = axi_b_chan_tr#(IW)::type_id::create("b");
   endfunction
 endclass
 
-class axi_read_transaction #(int DW=32) extends axi_transaction#(DW);
-  `uvm_object_param_utils(axi_read_transaction#(DW))
+class axi_read_transaction #(int DW=32, int IW=4) extends axi_transaction#(DW,IW);
+  `uvm_object_param_utils(axi_read_transaction#(DW,IW))
 
-  rand axi_ar_chan_tr#(DW) ar;
-       axi_r_chan_tr#(DW)  r;
+  rand axi_ar_chan_tr#(DW,IW) ar;
+       axi_r_chan_tr#(DW,IW)  r;
 
   function new(string name="axi_read_transaction");
     super.new(name);
     kind = AXI_OP_READ;
-    ar = axi_ar_chan_tr#(DW)::type_id::create("ar");
-    r  = axi_r_chan_tr#(DW)::type_id::create("r");
+    ar = axi_ar_chan_tr#(DW,IW)::type_id::create("ar");
+    r  = axi_r_chan_tr#(DW,IW)::type_id::create("r");
   endfunction
 endclass

@@ -5,6 +5,9 @@ class axi_agent #(parameter int DW=32) extends uvm_agent;
     axi_driver    #(DW)                drv;
     axi_monitor   #(DW)                mon;
     virtual axi_lite_if #(DW)          vif;
+    virtual axi_lite_if #(DW)          vif_lite;
+    virtual axi_abstract_if #(DW)      vif_abstract;
+    axi_if_kind_e                      if_kind;
 
     bit is_master;
     axi_agent_cfg #(DW)                cfg;
@@ -20,14 +23,31 @@ class axi_agent #(parameter int DW=32) extends uvm_agent;
     if (uvm_config_db#(axi_agent_cfg#(DW))::get(this, "", "cfg", cfg)) begin
       is_master = cfg.is_master;
       is_active = cfg.is_active;
+      if_kind = cfg.if_kind;
       vif = cfg.vif;
+      vif_lite = (cfg.vif_lite != null) ? cfg.vif_lite : cfg.vif;
+      vif_abstract = cfg.vif_abstract;
     end else begin
       is_master = 1'b0;
       is_active = UVM_PASSIVE;
+      if_kind = AXI_IF_KIND_LITE;
       void'(uvm_config_db#(virtual axi_lite_if#(DW))::get(this, "", "vif", vif));
+      vif_lite = vif;
+      void'(uvm_config_db#(virtual axi_abstract_if#(DW))::get(this, "", "vif_abstract", vif_abstract));
+    end
+
+    if ((if_kind == AXI_IF_KIND_LITE) && (vif_lite == null) && (vif != null)) begin
+      vif_lite = vif;
+    end
+
+    if (vif_abstract == null) begin
+      `uvm_fatal("NO_ABS_VIF", $sformatf("No abstract vif for monitor in %s", get_full_name()))
     end
 
     if (is_active == UVM_ACTIVE) begin
+      if (if_kind != AXI_IF_KIND_LITE) begin
+        `uvm_fatal("UNSUPPORTED_CFG", "axi_driver supports AXI-Lite only; set if_kind=AXI_IF_KIND_LITE for ACTIVE agent")
+      end
       seqr = uvm_sequencer#(axi_transaction#(DW))::type_id::create("seqr",this);
       drv  = axi_driver#(DW)::type_id::create("drv", this);
     end
@@ -36,8 +56,8 @@ class axi_agent #(parameter int DW=32) extends uvm_agent;
 
     uvm_config_db#(bit)::set(this,"drv","is_master",is_master);
     uvm_config_db#(bit)::set(this,"mon","is_master",is_master);
-    uvm_config_db#(virtual axi_lite_if#(DW))::set(this,"drv","vif",vif);
-    uvm_config_db#(virtual axi_lite_if#(DW))::set(this,"mon","vif",vif);
+    uvm_config_db#(virtual axi_lite_if#(DW))::set(this,"drv","vif",vif_lite);
+    uvm_config_db#(virtual axi_abstract_if#(DW))::set(this,"mon","vif",vif_abstract);
 
     endfunction
 

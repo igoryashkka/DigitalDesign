@@ -71,6 +71,8 @@ set dut2_files [list \
 ]
 
 set tb_files [list \
+  [file join $src_root simulation interfaces axi_abstract_if.sv] \
+  [file join $src_root simulation interfaces axi_if.sv] \
   [file join $src_root simulation interfaces axi_lite_if.sv] \
   [file join $src_root simulation tb_pkg.sv] \
   [file join $src_root simulation tb tb_top.sv]

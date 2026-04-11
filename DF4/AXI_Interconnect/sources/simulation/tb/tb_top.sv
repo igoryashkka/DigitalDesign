@@ -16,6 +16,8 @@ module tb_top;
   axi_lite_if #(DATA_WIDTH) mst_if(); // UVM master <-> interconnect (S side slot 0)
   axi_lite_if #(DATA_WIDTH) gen_if(); // Traffic generator <-> interconnect (S side slot 1)
   axi_lite_if #(DATA_WIDTH) slv_if(); // interconnect (M side) <-> gpio slave
+  axi_abstract_if #(DATA_WIDTH) mst_abs_if();
+  axi_abstract_if #(DATA_WIDTH) slv_abs_if();
 
   logic [S_COUNT*ADDR_WIDTH-1:0] s_axi_awaddr;
   logic [S_COUNT*3-1:0]          s_axi_awprot;
@@ -58,9 +60,66 @@ module tb_top;
   assign mst_if.aclk = clk;
   assign gen_if.aclk = clk;
   assign slv_if.aclk = clk;
+  assign mst_abs_if.aclk = clk;
+  assign slv_abs_if.aclk = clk;
   assign mst_if.aresetn = rst_n;
   assign gen_if.aresetn = rst_n;
   assign slv_if.aresetn = rst_n;
+  assign mst_abs_if.aresetn = rst_n;
+  assign slv_abs_if.aresetn = rst_n;
+
+  // Mirror AXI-Lite into abstract monitor interfaces.
+  assign mst_abs_if.awid    = '0;
+  assign mst_abs_if.awaddr  = mst_if.awaddr;
+  assign mst_abs_if.awprot  = mst_if.awprot;
+  assign mst_abs_if.awvalid = mst_if.awvalid;
+  assign mst_abs_if.awready = mst_if.awready;
+  assign mst_abs_if.wdata   = mst_if.wdata;
+  assign mst_abs_if.wstrb   = mst_if.wstrb;
+  assign mst_abs_if.wlast   = 1'b1;
+  assign mst_abs_if.wvalid  = mst_if.wvalid;
+  assign mst_abs_if.wready  = mst_if.wready;
+  assign mst_abs_if.bid     = '0;
+  assign mst_abs_if.bresp   = mst_if.bresp;
+  assign mst_abs_if.bvalid  = mst_if.bvalid;
+  assign mst_abs_if.bready  = mst_if.bready;
+  assign mst_abs_if.arid    = '0;
+  assign mst_abs_if.araddr  = mst_if.araddr;
+  assign mst_abs_if.arprot  = mst_if.arprot;
+  assign mst_abs_if.arvalid = mst_if.arvalid;
+  assign mst_abs_if.arready = mst_if.arready;
+  assign mst_abs_if.rid     = '0;
+  assign mst_abs_if.rdata   = mst_if.rdata;
+  assign mst_abs_if.rresp   = mst_if.rresp;
+  assign mst_abs_if.rlast   = 1'b1;
+  assign mst_abs_if.rvalid  = mst_if.rvalid;
+  assign mst_abs_if.rready  = mst_if.rready;
+
+  assign slv_abs_if.awid    = '0;
+  assign slv_abs_if.awaddr  = slv_if.awaddr;
+  assign slv_abs_if.awprot  = slv_if.awprot;
+  assign slv_abs_if.awvalid = slv_if.awvalid;
+  assign slv_abs_if.awready = slv_if.awready;
+  assign slv_abs_if.wdata   = slv_if.wdata;
+  assign slv_abs_if.wstrb   = slv_if.wstrb;
+  assign slv_abs_if.wlast   = 1'b1;
+  assign slv_abs_if.wvalid  = slv_if.wvalid;
+  assign slv_abs_if.wready  = slv_if.wready;
+  assign slv_abs_if.bid     = '0;
+  assign slv_abs_if.bresp   = slv_if.bresp;
+  assign slv_abs_if.bvalid  = slv_if.bvalid;
+  assign slv_abs_if.bready  = slv_if.bready;
+  assign slv_abs_if.arid    = '0;
+  assign slv_abs_if.araddr  = slv_if.araddr;
+  assign slv_abs_if.arprot  = slv_if.arprot;
+  assign slv_abs_if.arvalid = slv_if.arvalid;
+  assign slv_abs_if.arready = slv_if.arready;
+  assign slv_abs_if.rid     = '0;
+  assign slv_abs_if.rdata   = slv_if.rdata;
+  assign slv_abs_if.rresp   = slv_if.rresp;
+  assign slv_abs_if.rlast   = 1'b1;
+  assign slv_abs_if.rvalid  = slv_if.rvalid;
+  assign slv_abs_if.rready  = slv_if.rready;
 
   // Traffic generator CH1 drives slot1 as AXI-Lite master.
   assign gen_if.awaddr  = atg_awaddr;
@@ -250,6 +309,8 @@ module tb_top;
 
     uvm_config_db#(virtual axi_lite_if#(DATA_WIDTH))::set(null, "uvm_test_top.env", "mst_vif", mst_if);
     uvm_config_db#(virtual axi_lite_if#(DATA_WIDTH))::set(null, "uvm_test_top.env", "slv_vif", slv_if);
+    uvm_config_db#(virtual axi_abstract_if#(DATA_WIDTH))::set(null, "uvm_test_top.env", "mst_abs_vif", mst_abs_if);
+    uvm_config_db#(virtual axi_abstract_if#(DATA_WIDTH))::set(null, "uvm_test_top.env", "slv_abs_vif", slv_abs_if);
     uvm_config_db#(virtual axi_lite_if#(DATA_WIDTH))::set(null, "uvm_test_top.env.mst_agent", "vif", mst_if);
     uvm_config_db#(virtual axi_lite_if#(DATA_WIDTH))::set(null, "uvm_test_top.env.slv_agent", "vif", slv_if);
 
