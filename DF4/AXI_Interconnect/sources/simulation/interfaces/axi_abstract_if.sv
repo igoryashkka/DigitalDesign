@@ -43,32 +43,4 @@ interface axi_abstract_if #(
 	logic          rvalid;
 	logic          rready;
 
-	modport mst (
-		input  aclk, aresetn,
-		output awid, awaddr, awprot, awvalid,
-		input  awready,
-		output wdata, wstrb, wlast, wvalid,
-		input  wready,
-		input  bid, bresp, bvalid,
-		output bready,
-		output arid, araddr, arprot, arvalid,
-		input  arready,
-		input  rid, rdata, rresp, rlast, rvalid,
-		output rready
-	);
-
-	modport slv (
-		input  aclk, aresetn,
-		input  awid, awaddr, awprot, awvalid,
-		output awready,
-		input  wdata, wstrb, wlast, wvalid,
-		output wready,
-		output bid, bresp, bvalid,
-		input  bready,
-		input  arid, araddr, arprot, arvalid,
-		output arready,
-		output rid, rdata, rresp, rlast, rvalid,
-		input  rready
-	);
-
 endinterface : axi_abstract_if
