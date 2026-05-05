@@ -1,5 +1,5 @@
 module spi_master #(
-    parameter CLK_DIV = 4
+    parameter CLK_DIV = 24
 )(
     input  logic clk,
     input  logic rst_n,
@@ -13,64 +13,62 @@ module spi_master #(
     output logic done
 );
 
-    logic [7:0] shift_reg;
+    localparam int unsigned HALF_PERIOD = (CLK_DIV < 1) ? 1 : CLK_DIV;
+
+    logic [7:0] tx_byte;
     logic [2:0] bit_cnt;
     logic [15:0] clk_cnt;
-
-    typedef enum logic [1:0] {
-        IDLE,
-        TRANSFER,
-        DONE
-    } state_t;
-
-    state_t state;
+    logic       sclk_phase;
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            state <= IDLE;
-            scl <= 0;
-            sda <= 0;
-            busy <= 0;
-            done <= 0;
+            scl        <= 1'b0;
+            sda        <= 1'b0;
+            busy       <= 1'b0;
+            done       <= 1'b0;
+            bit_cnt    <= 3'd0;
+            clk_cnt    <= 16'd0;
+            tx_byte    <= 8'h00;
+            sclk_phase <= 1'b0;
         end else begin
-            case (state)
-                IDLE: begin
-                    done <= 0;
-                    if (start) begin
-                        shift_reg <= data_in;
-                        bit_cnt <= 7;
-                        busy <= 1;
-                        clk_cnt <= 0;
-                        state <= TRANSFER;
-                    end
+            done <= 1'b0;
+
+            if (!busy) begin
+                scl        <= 1'b0;
+                sclk_phase <= 1'b0;
+                clk_cnt    <= 16'd0;
+
+                if (start) begin
+                    tx_byte <= data_in;
+                    bit_cnt <= 3'd7;
+                    sda     <= data_in[7];
+                    busy    <= 1'b1;
                 end
+            end else begin
+                if (clk_cnt == (HALF_PERIOD - 1)) begin
+                    clk_cnt <= 16'd0;
 
-                TRANSFER: begin
-                    clk_cnt <= clk_cnt + 1;
+                    if (!sclk_phase) begin
+                        // Rising edge: ST7789 samples MOSI here (SPI mode 0).
+                        scl        <= 1'b1;
+                        sclk_phase <= 1'b1;
+                    end else begin
+                        // Falling edge: prepare the next data bit while SCK is low.
+                        scl        <= 1'b0;
+                        sclk_phase <= 1'b0;
 
-                    if (clk_cnt == CLK_DIV) begin
-                        scl <= ~scl;
-                        clk_cnt <= 0;
-
-                        if (scl == 0) begin
-                            sda <= shift_reg[bit_cnt];
+                        if (bit_cnt == 0) begin
+                            busy <= 1'b0;
+                            done <= 1'b1;
                         end else begin
-                            if (bit_cnt == 0) begin
-                                state <= DONE;
-                            end else begin
-                                bit_cnt <= bit_cnt - 1;
-                            end
+                            bit_cnt <= bit_cnt - 1'b1;
+                            sda     <= tx_byte[bit_cnt - 1'b1];
                         end
                     end
+                end else begin
+                    clk_cnt <= clk_cnt + 1'b1;
                 end
-
-                DONE: begin
-                    busy <= 0;
-                    done <= 1;
-                    scl <= 0;
-                    state <= IDLE;
-                end
-            endcase
+            end
         end
     end
 

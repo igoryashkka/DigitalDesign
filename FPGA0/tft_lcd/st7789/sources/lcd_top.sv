@@ -14,7 +14,8 @@ module lcd_top (
     // =============================
     // PARAMETERS
     // =============================
-    parameter CLK_DIV = 4; // SPI clock divider
+    parameter CLK_DIV = 2; // 10 MHz SPI with 40 MHz clk_sys
+    parameter CLK_HZ  = 40_000_000;
 
     // =============================
     // INTERNAL SIGNALS
@@ -26,9 +27,10 @@ module lcd_top (
     logic       clk_sys;
     logic       clk_locked;
     logic       rst_core_n;
+    logic       lcd_blk_ctrl;
 
     // =============================
-    // CLOCKING (200 MHz differential -> 50 MHz internal)
+    // CLOCKING (200 MHz differential -> 40 MHz internal)
     // =============================
     clk_wiz_0 clk_wiz_i (
         .clk_out1(clk_sys),
@@ -39,6 +41,7 @@ module lcd_top (
     );
 
     assign rst_core_n = rst_n & clk_locked;
+    assign lcd_blk = lcd_blk_ctrl;
 
     // =============================
     // SPI MASTER
@@ -59,7 +62,9 @@ module lcd_top (
     // =============================
     // LCD CONTROLLER
     // =============================
-    lcd_ctrl lcd0 (
+    lcd_ctrl #(
+        .CLK_HZ(CLK_HZ)
+    ) lcd0 (
         .clk(clk_sys),
         .rst_n(rst_core_n),
 
@@ -71,7 +76,7 @@ module lcd_top (
         .lcd_cs(lcd_cs),
         .lcd_dc(lcd_dc),
         .lcd_res(lcd_res),
-        .lcd_blk(lcd_blk)
+        .lcd_blk(lcd_blk_ctrl)
     );
 
 endmodule
