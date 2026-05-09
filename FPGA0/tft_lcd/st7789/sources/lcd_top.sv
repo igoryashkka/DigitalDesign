@@ -2,6 +2,8 @@ module lcd_top (
     input  logic clk_200_p,
     input  logic clk_200_n,
     input  logic rst_n,
+    input  logic uart_rx,
+    output logic uart_tx,
 
     output logic lcd_scl,
     output logic lcd_sda,
@@ -14,8 +16,22 @@ module lcd_top (
     // =============================
     // PARAMETERS
     // =============================
-    parameter CLK_DIV = 2; // 10 MHz SPI with 40 MHz clk_sys
-    parameter CLK_HZ  = 40_000_000;
+    parameter int unsigned CLK_HZ     = 40_000_000;
+    parameter int unsigned PANEL_W    = 320;
+    parameter int unsigned PANEL_H    = 240;
+    parameter int unsigned STRIPE_H   = 4;
+    parameter int unsigned UART_BAUD  = 2_000_000;
+    parameter int unsigned TARGET_FPS = 30;
+
+    localparam int unsigned BPP = 16;
+    localparam int unsigned SPI_REQ_HZ    = PANEL_W * PANEL_H * BPP * TARGET_FPS;
+    localparam int unsigned SPI_MAX_HW_HZ = CLK_HZ / 2;
+    localparam int unsigned SPI_SCK_HZ    = (SPI_REQ_HZ > SPI_MAX_HW_HZ) ? SPI_MAX_HW_HZ : SPI_REQ_HZ;
+
+    localparam int unsigned SPI_HALF_PERIOD_RAW =
+        (2 * SPI_SCK_HZ == 0) ? 1 : (CLK_HZ / (2 * SPI_SCK_HZ));
+    localparam int unsigned SPI_HALF_PERIOD =
+        (SPI_HALF_PERIOD_RAW < 1) ? 1 : SPI_HALF_PERIOD_RAW;
 
     // =============================
     // INTERNAL SIGNALS
@@ -42,12 +58,13 @@ module lcd_top (
 
     assign rst_core_n = rst_n & clk_locked;
     assign lcd_blk = lcd_blk_ctrl;
+    assign uart_tx = 1'b1;
 
     // =============================
     // SPI MASTER
     // =============================
     spi_master #(
-        .CLK_DIV(CLK_DIV)
+        .CLK_DIV(SPI_HALF_PERIOD)
     ) spi0 (
         .clk(clk_sys),
         .rst_n(rst_core_n),
@@ -62,11 +79,16 @@ module lcd_top (
     // =============================
     // LCD CONTROLLER
     // =============================
-    lcd_ctrl #(
-        .CLK_HZ(CLK_HZ)
+    lcd_uart_ctrl #(
+        .CLK_HZ(CLK_HZ),
+        .LCD_W(PANEL_W),
+        .LCD_H(PANEL_H),
+        .STRIPE_H(STRIPE_H),
+        .UART_BAUD(UART_BAUD)
     ) lcd0 (
         .clk(clk_sys),
         .rst_n(rst_core_n),
+        .uart_rx_i(uart_rx),
 
         .spi_data(spi_data),
         .spi_start(spi_start),

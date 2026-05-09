@@ -34,3 +34,7 @@ set_property -dict {PACKAGE_PIN F14 IOSTANDARD LVCMOS33} [get_ports lcd_dc]
 set_property -dict {PACKAGE_PIN C13 IOSTANDARD LVCMOS33} [get_ports lcd_cs]
 set_property -dict {PACKAGE_PIN D14 IOSTANDARD LVCMOS33} [get_ports lcd_blk]
 
+# USB-UART (CH340E)
+set_property -dict {PACKAGE_PIN P14 IOSTANDARD LVCMOS33} [get_ports uart_rx]
+set_property -dict {PACKAGE_PIN P15 IOSTANDARD LVCMOS33} [get_ports uart_tx]
+
