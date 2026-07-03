@@ -1,0 +1,152 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+module adc_simple_001 (
+    VDD3V3,
+    GND,
+    CLK,
+    EN,
+    IN,
+    VREF,
+    IBIAS10U,
+
+    OUT0,
+    OUT1,
+    OUT2,
+    OUT3,
+    OUT4,
+    OUT5,
+    OUT6,
+    OUT7
+);
+
+inout VDD3V3;
+inout GND;
+inout CLK;
+inout EN;
+inout IN;
+inout VREF;
+inout IBIAS10U;
+
+electrical VDD3V3;
+electrical GND;
+electrical CLK;
+electrical EN;
+electrical IN;
+electrical VREF;
+electrical IBIAS10U;
+
+output OUT0;
+output OUT1;
+output OUT2;
+output OUT3;
+output OUT4;
+output OUT5;
+output OUT6;
+output OUT7;
+
+electrical OUT0;
+electrical OUT1;
+electrical OUT2;
+electrical OUT3;
+electrical OUT4;
+electrical OUT5;
+electrical OUT6;
+electrical OUT7;
+
+real vin;
+real vref;
+real vdd;
+real ibias;
+
+integer sampled_code;
+integer output_code;
+integer next_code;
+
+analog begin
+
+    //--------------------------------------------
+    // Initial conditions
+    //--------------------------------------------
+    @(initial_step) begin
+        sampled_code = 0;
+        output_code  = 0;
+        next_code    = 0;
+    end
+
+    //--------------------------------------------
+    // Sample on rising clock edge
+    //--------------------------------------------
+    @(cross(V(CLK,GND)-1.65,+1)) begin
+
+        vdd   = V(VDD3V3,GND);
+        vref  = V(VREF,GND);
+        ibias = I(IBIAS10U,GND);
+
+        $strobe("--------------------------------");
+        $strobe("VDD   = %f", vdd);
+        $strobe("VREF  = %f", vref);
+        $strobe("VIN   = %f", vin);
+        $strobe("EN    = %f", V(EN,GND));
+        $strobe("IBIAS = %e", ibias);
+
+
+        if ((vdd >= 3.2) &&
+            (vdd <= 3.4) &&
+            (vref >= 1.99) &&
+            (vref <= 2.01) &&
+            (ibias >= 9u) &&
+            (ibias <= 11u) &&
+            (V(EN,GND) > 1.65)) begin
+
+            vin = V(IN,GND);
+
+            if (vin <= 0.0)
+                next_code = 0;
+            else if (vin >= vref)
+                next_code = 255;
+            else
+                next_code = (255.0*vin/vref + 0.5);
+
+            // One-clock pipeline
+            output_code  = sampled_code;
+            sampled_code = next_code;
+            
+        $strobe("next_code    = %0d", next_code);
+        $strobe("sampled_code = %0d", sampled_code);
+
+        $strobe("bits = %0d %0d %0d %0d %0d %0d %0d %0d",
+            ((sampled_code & 8'h80)!=0),
+            ((sampled_code & 8'h40)!=0),
+            ((sampled_code & 8'h20)!=0),
+            ((sampled_code & 8'h10)!=0),
+            ((sampled_code & 8'h08)!=0),
+            ((sampled_code & 8'h04)!=0),
+            ((sampled_code & 8'h02)!=0),
+            ((sampled_code & 8'h01)!=0)
+        );
+
+
+        end
+        else begin
+            output_code  = 0;
+            sampled_code = 0;
+        end
+    end
+
+    //--------------------------------------------
+    // Drive outputs
+    //--------------------------------------------
+
+    V(OUT0) <+ transition((output_code & 8'h01) ? 3.3 : 0.0, 0, 1n);
+    V(OUT1) <+ transition((output_code & 8'h02) ? 3.3 : 0.0, 0, 1n);
+    V(OUT2) <+ transition((output_code & 8'h04) ? 3.3 : 0.0, 0, 1n);
+    V(OUT3) <+ transition((output_code & 8'h08) ? 3.3 : 0.0, 0, 1n);
+    V(OUT4) <+ transition((output_code & 8'h10) ? 3.3 : 0.0, 0, 1n);
+    V(OUT5) <+ transition((output_code & 8'h20) ? 3.3 : 0.0, 0, 1n);
+    V(OUT6) <+ transition((output_code & 8'h40) ? 3.3 : 0.0, 0, 1n);
+    V(OUT7) <+ transition((output_code & 8'h80) ? 3.3 : 0.0, 0, 1n);
+
+end
+
+endmodule
