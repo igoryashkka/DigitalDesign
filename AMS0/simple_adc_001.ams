@@ -1,0 +1,78 @@
+`include "constants.vams"
+`include "disciplines.vams"
+`timescale 1ns/1ps
+
+module adc_simple_001 (
+    VDD3V3, GND, CLK, EN, IN, VREF, IBIAS10U, DOUT
+);
+
+
+input  VDD3V3, GND, IN, VREF, IBIAS10U;
+electrical VDD3V3, GND, IN, VREF, IBIAS10U;
+
+input  CLK, EN;
+
+
+output [7:0] DOUT;
+reg    [7:0] DOUT;
+
+real vin, vref, vdd, ibias;
+integer sampled_code, output_code, next_code;
+
+initial begin
+    sampled_code = 0;
+    output_code  = 0;
+    next_code    = 0;
+    DOUT         = 8'h00;
+end
+
+always @(posedge CLK) begin
+    vdd   = V(VDD3V3) - V(GND);
+    vref  = V(VREF)   - V(GND);
+    vin   = V(IN)     - V(GND);
+    ibias = I(IBIAS10U);
+
+    $strobe("--------------------------------");
+    $strobe("VDD   = %f", vdd);
+    $strobe("VREF  = %f", vref);
+    $strobe("VIN   = %f", vin);
+    $strobe("EN    = %b", EN);
+    $strobe("IBIAS = %e", ibias);
+
+    if ((vdd >= 3.2) && (vdd <= 3.4) &&
+        (vref >= 1.99) && (vref <= 2.01) &&
+        (ibias >= 9e-6) && (ibias <= 11e-6) &&
+        (EN == 1'b1)) begin
+
+        if (vin <= 0.0)
+            next_code = 0;
+        else if (vin >= vref)
+            next_code = 255;
+        else
+            next_code = $rtoi(255.0*vin/vref + 0.5);
+
+        output_code  = sampled_code;
+        sampled_code = next_code;
+
+        $strobe("next_code    = %0d", next_code);
+        $strobe("sampled_code = %0d", sampled_code);
+        $strobe("bits = %0d %0d %0d %0d %0d %0d %0d %0d",
+            ((sampled_code & 8'h80)!=0),
+            ((sampled_code & 8'h40)!=0),
+            ((sampled_code & 8'h20)!=0),
+            ((sampled_code & 8'h10)!=0),
+            ((sampled_code & 8'h08)!=0),
+            ((sampled_code & 8'h04)!=0),
+            ((sampled_code & 8'h02)!=0),
+            ((sampled_code & 8'h01)!=0)
+        );
+    end
+    else begin
+        output_code  = 0;
+        sampled_code = 0;
+    end
+
+    DOUT <= output_code[7:0];
+end
+
+endmodule
