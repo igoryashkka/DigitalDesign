@@ -2,31 +2,53 @@
 `include "disciplines.vams"
 `timescale 1ns/1ps
 
-module adc_simple_001 (
-    VDD3V3, GND, CLK, EN, IN, VREF, IBIAS10U, DOUT
-);
 
+module adc_simple_001 #(
+    parameter integer BITS   = 12,            
+    parameter integer NCOMP  = (1<<BITS)-1,  
+
+    parameter real VDD_MIN   = 3.2,
+    parameter real VDD_MAX   = 3.4,
+    parameter real VREF_MIN  = 1.99,
+    parameter real VREF_MAX  = 2.01,
+    parameter real IBIAS_MIN = 9e-6,
+    parameter real IBIAS_MAX = 11e-6
+) (
+    VDD3V3, GND, CLK, EN, IN, VREF, IBIAS10U, DOUT, STATUS
+);
 
 input  VDD3V3, GND, IN, VREF, IBIAS10U;
 electrical VDD3V3, GND, IN, VREF, IBIAS10U;
 
 input  CLK, EN;
 
+output [BITS-1:0] DOUT;
+reg    [BITS-1:0] DOUT;
 
-output [7:0] DOUT;
-reg    [7:0] DOUT;
+
+output [5:0] STATUS;
+reg    [5:0] STATUS;
 
 real vin, vref, vdd, ibias;
+real threshold;
 integer sampled_code, output_code, next_code;
+integer i;
+
+reg [NCOMP-1:0] comp;
+
+reg vdd_fault, vref_fault, ibias_fault, en_fault, under_fault, over_fault;
 
 initial begin
     sampled_code = 0;
     output_code  = 0;
     next_code    = 0;
-    DOUT         = 8'h00;
+    DOUT         = {BITS{1'b0}};
+    STATUS       = 6'b000000;
+    comp         = {NCOMP{1'b0}};
 end
 
 always @(posedge CLK) begin
+
     vdd   = V(VDD3V3) - V(GND);
     vref  = V(VREF)   - V(GND);
     vin   = V(IN)     - V(GND);
@@ -38,41 +60,51 @@ always @(posedge CLK) begin
     $strobe("VIN   = %f", vin);
     $strobe("EN    = %b", EN);
     $strobe("IBIAS = %e", ibias);
+    vdd_fault   = (vdd   < VDD_MIN)   || (vdd   > VDD_MAX);
+    vref_fault  = (vref  < VREF_MIN)  || (vref  > VREF_MAX);
+    ibias_fault = (ibias < IBIAS_MIN) || (ibias > IBIAS_MAX);
+    en_fault    = (EN !== 1'b1);
+    under_fault = (vin <= 0.0);
+    over_fault  = (vin >= vref);
 
-    if ((vdd >= 3.2) && (vdd <= 3.4) &&
-        (vref >= 1.99) && (vref <= 2.01) &&
-        (ibias >= 9e-6) && (ibias <= 11e-6) &&
-        (EN == 1'b1)) begin
+    STATUS[0] = vdd_fault;
+    STATUS[1] = vref_fault;
+    STATUS[2] = ibias_fault;
+    STATUS[3] = en_fault;
+    STATUS[4] = under_fault;
+    STATUS[5] = over_fault;
 
-        if (vin <= 0.0)
-            next_code = 0;
-        else if (vin >= vref)
-            next_code = 255;
-        else
-            next_code = $rtoi(255.0*vin/vref + 0.5);
+    if (!vdd_fault && !vref_fault && !ibias_fault && !en_fault) begin
+
+        for (i = 0; i < NCOMP; i = i + 1) begin
+            threshold = (i+1)*vref/(NCOMP+1);
+            comp[i]   = (vin > threshold) ? 1'b1 : 1'b0;
+        end
+
+        next_code = 0;
+        for (i = 0; i < NCOMP; i = i + 1) begin
+            next_code = next_code + comp[i];
+        end
+
+        if (next_code > NCOMP)
+            next_code = NCOMP;
 
         output_code  = sampled_code;
         sampled_code = next_code;
 
         $strobe("next_code    = %0d", next_code);
         $strobe("sampled_code = %0d", sampled_code);
-        $strobe("bits = %0d %0d %0d %0d %0d %0d %0d %0d",
-            ((sampled_code & 8'h80)!=0),
-            ((sampled_code & 8'h40)!=0),
-            ((sampled_code & 8'h20)!=0),
-            ((sampled_code & 8'h10)!=0),
-            ((sampled_code & 8'h08)!=0),
-            ((sampled_code & 8'h04)!=0),
-            ((sampled_code & 8'h02)!=0),
-            ((sampled_code & 8'h01)!=0)
-        );
+        $strobe("STATUS = %b", STATUS);
+
     end
     else begin
         output_code  = 0;
         sampled_code = 0;
+        comp         = {NCOMP{1'b0}};
     end
 
-    DOUT <= output_code[7:0];
+    DOUT <= output_code[BITS-1:0];
+
 end
 
 endmodule
