@@ -11,7 +11,7 @@ The complete design consists of the following modules:
 
 ```
                 +----------------------+
-                |      SPI Master      |
+                | SPI Master TestBench |
                 +----------+-----------+
                            |
                            | SPI
