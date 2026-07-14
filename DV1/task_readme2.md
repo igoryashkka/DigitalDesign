@@ -1,6 +1,3 @@
-Я б трохи спростив постановку так, щоб студенту було одразу зрозуміло, **які модулі потрібно написати і як вони між собою з'єднані**. При цьому CDC не виділяти окремим великим розділом, а оформити як **Note** до SPI-конфігурації.
-
----
 
 # RTL Design Task: Image Processing with Nonlinear Spatial Filters and SPI Configuration (AXI4-Stream)
 
