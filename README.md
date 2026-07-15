@@ -1,16 +1,19 @@
 # Project Documentation
 
-This documentation provides a concise overview of the modules in this repository and how to build / simulate them.
+This repository collects study and practice materials across several chip design directions: digital RTL development, verification, analog mixed-signal modeling, and backend ASIC flow. The projects are organized as small focused tasks and labs, so the repo can be used both as a learning path and as a reference for typical design stages.
 
-Modules:
+## Main Directions
 
-- **DF1** - Basic VHDL components (gates, latch, full adder, FSM)
-- **DF2** - Collections of small designs and simulations (BasicLogicGates, FSM_Protocols, IntermediateBlocks)
-- **DF3** - FPGA-focused projects (Counter, Decoder)
-- **DF4** - AXI4-Lite slave and GPIO (in progress)
-- **DV1** - Not found in repository (placeholder)
-- **DV2** - FilterDXI demonstration (VHDL filter with test vectors)
-- **DV3** - Verification/UVM project
-- **CPU0** - RISC-V SystemVerilog CPU core (instruction memory, datapath, control)
+- **Digital Design** - RTL blocks and FPGA-oriented designs in VHDL/SystemVerilog, including logic gates, FSMs, arithmetic modules, AXI-based components, and a small RISC-V CPU core.
+- **Verification** - Simulation and verification exercises covering test vectors, protocol-level checks, and UVM-oriented project structure.
+- **Analog Mixed-Signal** - Simple AMS examples that demonstrate mixed-signal behavior and basic converter modeling.
+- **Backend Design** - Introductory ASIC backend flow material based on OpenLane/OpenROAD for physical implementation experiments.
+
+## Repository Modules
+
+- **Digital Design** - `DF1`, `DF2`, `DF3`, `DF4`, `CPU0`
+- **Verification** - `DV1`, `DV2`, `DV3`, `FilterDXI`
+- **Analog Mixed-Signal** - `AMS0`
+- **Backend Design** - `ASIC0`
 
 Refer to the individual module pages for details, file lists, and instructions.
